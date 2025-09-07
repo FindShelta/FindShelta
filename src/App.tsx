@@ -1,0 +1,50 @@
+import React, { useState } from 'react';
+import { useAuth } from './contexts/AuthContext';
+import RegistrationFlow from './components/Auth/RegistrationFlow';
+import LoginForm from './components/Auth/LoginForm';
+import HomeSeekerDashboard from './components/Dashboard/HomeSeekerDashboard';
+import AgentDashboard from './components/Dashboard/AgentDashboard';
+import AdminDashboard from './components/Admin/AdminDashboard';
+
+function App() {
+  const { user, loading } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is authenticated, show appropriate dashboard
+  if (user) {
+    if (user.role === 'admin') {
+      return <AdminDashboard />;
+    }
+    return user.role === 'agent' ? <AgentDashboard /> : <HomeSeekerDashboard />;
+  }
+
+  // Show login form if requested
+  if (showLogin) {
+    return (
+      <LoginForm
+        onBack={() => setShowLogin(false)}
+        onSwitchToRegister={() => setShowLogin(false)}
+      />
+    );
+  }
+
+  // Default: Show registration flow (primary entry point)
+  return (
+    <RegistrationFlow
+      onBack={() => setShowLogin(true)}
+    />
+  );
+}
+
+export default App;
