@@ -2,6 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
 
+// Interface for stored user data (includes password for authentication)
+interface StoredUser extends User {
+  password: string;
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
@@ -83,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('supabase_auth');
-    localStorage.removeItem('users'); // Clear mock users as well
+    // DON'T clear 'users' - this contains all registered users
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -101,13 +106,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setUser(adminUser);
         localStorage.setItem('user', JSON.stringify(adminUser));
-        // Note: NOT setting 'supabase_auth' to avoid session validation issues
         return true;
       }
       
       // Mock authentication - in production, this would call your API
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const foundUser = users.find((u: User) => u.email === email && u.password === password);
+      const users: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
+      const foundUser = users.find((u: StoredUser) => u.email === email && u.password === password);
       
       if (foundUser) {
         const { password: _, ...userWithoutPassword } = foundUser;
@@ -124,10 +128,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (name: string, email: string, password: string, role: 'agent' | 'home_seeker', whatsappNumber?: string): Promise<boolean> => {
     try {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const users: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
       
       // Check if user already exists
-      if (users.find((u: User) => u.email === email)) {
+      if (users.find((u: StoredUser) => u.email === email)) {
         return false;
       }
 
@@ -135,7 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: crypto.randomUUID(),
         name,
         email,
-        password,
+        password, // Store password for mock authentication
         role,
         whatsappNumber,
         isSubscribed: role === 'home_seeker' ? true : false,
