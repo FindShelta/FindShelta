@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 import { User } from '../types';
 
 // Interface for stored user data (includes password for authentication)
@@ -30,64 +29,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize auth state from localStorage and Supabase
-    const initializeAuth = async () => {
+    // Initialize auth state from localStorage only (mock authentication)
+    const initializeAuth = () => {
       try {
-        // Check for stored user data (for admin users)
+        // Check for stored user data
         const storedUser = localStorage.getItem('user');
-        const storedSupabaseAuth = localStorage.getItem('supabase_auth');
         
-        if (storedUser && storedSupabaseAuth) {
+        if (storedUser) {
           const userData = JSON.parse(storedUser);
-          const authData = JSON.parse(storedSupabaseAuth);
-          
-          // Verify the session is still valid
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (session && session.user.id === userData.id) {
-            setUser(userData);
-          } else {
-            // Clear invalid session
-            localStorage.removeItem('user');
-            localStorage.removeItem('supabase_auth');
-          }
+          setUser(userData);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         // Clear potentially corrupted data
         localStorage.removeItem('user');
-        localStorage.removeItem('supabase_auth');
       } finally {
         setLoading(false);
       }
     };
 
     initializeAuth();
-
-    // Listen for Supabase auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_OUT' || !session) {
-          setUser(null);
-          localStorage.removeItem('user');
-          localStorage.removeItem('supabase_auth');
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   const logout = () => {
-    // Sign out from Supabase
-    supabase.auth.signOut();
-    
-    // Clear local state
+    // Clear local state only (mock authentication)
     setUser(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('supabase_auth');
     // DON'T clear 'users' - this contains all registered users
   };
 
