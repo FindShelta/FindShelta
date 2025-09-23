@@ -30,11 +30,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize auth state from Supabase and localStorage
+    // Initialize auth state with timeout to prevent infinite loading
     const initializeAuth = async () => {
+      const timeoutId = setTimeout(() => {
+        console.log('Auth initialization timeout, using localStorage fallback');
+        // Fallback to localStorage if Supabase takes too long
+        try {
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            setUser(userData);
+          }
+        } catch (localError) {
+          console.error('localStorage error:', localError);
+        }
+        setLoading(false);
+      }, 3000); // 3 second timeout
+
       try {
-        // Check Supabase session first
-        const { data: { session } } = await supabase.auth.getSession();
+        // Try Supabase session check with timeout
+        const sessionPromise = supabase.auth.getSession();
+        const { data: { session } } = await Promise.race([
+          sessionPromise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 2000)
+          )
+        ]);
+        
+        clearTimeout(timeoutId);
         
         if (session?.user) {
           const userData = {
@@ -49,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(userData);
           localStorage.setItem('user', JSON.stringify(userData));
         } else {
-          // Fallback to localStorage
+          // No Supabase session, check localStorage
           const storedUser = localStorage.getItem('user');
           if (storedUser) {
             const userData = JSON.parse(storedUser);
@@ -57,7 +80,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        clearTimeout(timeoutId);
+        console.log('Supabase session check failed, using localStorage:', error.message);
         // Fallback to localStorage
         try {
           const storedUser = localStorage.getItem('user');
@@ -66,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(userData);
           }
         } catch (localError) {
+          console.error('localStorage error:', localError);
           localStorage.removeItem('user');
         }
       } finally {
@@ -75,30 +100,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeAuth();
 
-    // Listen for Supabase auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_OUT' || !session) {
-          setUser(null);
-          localStorage.removeItem('user');
-        } else if (session?.user) {
-          const userData = {
-            id: session.user.id,
-            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-            email: session.user.email!,
-            role: session.user.user_metadata?.role || 'home_seeker',
-            whatsappNumber: session.user.user_metadata?.whatsapp_number,
-            isSubscribed: true,
-            createdAt: new Date(session.user.created_at)
-          };
-          setUser(userData);
-          localStorage.setItem('user', JSON.stringify(userData));
+    // Listen for Supabase auth state changes (with error handling)
+    let subscription;
+    try {
+      const { data } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (event === 'SIGNED_OUT' || !session) {
+            setUser(null);
+            localStorage.removeItem('user');
+          } else if (session?.user) {
+            const userData = {
+              id: session.user.id,
+              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+              email: session.user.email!,
+              role: session.user.user_metadata?.role || 'home_seeker',
+              whatsappNumber: session.user.user_metadata?.whatsapp_number,
+              isSubscribed: true,
+              createdAt: new Date(session.user.created_at)
+            };
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          }
         }
-      }
-    );
+      );
+      subscription = data.subscription;
+    } catch (error) {
+      console.log('Auth state listener setup failed:', error.message);
+    }
 
     return () => {
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, []);
 
