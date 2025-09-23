@@ -25,10 +25,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize auth state from Supabase session
+    // Initialize auth state with timeout to prevent infinite loading
     const initializeAuth = async () => {
+      const timeout = setTimeout(() => {
+        console.log('Auth initialization timeout');
+        setLoading(false);
+      }, 3000); // 3 second timeout
+
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        clearTimeout(timeout);
         
         if (session?.user) {
           const userData = {
@@ -43,6 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(userData);
         }
       } catch (error) {
+        clearTimeout(timeout);
         console.error('Auth initialization error:', error);
       } finally {
         setLoading(false);
@@ -51,28 +58,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeAuth();
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_OUT' || !session) {
-          setUser(null);
-        } else if (session?.user) {
-          const userData = {
-            id: session.user.id,
-            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-            email: session.user.email!,
-            role: session.user.user_metadata?.role || 'home_seeker',
-            whatsappNumber: session.user.user_metadata?.whatsapp_number,
-            isSubscribed: true,
-            createdAt: new Date(session.user.created_at)
-          };
-          setUser(userData);
+    // Listen for auth state changes with error handling
+    let subscription;
+    try {
+      const { data } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (event === 'SIGNED_OUT' || !session) {
+            setUser(null);
+          } else if (session?.user) {
+            const userData = {
+              id: session.user.id,
+              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+              email: session.user.email!,
+              role: session.user.user_metadata?.role || 'home_seeker',
+              whatsappNumber: session.user.user_metadata?.whatsapp_number,
+              isSubscribed: true,
+              createdAt: new Date(session.user.created_at)
+            };
+            setUser(userData);
+          }
         }
-      }
-    );
+      );
+      subscription = data.subscription;
+    } catch (error) {
+      console.error('Auth listener setup failed:', error);
+      setLoading(false);
+    }
 
     return () => {
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, []);
 
