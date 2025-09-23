@@ -41,10 +41,10 @@ const AgentDashboard: React.FC = () => {
           .single();
 
         if (userError) {
-          console.log('No profile found for user:', user.id);
-          // For now, set default subscription status
+          console.log('No profile found for user:', user.id, userError.message);
+          // Set default subscription status for all users
           setSubscriptionStatus({
-            isActive: true, // Allow listing for testing
+            isActive: true, // Allow listing for all users
             isVerified: true,
             paymentStatus: 'approved',
             expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
@@ -85,7 +85,7 @@ const AgentDashboard: React.FC = () => {
             });
           }
         } catch (paymentError) {
-          console.log('Payments table not accessible, using default subscription');
+          console.log('Payments table not accessible:', paymentError.message);
           // Payments table doesn't exist or not accessible, set default
           setSubscriptionStatus({
             isActive: true,
