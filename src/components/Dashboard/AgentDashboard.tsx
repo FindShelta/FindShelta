@@ -362,24 +362,118 @@ const AgentDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       <Header />
       
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Agent Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Manage your properties and track performance
-          </p>
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white py-8">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">
+                Welcome back, {user?.name}!
+              </h1>
+              <p className="text-emerald-100">
+                Manage your properties and grow your business
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">{mockStats.totalListings}</div>
+              <div className="text-emerald-100 text-sm">Active Listings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{mockStats.totalListings}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Listings</p>
+              </div>
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{mockStats.totalViews}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Views</p>
+              </div>
+              <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                <Eye className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{mockStats.totalBookmarks}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Bookmarks</p>
+              </div>
+              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                <Bookmark className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{mockStats.thisMonth}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">This Month</p>
+              </div>
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <SubscriptionStatus />
+        {/* Subscription Status Card */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Subscription Status
+              </h3>
+              <div className="flex items-center space-x-3">
+                {subscriptionStatus.isActive ? (
+                  <>
+                    <div className="flex items-center space-x-2 text-green-600 dark:text-green-400">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="font-medium">Active</span>
+                    </div>
+                    <span className="text-gray-600 dark:text-gray-300">
+                      Until {subscriptionStatus.expiryDate?.toLocaleDateString()}
+                    </span>
+                  </>
+                ) : (
+                  <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400">
+                    <Clock className="w-5 h-5" />
+                    <span className="font-medium">Payment Pending</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                {subscriptionStatus.plan} plan
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Navigation Tabs */}
-        <div className="border-b border-gray-200 dark:border-slate-700 mb-6">
-          <nav className="flex space-x-8">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 mb-8">
+          <div className="flex space-x-1 p-1">
             {[
-              { id: 'listings', label: 'Listings', icon: Upload },
-              { id: 'payment', label: 'Payment', icon: CreditCard },
+              { id: 'listings', label: 'My Listings', icon: Upload },
+              { id: 'payment', label: 'Subscription', icon: CreditCard },
               { id: 'analytics', label: 'Analytics', icon: BarChart3 }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -387,10 +481,10 @@ const AgentDashboard: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -398,7 +492,7 @@ const AgentDashboard: React.FC = () => {
                 </button>
               );
             })}
-          </nav>
+          </div>
         </div>
 
         {/* Tab Content */}
