@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
+import HomePage from './components/Landing/HomePage';
 import RegistrationFlow from './components/Auth/RegistrationFlow';
 import LoginForm from './components/Auth/LoginForm';
 import HomeSeekerDashboard from './components/Dashboard/HomeSeekerDashboard';
@@ -8,7 +9,7 @@ import AdminDashboard from './components/Admin/AdminDashboard';
 
 function App() {
   const { user, loading } = useAuth();
-  const [showLogin, setShowLogin] = useState(false);
+  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register'>('home');
 
   if (loading) {
     return (
@@ -29,20 +30,29 @@ function App() {
     return user.role === 'agent' ? <AgentDashboard /> : <HomeSeekerDashboard />;
   }
 
-  // Show login form if requested
-  if (showLogin) {
+  // Show different views based on currentView state
+  if (currentView === 'login') {
     return (
       <LoginForm
-        onBack={() => setShowLogin(false)}
-        onSwitchToRegister={() => setShowLogin(false)}
+        onBack={() => setCurrentView('home')}
+        onSwitchToRegister={() => setCurrentView('register')}
       />
     );
   }
 
-  // Default: Show registration flow (primary entry point)
+  if (currentView === 'register') {
+    return (
+      <RegistrationFlow
+        onBack={() => setCurrentView('login')}
+      />
+    );
+  }
+
+  // Default: Show homepage
   return (
-    <RegistrationFlow
-      onBack={() => setShowLogin(true)}
+    <HomePage
+      onGetStarted={() => setCurrentView('register')}
+      onSignIn={() => setCurrentView('login')}
     />
   );
 }
