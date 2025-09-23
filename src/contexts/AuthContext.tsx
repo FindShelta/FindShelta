@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { User } from '../types';
 
 // Interface for stored user data (includes password for authentication)
@@ -29,30 +30,87 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize auth state from localStorage only (mock authentication)
-    const initializeAuth = () => {
+    // Initialize auth state from Supabase and localStorage
+    const initializeAuth = async () => {
       try {
-        // Check for stored user data
-        const storedUser = localStorage.getItem('user');
+        // Check Supabase session first
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
+        if (session?.user) {
+          const userData = {
+            id: session.user.id,
+            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+            email: session.user.email!,
+            role: session.user.user_metadata?.role || 'home_seeker',
+            whatsappNumber: session.user.user_metadata?.whatsapp_number,
+            isSubscribed: true,
+            createdAt: new Date(session.user.created_at)
+          };
           setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+        } else {
+          // Fallback to localStorage
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            setUser(userData);
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        // Clear potentially corrupted data
-        localStorage.removeItem('user');
+        // Fallback to localStorage
+        try {
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            setUser(userData);
+          }
+        } catch (localError) {
+          localStorage.removeItem('user');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     initializeAuth();
+
+    // Listen for Supabase auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_OUT' || !session) {
+          setUser(null);
+          localStorage.removeItem('user');
+        } else if (session?.user) {
+          const userData = {
+            id: session.user.id,
+            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+            email: session.user.email!,
+            role: session.user.user_metadata?.role || 'home_seeker',
+            whatsappNumber: session.user.user_metadata?.whatsapp_number,
+            isSubscribed: true,
+            createdAt: new Date(session.user.created_at)
+          };
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const logout = () => {
-    // Clear local state only (mock authentication)
+  const logout = async () => {
+    // Sign out from Supabase (will fail silently if not using Supabase)
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.log('Supabase signout failed (expected if using local auth)');
+    }
+    
+    // Clear local state
     setUser(null);
     localStorage.removeItem('user');
     // DON'T clear 'users' - this contains all registered users
@@ -76,16 +134,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return true;
       }
       
-      // Mock authentication - in production, this would call your API
-      const users: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
-      const foundUser = users.find((u: StoredUser) => u.email === email && u.password === password);
-      
-      if (foundUser) {
-        const { password: _, ...userWithoutPassword } = foundUser;
-        setUser(userWithoutPassword);
-        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      // Try Supabase auth first
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (authError) {
+        console.log('Supabase login failed, using fallback:', authError.message);
+        // Fallback to local storage
+        const users: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
+        const foundUser = users.find((u: StoredUser) => u.email === email && u.password === password);
+        
+        if (foundUser) {
+          const { password: _, ...userWithoutPassword } = foundUser;
+          setUser(userWithoutPassword);
+          localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+          return true;
+        }
+        return false;
+      }
+
+      // Supabase login successful
+      if (authData.user) {
+        const userData = {
+          id: authData.user.id,
+          name: authData.user.user_metadata?.name || authData.user.email?.split('@')[0] || 'User',
+          email: authData.user.email!,
+          role: authData.user.user_metadata?.role || 'home_seeker',
+          whatsappNumber: authData.user.user_metadata?.whatsapp_number,
+          isSubscribed: true,
+          createdAt: new Date(authData.user.created_at)
+        };
+
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
         return true;
       }
+
       return false;
     } catch (error) {
       console.error('Login error:', error);
@@ -95,31 +181,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (name: string, email: string, password: string, role: 'agent' | 'home_seeker', whatsappNumber?: string): Promise<boolean> => {
     try {
-      const users: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
-      
-      // Check if user already exists
-      if (users.find((u: StoredUser) => u.email === email)) {
-        return false;
+      // Try Supabase auth first
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role,
+            whatsapp_number: whatsappNumber
+          }
+        }
+      });
+
+      if (authError) {
+        console.log('Supabase registration failed, using fallback:', authError.message);
+        
+        // If user already exists in Supabase, don't create in localStorage
+        if (authError.message.includes('already registered') || authError.message.includes('already exists')) {
+          return false;
+        }
+        
+        // Fallback to local storage for other errors
+        const users: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
+        
+        if (users.find((u: StoredUser) => u.email === email)) {
+          return false;
+        }
+
+        const newUser = {
+          id: crypto.randomUUID(),
+          name,
+          email,
+          password,
+          role,
+          whatsappNumber,
+          isSubscribed: role === 'home_seeker' ? true : false,
+          createdAt: new Date(),
+        };
+
+        users.push(newUser);
+        localStorage.setItem('users', JSON.stringify(users));
+
+        const { password: _, ...userWithoutPassword } = newUser;
+        setUser(userWithoutPassword);
+        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+        return true;
       }
 
-      const newUser = {
-        id: crypto.randomUUID(),
-        name,
-        email,
-        password, // Store password for mock authentication
-        role,
-        whatsappNumber,
-        isSubscribed: role === 'home_seeker' ? true : false,
-        createdAt: new Date(),
-      };
+      // Supabase registration successful
+      if (authData.user) {
+        const newUser = {
+          id: authData.user.id,
+          name,
+          email,
+          role,
+          whatsappNumber,
+          isSubscribed: role === 'home_seeker' ? true : false,
+          createdAt: new Date(),
+        };
 
-      users.push(newUser);
-      localStorage.setItem('users', JSON.stringify(users));
+        setUser(newUser);
+        localStorage.setItem('user', JSON.stringify(newUser));
+        return true;
+      }
 
-      const { password: _, ...userWithoutPassword } = newUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      return true;
+      return false;
     } catch (error) {
       console.error('Registration error:', error);
       return false;

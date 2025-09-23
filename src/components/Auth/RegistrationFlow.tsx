@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft, Home, UserCheck, CheckCircle, ArrowRight, Sun, Moon, Shield, Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { supabase } from '../../lib/supabase';
 import FindSheltaLogo from '../common/FindShelterLogo';
 
 interface RegistrationFlowProps {
