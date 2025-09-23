@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string, role: 'agent' | 'home_seeker', whatsappNumber?: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -78,11 +78,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Supabase logout error:', error.message);
+      }
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      // Always clear user state regardless of Supabase response
+      setUser(null);
     }
-    setUser(null);
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
