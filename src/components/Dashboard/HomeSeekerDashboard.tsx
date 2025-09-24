@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Property } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import Header from '../Layout/Header';
-import { Search, Filter, Heart, MapPin, Bed, Bath, Car, Wifi, Shield, Star, Phone } from 'lucide-react';
+import { Search, Filter, Heart, MapPin, Bed, Bath, Car, Wifi, Shield, Star, Phone, X } from 'lucide-react';
 
 const HomeSeekerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -11,102 +12,86 @@ const HomeSeekerDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [bookmarkedProperties, setBookmarkedProperties] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    minPrice: '',
+    maxPrice: '',
+    bedrooms: '',
+    bathrooms: '',
+    location: ''
+  });
 
-  // Mock properties data
-  const mockProperties: Property[] = [
-    {
-      id: '1',
-      title: 'Modern 3-Bedroom Apartment in Victoria Island',
-      description: 'Beautiful modern apartment with stunning city views, fully furnished with high-end appliances and finishes.',
-      price: 2500000,
-      currency: 'NGN',
-      type: 'sale',
-      location: 'Victoria Island, Lagos',
-      bedrooms: 3,
-      bathrooms: 2,
-      amenities: ['wifi', 'parking', 'security'],
-      images: [
-        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg',
-        'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg'
-      ],
-      agentId: 'agent1',
-      agentName: 'John Doe',
-      agentWhatsapp: '+2348123456789',
-      createdAt: new Date('2024-01-15'),
-      views: 45,
-      bookmarks: 12
-    },
-    {
-      id: '2',
-      title: 'Cozy 2-Bedroom Flat in Lekki',
-      description: 'Comfortable and affordable apartment in a serene neighborhood with modern amenities.',
-      price: 800000,
-      currency: 'NGN',
-      type: 'rent',
-      location: 'Lekki, Lagos',
-      bedrooms: 2,
-      bathrooms: 1,
-      amenities: ['wifi', 'security'],
-      images: [
-        'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg',
-        'https://images.pexels.com/photos/2631746/pexels-photo-2631746.jpeg'
-      ],
-      agentId: 'agent2',
-      agentName: 'Jane Smith',
-      agentWhatsapp: '+2348123456790',
-      createdAt: new Date('2024-01-20'),
-      views: 32,
-      bookmarks: 8
-    },
-    {
-      id: '3',
-      title: 'Luxury Studio for Short Stay in Ikoyi',
-      description: 'Perfect for business travelers and short stays. Fully equipped with modern amenities.',
-      price: 25000,
-      currency: 'NGN',
-      type: 'shortstay',
-      location: 'Ikoyi, Lagos',
-      bedrooms: 1,
-      bathrooms: 1,
-      amenities: ['wifi', 'parking', 'security'],
-      images: [
-        'https://images.pexels.com/photos/2631746/pexels-photo-2631746.jpeg',
-        'https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg'
-      ],
-      agentId: 'agent3',
-      agentName: 'Mike Johnson',
-      agentWhatsapp: '+2348123456791',
-      createdAt: new Date('2024-01-25'),
-      views: 67,
-      bookmarks: 15
-    },
-    {
-      id: '4',
-      title: 'Spacious 4-Bedroom Duplex in Ajah',
-      description: 'Family-friendly duplex with a large compound and modern facilities.',
-      price: 1200000,
-      currency: 'NGN',
-      type: 'rent',
-      location: 'Ajah, Lagos',
-      bedrooms: 4,
-      bathrooms: 3,
-      amenities: ['wifi', 'parking', 'security'],
-      images: [
-        'https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg',
-        'https://images.pexels.com/photos/323775/pexels-photo-323775.jpeg'
-      ],
-      agentId: 'agent1',
-      agentName: 'John Doe',
-      agentWhatsapp: '+2348123456789',
-      createdAt: new Date('2024-01-30'),
-      views: 23,
-      bookmarks: 5
+  // Fetch properties from Supabase
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  const fetchProperties = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('listings')
+        .select(`
+          id,
+          title,
+          description,
+          price,
+          category,
+          location_city,
+          location_state,
+          bedrooms,
+          bathrooms,
+          amenities,
+          images,
+          video_url,
+          agent_id,
+          agent_name,
+          agent_whatsapp,
+          created_at,
+          views,
+          bookmarks
+        `)
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching properties:', error);
+        return;
+      }
+
+      // Transform data to match Property interface
+      const transformedProperties: Property[] = (data || []).map(listing => ({
+        id: listing.id,
+        title: listing.title,
+        description: listing.description,
+        price: listing.price,
+        currency: 'NGN',
+        type: listing.category as 'sale' | 'rent' | 'shortstay',
+        location: `${listing.location_city}, ${listing.location_state}`,
+        bedrooms: listing.bedrooms,
+        bathrooms: listing.bathrooms,
+        amenities: listing.amenities || [],
+        images: listing.images || ['https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'],
+        agentId: listing.agent_id,
+        agentName: listing.agent_name || 'Agent',
+        agentWhatsapp: listing.agent_whatsapp || '',
+        createdAt: new Date(listing.created_at),
+        views: listing.views || 0,
+        bookmarks: listing.bookmarks || 0
+      }));
+
+      setProperties(transformedProperties);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  // Filter properties based on search query and category
+  // Filter properties based on search query, category, and filters
   const getFilteredProperties = () => {
-    let filtered = mockProperties;
+    let filtered = properties;
     
     // Filter by search query
     if (searchQuery.trim()) {
@@ -121,14 +106,49 @@ const HomeSeekerDashboard: React.FC = () => {
     if (activeCategory !== 'all') {
       filtered = filtered.filter(property => property.type === activeCategory);
     }
+
+    // Apply additional filters
+    if (filters.minPrice) {
+      filtered = filtered.filter(property => property.price >= parseInt(filters.minPrice));
+    }
+    if (filters.maxPrice) {
+      filtered = filtered.filter(property => property.price <= parseInt(filters.maxPrice));
+    }
+    if (filters.bedrooms) {
+      filtered = filtered.filter(property => property.bedrooms >= parseInt(filters.bedrooms));
+    }
+    if (filters.bathrooms) {
+      filtered = filtered.filter(property => property.bathrooms >= parseInt(filters.bathrooms));
+    }
+    if (filters.location.trim()) {
+      filtered = filtered.filter(property =>
+        property.location.toLowerCase().includes(filters.location.toLowerCase())
+      );
+    }
     
     return filtered;
   };
 
   const filteredProperties = getFilteredProperties();
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
+  const handleSearch = () => {
+    // Search is handled by getFilteredProperties
+    // This function can be used for additional search logic if needed
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      minPrice: '',
+      maxPrice: '',
+      bedrooms: '',
+      bathrooms: '',
+      location: ''
+    });
+    setSearchQuery('');
   };
 
   const formatPrice = (price: number, type: string) => {
@@ -195,7 +215,10 @@ const HomeSeekerDashboard: React.FC = () => {
                   <Filter className="w-5 h-5" />
                   <span>Filters</span>
                 </button>
-                <button className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                <button 
+                  onClick={handleSearch}
+                  className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
                   Search
                 </button>
               </div>
@@ -209,10 +232,10 @@ const HomeSeekerDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex space-x-8 overflow-x-auto py-4">
             {[
-              { id: 'all', label: 'All Properties', count: mockProperties.length },
-              { id: 'sale', label: 'For Sale', count: mockProperties.filter(p => p.type === 'sale').length },
-              { id: 'rent', label: 'For Rent', count: mockProperties.filter(p => p.type === 'rent').length },
-              { id: 'shortstay', label: 'Short Stay', count: mockProperties.filter(p => p.type === 'shortstay').length }
+              { id: 'all', label: 'All Properties', count: properties.length },
+              { id: 'sale', label: 'For Sale', count: properties.filter(p => p.type === 'sale').length },
+              { id: 'rent', label: 'For Rent', count: properties.filter(p => p.type === 'rent').length },
+              { id: 'shortstay', label: 'Short Stay', count: properties.filter(p => p.type === 'shortstay').length }
             ].map((category) => (
               <button
                 key={category.id}
@@ -233,124 +256,241 @@ const HomeSeekerDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Filters Panel */}
+      {showFilters && (
+        <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Min Price (₦)
+                </label>
+                <input
+                  type="number"
+                  value={filters.minPrice}
+                  onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Max Price (₦)
+                </label>
+                <input
+                  type="number"
+                  value={filters.maxPrice}
+                  onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  placeholder="Any"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Min Bedrooms
+                </label>
+                <select
+                  value={filters.bedrooms}
+                  onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Any</option>
+                  <option value="1">1+</option>
+                  <option value="2">2+</option>
+                  <option value="3">3+</option>
+                  <option value="4">4+</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Min Bathrooms
+                </label>
+                <select
+                  value={filters.bathrooms}
+                  onChange={(e) => handleFilterChange('bathrooms', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Any</option>
+                  <option value="1">1+</option>
+                  <option value="2">2+</option>
+                  <option value="3">3+</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={filters.location}
+                  onChange={(e) => handleFilterChange('location', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  placeholder="City, State"
+                />
+              </div>
+            </div>
+            <div className="flex items-center space-x-4 mt-4">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                Clear All
+              </button>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {filteredProperties.length} properties found
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Properties Grid */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProperties.map((property) => (
-            <div
-              key={property.id}
-              className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
-              onClick={() => setSelectedProperty(property)}
-            >
-              {/* Property Image */}
-              <div className="relative h-48">
-                <img
-                  src={property.images[0]}
-                  alt={property.title}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBookmarkToggle(property.id);
-                  }}
-                  className="absolute top-3 right-3 p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
-                >
-                  <Heart
-                    className={`w-5 h-5 ${
-                      bookmarkedProperties.has(property.id)
-                        ? 'text-red-500 fill-current'
-                        : 'text-gray-600'
-                    }`}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-300">Loading properties...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProperties.map((property) => (
+              <div
+                key={property.id}
+                className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+                onClick={() => setSelectedProperty(property)}
+              >
+                {/* Property Image */}
+                <div className="relative h-48">
+                  <img
+                    src={property.images[0]}
+                    alt={property.title}
+                    className="w-full h-full object-cover"
                   />
-                </button>
-                <div className="absolute top-3 left-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    property.type === 'sale'
-                      ? 'bg-blue-100 text-blue-700'
-                      : property.type === 'rent'
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-orange-100 text-orange-700'
-                  }`}>
-                    {property.type === 'sale' ? 'For Sale' : property.type === 'rent' ? 'For Rent' : 'Short Stay'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Property Details */}
-              <div className="p-6">
-                <div className="mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
-                    {property.title}
-                  </h3>
-                  <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    <span>{property.location}</span>
-                  </div>
-                </div>
-
-                {/* Property Stats */}
-                <div className="flex items-center space-x-4 mb-4 text-sm text-gray-600 dark:text-gray-300">
-                  <div className="flex items-center space-x-1">
-                    <Bed className="w-4 h-4" />
-                    <span>{property.bedrooms}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Bath className="w-4 h-4" />
-                    <span>{property.bathrooms}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span>4.8</span>
-                  </div>
-                </div>
-
-                {/* Amenities */}
-                <div className="flex items-center space-x-2 mb-4">
-                  {property.amenities.slice(0, 3).map((amenity) => (
-                    <div
-                      key={amenity}
-                      className="flex items-center space-x-1 bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded text-xs text-gray-600 dark:text-gray-300"
-                    >
-                      {getAmenityIcon(amenity)}
-                      <span className="capitalize">{amenity}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Price and Contact */}
-                <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {formatPrice(property.price, property.type)}
-                  </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.open(`https://wa.me/${property.agentWhatsapp}`, '_blank');
+                      handleBookmarkToggle(property.id);
                     }}
-                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                    className="absolute top-3 right-3 p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
                   >
-                    <Phone className="w-4 h-4" />
-                    <span>Contact</span>
+                    <Heart
+                      className={`w-5 h-5 ${
+                        bookmarkedProperties.has(property.id)
+                          ? 'text-red-500 fill-current'
+                          : 'text-gray-600'
+                      }`}
+                    />
                   </button>
+                  <div className="absolute top-3 left-3">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      property.type === 'sale'
+                        ? 'bg-blue-100 text-blue-700'
+                        : property.type === 'rent'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-orange-100 text-orange-700'
+                    }`}>
+                      {property.type === 'sale' ? 'For Sale' : property.type === 'rent' ? 'For Rent' : 'Short Stay'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Property Details */}
+                <div className="p-6">
+                  <div className="mb-3">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
+                      {property.title}
+                    </h3>
+                    <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      <span>{property.location}</span>
+                    </div>
+                  </div>
+
+                  {/* Property Stats */}
+                  <div className="flex items-center space-x-4 mb-4 text-sm text-gray-600 dark:text-gray-300">
+                    <div className="flex items-center space-x-1">
+                      <Bed className="w-4 h-4" />
+                      <span>{property.bedrooms}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Bath className="w-4 h-4" />
+                      <span>{property.bathrooms}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span>4.8</span>
+                    </div>
+                  </div>
+
+                  {/* Amenities */}
+                  <div className="flex items-center space-x-2 mb-4">
+                    {property.amenities.slice(0, 3).map((amenity) => (
+                      <div
+                        key={amenity}
+                        className="flex items-center space-x-1 bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded text-xs text-gray-600 dark:text-gray-300"
+                      >
+                        {getAmenityIcon(amenity)}
+                        <span className="capitalize">{amenity}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Price and Contact */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {formatPrice(property.price, property.type)}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(`https://wa.me/${property.agentWhatsapp}`, '_blank');
+                      }}
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                    >
+                      <Phone className="w-4 h-4" />
+                      <span>Contact</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* No Results */}
-        {filteredProperties.length === 0 && (
+        {!loading && filteredProperties.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
               <Search className="w-16 h-16 mx-auto" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              No properties found
+              {properties.length === 0 ? 'No properties available yet' : 'No properties found'}
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Try adjusting your search criteria or browse all properties
+              {properties.length === 0 
+                ? 'Be the first agent to list a property on FindShelta!' 
+                : 'Try adjusting your search criteria or browse all properties'
+              }
             </p>
+            {properties.length === 0 && (
+              <button
+                onClick={clearFilters}
+                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         )}
       </div>
