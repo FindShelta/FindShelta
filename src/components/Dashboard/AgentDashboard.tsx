@@ -9,7 +9,14 @@ const AgentDashboard: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'listings' | 'payment' | 'analytics'>('listings');
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [mockListings, setMockListings] = useState<any[]>([]);
+  const [listings, setListings] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalListings: 0,
+    totalViews: 0,
+    totalBookmarks: 0,
+    thisMonth: 0
+  });
+  const [loading, setLoading] = useState(true);
 
   // Enhanced subscription status with payment verification
   const [subscriptionStatus, setSubscriptionStatus] = useState({
@@ -20,11 +27,51 @@ const AgentDashboard: React.FC = () => {
     plan: null as string | null
   });
 
-  const mockStats = {
-    totalListings: 5,
-    totalViews: 167,
-    totalBookmarks: 40,
-    thisMonth: 23
+  // Fetch agent's listings and stats
+  const fetchListingsAndStats = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
+      
+      // Fetch agent's listings
+      const { data: listingsData, error: listingsError } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('agent_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (listingsError) {
+        console.error('Error fetching listings:', listingsError);
+        return;
+      }
+
+      setListings(listingsData || []);
+
+      // Calculate stats from real data
+      const totalListings = listingsData?.length || 0;
+      const totalViews = listingsData?.reduce((sum, listing) => sum + (listing.views || 0), 0) || 0;
+      const totalBookmarks = listingsData?.reduce((sum, listing) => sum + (listing.bookmarks || 0), 0) || 0;
+      
+      // Calculate this month's listings
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const thisMonth = listingsData?.filter(listing => {
+        const listingDate = new Date(listing.created_at);
+        return listingDate.getMonth() === currentMonth && listingDate.getFullYear() === currentYear;
+      }).length || 0;
+
+      setStats({
+        totalListings,
+        totalViews,
+        totalBookmarks,
+        thisMonth
+      });
+    } catch (error) {
+      console.error('Error fetching listings and stats:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Check subscription and payment status
@@ -109,10 +156,12 @@ const AgentDashboard: React.FC = () => {
     };
 
     checkSubscriptionStatus();
+    fetchListingsAndStats();
   }, [user?.id]);
 
   const handlePropertySubmit = (propertyData: any) => {
-    setMockListings(prev => [propertyData, ...prev]);
+    // Refresh listings after new property is added
+    fetchListingsAndStats();
     setShowUploadForm(false);
   };
 
@@ -267,7 +316,12 @@ const AgentDashboard: React.FC = () => {
           Your Listings
         </h3>
         
-        {mockListings.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500 dark:text-gray-400">Loading your listings...</p>
+          </div>
+        ) : listings.length === 0 ? (
           <div className="text-center py-12">
             <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
@@ -276,11 +330,11 @@ const AgentDashboard: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {mockListings.map((listing) => (
+            {listings.map((listing) => (
               <div key={listing.id} className="border border-gray-200 dark:border-slate-600 rounded-lg p-4">
                 <div className="flex items-start space-x-4">
                   <img
-                    src={listing.images[0]}
+                    src={listing.images?.[0] || '/placeholder-property.jpg'}
                     alt={listing.title}
                     className="w-20 h-20 object-cover rounded-lg"
                   />
@@ -288,12 +342,12 @@ const AgentDashboard: React.FC = () => {
                     <h4 className="font-medium text-gray-900 dark:text-white">{listing.title}</h4>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{listing.location}</p>
                     <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                      ₦{listing.price.toLocaleString()}{listing.type === 'rent' ? '/year' : listing.type === 'shortstay' ? '/night' : ''}
+                      ₦{listing.price?.toLocaleString()}{listing.type === 'rent' ? '/year' : listing.type === 'shortstay' ? '/night' : ''}
                     </p>
                   </div>
                   <div className="text-right text-sm text-gray-500 dark:text-gray-400">
-                    <p>{listing.views} views</p>
-                    <p>{listing.bookmarks} bookmarks</p>
+                    <p>{listing.views || 0} views</p>
+                    <p>{listing.bookmarks || 0} bookmarks</p>
                   </div>
                 </div>
               </div>
@@ -313,7 +367,7 @@ const AgentDashboard: React.FC = () => {
               <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.totalListings}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalListings}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Total Listings</p>
             </div>
           </div>
@@ -325,7 +379,7 @@ const AgentDashboard: React.FC = () => {
               <Eye className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.totalViews}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalViews}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Total Views</p>
             </div>
           </div>
@@ -337,7 +391,7 @@ const AgentDashboard: React.FC = () => {
               <Bookmark className="w-5 h-5 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.totalBookmarks}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalBookmarks}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Bookmarks</p>
             </div>
           </div>
@@ -349,7 +403,7 @@ const AgentDashboard: React.FC = () => {
               <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.thisMonth}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.thisMonth}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">This Month</p>
             </div>
           </div>
@@ -375,7 +429,7 @@ const AgentDashboard: React.FC = () => {
               </p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold">{mockStats.totalListings}</div>
+              <div className="text-2xl font-bold">{stats.totalListings}</div>
               <div className="text-emerald-100 text-sm">Active Listings</div>
             </div>
           </div>
@@ -388,7 +442,7 @@ const AgentDashboard: React.FC = () => {
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{mockStats.totalListings}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalListings}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Listings</p>
               </div>
               <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -400,7 +454,7 @@ const AgentDashboard: React.FC = () => {
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{mockStats.totalViews}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalViews}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Views</p>
               </div>
               <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
@@ -412,7 +466,7 @@ const AgentDashboard: React.FC = () => {
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{mockStats.totalBookmarks}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBookmarks}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Bookmarks</p>
               </div>
               <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
@@ -424,7 +478,7 @@ const AgentDashboard: React.FC = () => {
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{mockStats.thisMonth}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.thisMonth}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">This Month</p>
               </div>
               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
