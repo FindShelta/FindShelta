@@ -6,7 +6,7 @@ import Header from '../Layout/Header';
 import PropertyUploadForm from '../Properties/PropertyUploadForm';
 
 const AgentDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, agentStatus } = useAuth();
   const [activeTab, setActiveTab] = useState<'listings' | 'payment' | 'analytics'>('listings');
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [listings, setListings] = useState<any[]>([]);
@@ -29,16 +29,28 @@ const AgentDashboard: React.FC = () => {
 
   // Fetch agent's listings and stats
   const fetchListingsAndStats = async () => {
-    if (!user?.id) return;
+    if (!user?.id || agentStatus !== 'approved') return;
     
     try {
       setLoading(true);
       
-      // Fetch agent's listings
+      // Get agent record first
+      const { data: agentData, error: agentError } = await supabase
+        .from('agents')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (agentError || !agentData) {
+        console.error('Agent not found:', agentError);
+        return;
+      }
+      
+      // Fetch agent's listings using agent_uuid
       const { data: listingsData, error: listingsError } = await supabase
         .from('listings')
         .select('*')
-        .eq('agent_id', user.id)
+        .eq('agent_uuid', agentData.id)
         .order('created_at', { ascending: false });
 
       if (listingsError) {
@@ -279,7 +291,17 @@ const AgentDashboard: React.FC = () => {
 
   const ListingsTab = () => (
     <div className="space-y-6">
-      {!subscriptionStatus.isActive ? (
+      {agentStatus !== 'approved' ? (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+          <p className="text-yellow-800 dark:text-yellow-200">
+            {agentStatus === 'pending' 
+              ? 'Your agent registration is pending approval. You will be able to list properties once approved by an admin.'
+              : agentStatus === 'rejected'
+              ? 'Your agent registration was rejected. Please contact support for more information.'
+              : 'Please complete your agent registration to access listing features.'}
+          </p>
+        </div>
+      ) : !subscriptionStatus.isActive ? (
         <div className={`border rounded-lg p-4 ${
           subscriptionStatus.paymentStatus === 'pending' 
             ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700'
@@ -316,7 +338,14 @@ const AgentDashboard: React.FC = () => {
           Your Listings
         </h3>
         
-        {loading ? (
+        {agentStatus !== 'approved' ? (
+          <div className="text-center py-12">
+            <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">
+              Agent approval required to view listings
+            </p>
+          </div>
+        ) : loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-500 dark:text-gray-400">Loading your listings...</p>
@@ -550,9 +579,38 @@ const AgentDashboard: React.FC = () => {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'listings' && <ListingsTab />}
-        {activeTab === 'payment' && <PaymentForm />}
-        {activeTab === 'analytics' && <AnalyticsTab />}
+        {agentStatus !== 'approved' ? (
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-8 border border-gray-200 dark:border-slate-700 text-center">
+            <div className="mb-4">
+              {agentStatus === 'pending' && (
+                <div className="flex items-center justify-center space-x-2 text-yellow-600 dark:text-yellow-400 mb-4">
+                  <Clock className="w-8 h-8" />
+                  <span className="text-xl font-semibold">Pending Approval</span>
+                </div>
+              )}
+              {agentStatus === 'rejected' && (
+                <div className="flex items-center justify-center space-x-2 text-red-600 dark:text-red-400 mb-4">
+                  <AlertCircle className="w-8 h-8" />
+                  <span className="text-xl font-semibold">Registration Rejected</span>
+                </div>
+              )}
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              {agentStatus === 'pending' 
+                ? 'Your agent registration is being reviewed by our admin team. You will receive an email notification once approved.'
+                : 'Your agent registration was not approved. Please contact our support team for assistance.'}
+            </p>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              <p>Need help? Contact us at support@findshelta.com</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'listings' && <ListingsTab />}
+            {activeTab === 'payment' && <PaymentForm />}
+            {activeTab === 'analytics' && <AnalyticsTab />}
+          </>
+        )}
         
         {/* Property Upload Modal */}
         {showUploadForm && (

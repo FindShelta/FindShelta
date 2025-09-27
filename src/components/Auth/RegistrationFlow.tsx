@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
 import FindSheltaLogo from '../common/FindShelterLogo';
+import AgentRegistrationForm from './AgentRegistrationForm';
 
 interface RegistrationFlowProps {
   onBack?: () => void;
@@ -13,6 +14,7 @@ const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onBack }) => {
   const [currentStep, setCurrentStep] = useState<'role' | 'details' | 'success'>('role');
   const { isDark, toggleTheme } = useTheme();
   const [selectedRole, setSelectedRole] = useState<'agent' | 'home_seeker' | null>(null);
+  const [showAgentForm, setShowAgentForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,6 +26,17 @@ const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onBack }) => {
   const [error, setError] = useState('');
 
   const { register } = useAuth();
+
+  if (showAgentForm) {
+    return (
+      <AgentRegistrationForm 
+        onClose={() => {
+          setShowAgentForm(false);
+          setSelectedRole(null);
+        }}
+      />
+    );
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,7 +51,11 @@ const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onBack }) => {
 
   const handleRoleSelect = (role: 'agent' | 'home_seeker') => {
     setSelectedRole(role);
-    setCurrentStep('details');
+    if (role === 'agent') {
+      setShowAgentForm(true);
+    } else {
+      setCurrentStep('details');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

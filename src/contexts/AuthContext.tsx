@@ -6,8 +6,10 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string, role: 'agent' | 'home_seeker', whatsappNumber?: string) => Promise<boolean>;
+  registerAgent: (agentData: any) => Promise<boolean>;
   logout: () => Promise<void>;
   loading: boolean;
+  agentStatus: 'pending' | 'approved' | 'rejected' | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +25,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [agentStatus, setAgentStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
 
   useEffect(() => {
     // Initialize auth state with timeout to prevent infinite loading
@@ -47,6 +50,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             createdAt: new Date(session.user.created_at)
           };
           setUser(userData);
+          
+          // Check agent status if user is an agent
+          if (userData.role === 'agent') {
+            checkAgentStatus(session.user.id);
+          }
         }
       } catch (error) {
         clearTimeout(timeout);
@@ -76,6 +84,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: new Date(session.user.created_at)
             };
             setUser(userData);
+            
+            // Check agent status if user is an agent
+            if (userData.role === 'agent') {
+              checkAgentStatus(session.user.id);
+            }
           }
         }
       );
@@ -92,6 +105,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  const checkAgentStatus = async (userId: string) => {
+    try {
+      const { data: agent, error } = await supabase
+        .from('agents')
+        .select('status')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error checking agent status:', error);
+        setAgentStatus(null);
+        return;
+      }
+
+      setAgentStatus(agent?.status || 'pending');
+    } catch (error) {
+      console.error('Error checking agent status:', error);
+      setAgentStatus(null);
+    }
+  };
+
   const logout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -103,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       // Always clear user state regardless of Supabase response
       setUser(null);
+      setAgentStatus(null);
     }
   };
 
@@ -131,6 +166,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         setUser(userData);
+        
+        // Check agent status if user is an agent
+        if (userData.role === 'agent') {
+          await checkAgentStatus(authData.user.id);
+        }
+        
         return true;
       }
 
@@ -183,8 +224,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const registerAgent = async (agentData: any): Promise<boolean> => {
+    try {
+      // First create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: agentData.email,
+        password: agentData.password,
+        options: {
+          data: {
+            name: agentData.fullName,
+            role: 'agent'
+          }
+        }
+      });
+
+      if (authError) {
+        console.error('Agent auth registration failed:', authError.message);
+        return false;
+      }
+
+      if (authData.user) {
+        // Create agent record
+        const { error: agentError } = await supabase
+          .from('agents')
+          .insert({
+            user_id: authData.user.id,
+            full_name: agentData.fullName,
+            email: agentData.email,
+            phone: agentData.phone,
+            company_name: agentData.companyName,
+            license_number: agentData.licenseNumber,
+            experience_years: agentData.experienceYears,
+            specialization: agentData.specialization,
+            bio: agentData.bio,
+            status: 'pending'
+          });
+
+        if (agentError) {
+          console.error('Agent record creation failed:', agentError.message);
+          return false;
+        }
+
+        setAgentStatus('pending');
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Agent registration error:', error);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, registerAgent, logout, loading, agentStatus }}>
       {children}
     </AuthContext.Provider>
   );
