@@ -29,19 +29,36 @@ const AgentDashboard: React.FC = () => {
 
   // Fetch agent's listings and stats
   const fetchListingsAndStats = async () => {
-    if (!user?.id || agentStatus !== 'approved') return;
+    if (!user?.id) return;
     
     try {
       setLoading(true);
       
-      // Get agent record first
+      // Try to get agent record first
       const { data: agentData, error: agentError } = await supabase
         .from('agents')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
-      if (agentError || !agentData) {
+      if (agentError) {
+        if (agentError.code === '42P01') {
+          // Agents table doesn't exist, fall back to old method
+          const { data: listingsData, error: listingsError } = await supabase
+            .from('listings')
+            .select('*')
+            .eq('agent_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (listingsError) {
+            console.error('Error fetching listings:', listingsError);
+            return;
+          }
+
+          setListings(listingsData || []);
+          calculateStats(listingsData || []);
+          return;
+        }
         console.error('Agent not found:', agentError);
         return;
       }
@@ -59,26 +76,7 @@ const AgentDashboard: React.FC = () => {
       }
 
       setListings(listingsData || []);
-
-      // Calculate stats from real data
-      const totalListings = listingsData?.length || 0;
-      const totalViews = listingsData?.reduce((sum, listing) => sum + (listing.views || 0), 0) || 0;
-      const totalBookmarks = listingsData?.reduce((sum, listing) => sum + (listing.bookmarks || 0), 0) || 0;
-      
-      // Calculate this month's listings
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      const thisMonth = listingsData?.filter(listing => {
-        const listingDate = new Date(listing.created_at);
-        return listingDate.getMonth() === currentMonth && listingDate.getFullYear() === currentYear;
-      }).length || 0;
-
-      setStats({
-        totalListings,
-        totalViews,
-        totalBookmarks,
-        thisMonth
-      });
+      calculateStats(listingsData || []);
     } catch (error) {
       console.error('Error fetching listings and stats:', error);
     } finally {
@@ -170,6 +168,27 @@ const AgentDashboard: React.FC = () => {
     checkSubscriptionStatus();
     fetchListingsAndStats();
   }, [user?.id]);
+
+  const calculateStats = (listingsData: any[]) => {
+    const totalListings = listingsData?.length || 0;
+    const totalViews = listingsData?.reduce((sum, listing) => sum + (listing.views || 0), 0) || 0;
+    const totalBookmarks = listingsData?.reduce((sum, listing) => sum + (listing.bookmarks || 0), 0) || 0;
+    
+    // Calculate this month's listings
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const thisMonth = listingsData?.filter(listing => {
+      const listingDate = new Date(listing.created_at);
+      return listingDate.getMonth() === currentMonth && listingDate.getFullYear() === currentYear;
+    }).length || 0;
+
+    setStats({
+      totalListings,
+      totalViews,
+      totalBookmarks,
+      thisMonth
+    });
+  };
 
   const handlePropertySubmit = (propertyData: any) => {
     // Refresh listings after new property is added
@@ -291,14 +310,16 @@ const AgentDashboard: React.FC = () => {
 
   const ListingsTab = () => (
     <div className="space-y-6">
-      {agentStatus !== 'approved' ? (
+      {agentStatus === 'pending' ? (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
           <p className="text-yellow-800 dark:text-yellow-200">
-            {agentStatus === 'pending' 
-              ? 'Your agent registration is pending approval. You will be able to list properties once approved by an admin.'
-              : agentStatus === 'rejected'
-              ? 'Your agent registration was rejected. Please contact support for more information.'
-              : 'Please complete your agent registration to access listing features.'}
+            Your agent registration is pending approval. You will be able to list properties once approved by an admin.
+          </p>
+        </div>
+      ) : agentStatus === 'rejected' ? (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
+          <p className="text-red-800 dark:text-red-200">
+            Your agent registration was rejected. Please contact support for more information.
           </p>
         </div>
       ) : !subscriptionStatus.isActive ? (
@@ -338,11 +359,11 @@ const AgentDashboard: React.FC = () => {
           Your Listings
         </h3>
         
-        {agentStatus !== 'approved' ? (
+        {agentStatus === 'pending' || agentStatus === 'rejected' ? (
           <div className="text-center py-12">
             <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
-              Agent approval required to view listings
+              {agentStatus === 'pending' ? 'Agent approval required to view listings' : 'Agent registration rejected'}
             </p>
           </div>
         ) : loading ? (
@@ -579,7 +600,7 @@ const AgentDashboard: React.FC = () => {
         </div>
 
         {/* Tab Content */}
-        {agentStatus !== 'approved' ? (
+        {agentStatus === 'rejected' ? (
           <div className="bg-white dark:bg-slate-800 rounded-xl p-8 border border-gray-200 dark:border-slate-700 text-center">
             <div className="mb-4">
               {agentStatus === 'pending' && (

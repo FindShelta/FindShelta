@@ -114,15 +114,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
+        if (error.code === '42P01') {
+          // Table doesn't exist, set status to null
+          setAgentStatus(null);
+          return;
+        }
         console.error('Error checking agent status:', error);
-        setAgentStatus(null);
+        setAgentStatus('pending');
         return;
       }
 
       setAgentStatus(agent?.status || 'pending');
     } catch (error) {
       console.error('Error checking agent status:', error);
-      setAgentStatus(null);
+      setAgentStatus('pending');
     }
   };
 
@@ -261,6 +266,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
 
         if (agentError) {
+          if (agentError.code === '42P01') {
+            console.error('Agents table does not exist. Please create it manually.');
+            alert('Agents table not found. Please contact administrator.');
+            return false;
+          }
           console.error('Agent record creation failed:', agentError.message);
           return false;
         }
