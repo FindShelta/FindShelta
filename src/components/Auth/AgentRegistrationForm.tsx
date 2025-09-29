@@ -13,8 +13,7 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    password: '',
-    phone: ''
+    password: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -139,18 +138,7 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  />
-                </div>
+
               </div>
             </div>
 

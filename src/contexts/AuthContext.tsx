@@ -242,21 +242,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerAgent = async (agentData: any): Promise<boolean> => {
     try {
-      // Only create agent record - no auth user
+      // First create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: agentData.email,
+        password: agentData.password,
+        options: {
+          data: {
+            name: agentData.fullName,
+            role: 'agent'
+          }
+        }
+      });
+
+      if (authError) {
+        console.error('Auth user creation failed:', authError.message);
+        return false;
+      }
+
+      if (!authData.user) {
+        console.error('No user returned from auth signup');
+        return false;
+      }
+
+      // Then create agent record with user_id
       const { error: agentError } = await supabase
         .from('agent_registration')
         .insert({
           full_name: agentData.fullName,
           email: agentData.email,
-          phone: agentData.phone,
+          user_id: authData.user.id,
           status: 'pending'
         });
 
       if (agentError) {
         console.error('Agent record creation failed:', agentError.message);
+        // Clean up auth user if agent record creation fails
+        await supabase.auth.admin.deleteUser(authData.user.id);
         return false;
       }
 
+      // Don't auto-login - agents need approval first
+      await supabase.auth.signOut();
       return true;
     } catch (error) {
       console.error('Agent registration error:', error);

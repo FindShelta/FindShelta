@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Agent Table Structure</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Agent Table Structure Check</h1>
+    <div id="results"></div>
+    
+    <script>
+        const supabaseUrl = 'https://vvtldnyxnqmfhlpascel.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2dGxkbnl4bnFtZmhscGFzY2VsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjk2MzgsImV4cCI6MjA2NzkwNTYzOH0.VQgDoVUH1n-G4prQoO-BfDWDOMpia7Xlkbk7skkcGy8';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        async function checkTable() {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                // Try to get table structure by attempting a select with limit 0
+                const { data, error } = await supabase
+                    .from('agent_registration')
+                    .select('*')
+                    .limit(0);
+                
+                if (error) {
+                    resultsDiv.innerHTML = `<h2>Error:</h2><pre>${JSON.stringify(error, null, 2)}</pre>`;
+                } else {
+                    resultsDiv.innerHTML = `<h2>Table exists but no data returned (limit 0)</h2><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+                
+                // Try to insert a test record to see what columns are expected
+                const testData = {
+                    full_name: 'Test Agent',
+                    email: 'test@example.com'
+                };
+                
+                const { data: insertData, error: insertError } = await supabase
+                    .from('agent_registration')
+                    .insert(testData)
+                    .select();
+                
+                if (insertError) {
+                    resultsDiv.innerHTML += `<h2>Insert Test Error:</h2><pre>${JSON.stringify(insertError, null, 2)}</pre>`;
+                } else {
+                    resultsDiv.innerHTML += `<h2>Insert Test Success:</h2><pre>${JSON.stringify(insertData, null, 2)}</pre>`;
+                    
+                    // Clean up - delete the test record
+                    await supabase
+                        .from('agent_registration')
+                        .delete()
+                        .eq('email', 'test@example.com');
+                }
+                
+            } catch (err) {
+                resultsDiv.innerHTML = `<h2>JavaScript Error:</h2><pre>${err.message}</pre>`;
+            }
+        }
+        
+        // Run the check when page loads
+        checkTable();
+    </script>
+</body>
+</html>
