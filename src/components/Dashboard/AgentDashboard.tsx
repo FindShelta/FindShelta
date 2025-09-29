@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Upload, CreditCard, BarChart3, Eye, Bookmark, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Upload, CreditCard, BarChart3, Eye, Bookmark, Calendar, AlertCircle, CheckCircle, Clock, Check } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import Header from '../Layout/Header';
@@ -17,6 +17,7 @@ const AgentDashboard: React.FC = () => {
     thisMonth: 0
   });
   const [loading, setLoading] = useState(true);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   // Enhanced subscription status with payment verification
   const [subscriptionStatus, setSubscriptionStatus] = useState({
@@ -250,6 +251,27 @@ const AgentDashboard: React.FC = () => {
     </div>
   );
 
+  const SubscriptionModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-slate-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Agent Subscription Plans
+            </h2>
+            <button
+              onClick={() => setShowSubscriptionModal(false)}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+          {/* Subscription content here */}
+        </div>
+      </div>
+    </div>
+  );
+
   const PaymentForm = () => {
     const getDaysRemaining = () => {
       if (!subscriptionStatus.expiryDate) return 0;
@@ -326,12 +348,12 @@ const AgentDashboard: React.FC = () => {
         </div>
 
         <div className="text-center space-y-4">
-          <a
-            href="/subscription"
+          <button
+            onClick={() => setShowSubscriptionModal(true)}
             className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
           >
             View Subscription Plans
-          </a>
+          </button>
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Need help? Contact us at <strong>support@findshelta.com</strong>
           </p>
@@ -668,12 +690,12 @@ const AgentDashboard: React.FC = () => {
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
                   While waiting for approval, you can subscribe to be ready to start listing immediately.
                 </p>
-                <a
-                  href="/subscription"
+                <button
+                  onClick={() => setShowSubscriptionModal(true)}
                   className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                 >
                   View Subscription Plans
-                </a>
+                </button>
               </div>
             )}
             <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -694,6 +716,124 @@ const AgentDashboard: React.FC = () => {
             onClose={() => setShowUploadForm(false)}
             onSubmit={handlePropertySubmit}
           />
+        )}
+        
+        {/* Subscription Plans Modal */}
+        {showSubscriptionModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-slate-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Agent Subscription Plans
+                  </h2>
+                  <button
+                    onClick={() => setShowSubscriptionModal(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  {/* Free Trial */}
+                  <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-slate-600">
+                    <div className="text-center mb-6">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                        Free Trial
+                      </h3>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        ₦0
+                      </div>
+                      <p className="text-gray-500 dark:text-gray-400">First month free</p>
+                    </div>
+                    
+                    <ul className="space-y-3 mb-6">
+                      <li className="flex items-center space-x-3">
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-sm">List up to 10 properties</span>
+                      </li>
+                      <li className="flex items-center space-x-3">
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-sm">Basic analytics</span>
+                      </li>
+                      <li className="flex items-center space-x-3">
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-sm">Email support</span>
+                      </li>
+                    </ul>
+                    
+                    <div className="text-center">
+                      <div className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 px-3 py-2 rounded-lg text-sm">
+                        Included with approval
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Monthly Plan */}
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border-2 border-blue-500 relative">
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                        Most Popular
+                      </span>
+                    </div>
+                    
+                    <div className="text-center mb-6">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                        Monthly Plan
+                      </h3>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        ₦15,000
+                      </div>
+                      <p className="text-gray-500 dark:text-gray-400">per month</p>
+                    </div>
+                    
+                    <ul className="space-y-3 mb-6">
+                      <li className="flex items-center space-x-3">
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-sm">Unlimited property listings</span>
+                      </li>
+                      <li className="flex items-center space-x-3">
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-sm">Advanced analytics</span>
+                      </li>
+                      <li className="flex items-center space-x-3">
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-sm">Priority support</span>
+                      </li>
+                    </ul>
+                    
+                    <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-4">
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">
+                        Transfer ₦15,000 to:
+                      </h4>
+                      <div className="space-y-1 text-xs">
+                        <div><strong>Bank:</strong> Opay</div>
+                        <div><strong>Account:</strong> 9080151095</div>
+                        <div><strong>Name:</strong> Benneth Agantiem</div>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText('9080151095');
+                        alert('Account number copied!');
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors text-sm"
+                    >
+                      Copy Account Number
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 text-center">
+                  <p className="text-sm text-blue-700 dark:text-blue-200">
+                    After payment, email your receipt to <strong>support@findshelta.com</strong> to activate your subscription.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
