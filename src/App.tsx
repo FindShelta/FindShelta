@@ -7,10 +7,11 @@ import ResetPassword from './components/Auth/ResetPassword';
 import HomeSeekerDashboard from './components/Dashboard/HomeSeekerDashboard';
 import AgentDashboard from './components/Dashboard/AgentDashboard';
 import AdminDashboard from './components/Admin/AdminDashboard';
+import SubscriptionPlans from './components/Subscription/SubscriptionPlans';
 
 function App() {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register' | 'reset-password'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register' | 'reset-password' | 'subscription'>('home');
 
   useEffect(() => {
     // Check if this is a password reset redirect
@@ -64,11 +65,16 @@ function App() {
     return <ResetPassword />;
   }
 
+  if (currentView === 'subscription') {
+    return <SubscriptionPlans />;
+  }
+
   // Default: Show homepage
   return (
     <HomePage
       onGetStarted={() => setCurrentView('register')}
       onSignIn={() => setCurrentView('login')}
+      onSubscription={() => setCurrentView('subscription')}
     />
   );
 }
