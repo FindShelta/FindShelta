@@ -253,7 +253,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           license_number: agentData.licenseNumber,
           experience_years: agentData.experienceYears,
           specialization: agentData.specialization,
-          bio: agentData.bio,
           status: 'pending'
         });
 

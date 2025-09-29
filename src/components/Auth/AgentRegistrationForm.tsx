@@ -18,8 +18,7 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
     companyName: '',
     licenseNumber: '',
     experienceYears: '',
-    specialization: [] as string[],
-    bio: ''
+    specialization: [] as string[]
   });
 
   const specializationOptions = [
@@ -243,18 +242,7 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Bio / Professional Summary
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.bio}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                  placeholder="Tell us about your experience and expertise..."
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                />
-              </div>
+
             </div>
 
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
