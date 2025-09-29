@@ -787,10 +787,10 @@ const AgentDashboard: React.FC = () => {
                         Quarterly
                       </h3>
                       <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                        ₦40,000
+                        ₦35,000
                       </div>
                       <p className="text-gray-500 dark:text-gray-400 text-sm">3 months</p>
-                      <p className="text-green-600 dark:text-green-400 text-xs font-medium">Save ₦5,000</p>
+                      <p className="text-green-600 dark:text-green-400 text-xs font-medium">Save ₦10,000</p>
                     </div>
                     
                     <ul className="space-y-2 mb-4">
@@ -826,10 +826,10 @@ const AgentDashboard: React.FC = () => {
                         Annual
                       </h3>
                       <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                        ₦150,000
+                        ₦110,000
                       </div>
                       <p className="text-gray-500 dark:text-gray-400 text-sm">12 months</p>
-                      <p className="text-green-600 dark:text-green-400 text-xs font-medium">Save ₦30,000</p>
+                      <p className="text-green-600 dark:text-green-400 text-xs font-medium">Save ₦70,000</p>
                     </div>
                     
                     <ul className="space-y-2 mb-4">
@@ -872,7 +872,9 @@ const AgentDashboard: React.FC = () => {
 
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 text-center">
                   <p className="text-sm text-blue-700 dark:text-blue-200">
-                    After payment, email your receipt to <strong>support@findshelta.com</strong> to activate your subscription.
+                    After payment, send your receipt to:<br/>
+                    <strong>Email:</strong> support@findshelta.com<br/>
+                    <strong>WhatsApp:</strong> +2347025790877
                   </p>
                 </div>
               </div>

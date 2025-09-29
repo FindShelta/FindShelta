@@ -68,10 +68,10 @@ const SubscriptionPlans: React.FC = () => {
                 Quarterly
               </h3>
               <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                ₦40,000
+                ₦35,000
               </div>
               <p className="text-gray-500 dark:text-gray-400">3 months</p>
-              <p className="text-green-600 dark:text-green-400 text-sm font-medium">Save ₦5,000</p>
+              <p className="text-green-600 dark:text-green-400 text-sm font-medium">Save ₦10,000</p>
             </div>
             
             <ul className="space-y-3 mb-6">
@@ -104,10 +104,10 @@ const SubscriptionPlans: React.FC = () => {
                 Annual
               </h3>
               <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                ₦150,000
+                ₦110,000
               </div>
               <p className="text-gray-500 dark:text-gray-400">12 months</p>
-              <p className="text-green-600 dark:text-green-400 text-sm font-medium">Save ₦30,000</p>
+              <p className="text-green-600 dark:text-green-400 text-sm font-medium">Save ₦70,000</p>
             </div>
             
             <ul className="space-y-3 mb-6">
@@ -161,7 +161,9 @@ const SubscriptionPlans: React.FC = () => {
                   <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                   <div>
                     <p className="text-sm text-blue-700 dark:text-blue-200">
-                      After payment, email your receipt to <strong>support@findshelta.com</strong> to activate your subscription.
+                      After payment, send your receipt to:<br/>
+                      <strong>Email:</strong> support@findshelta.com<br/>
+                      <strong>WhatsApp:</strong> +2347025790877
                     </p>
                   </div>
                 </div>
