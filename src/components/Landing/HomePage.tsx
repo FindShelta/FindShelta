@@ -6,10 +6,9 @@ import FindSheltaLogo from '../common/FindShelterLogo';
 interface HomePageProps {
   onGetStarted: () => void;
   onSignIn: () => void;
-  onSubscription?: () => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onSubscription }) => {
+const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn }) => {
   const { isDark, toggleTheme } = useTheme();
 
   return (
@@ -31,22 +30,12 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onSubscript
             <FindSheltaLogo size={48} />
             <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">FindShelta</span>
           </div>
-          <div className="flex items-center space-x-4">
-            {onSubscription && (
-              <button
-                onClick={onSubscription}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                Agent Plans
-              </button>
-            )}
-            <button
-              onClick={onSignIn}
-              className="px-6 py-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
-            >
-              Sign In
-            </button>
-          </div>
+          <button
+            onClick={onSignIn}
+            className="px-6 py-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+          >
+            Sign In
+          </button>
         </div>
       </nav>
 

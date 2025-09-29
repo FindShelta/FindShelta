@@ -325,8 +325,14 @@ const AgentDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+        <div className="text-center space-y-4">
+          <a
+            href="/subscription"
+            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+          >
+            View Subscription Plans
+          </a>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Need help? Contact us at <strong>support@findshelta.com</strong>
           </p>
         </div>

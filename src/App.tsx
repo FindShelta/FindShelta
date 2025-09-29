@@ -9,11 +9,19 @@ import AgentDashboard from './components/Dashboard/AgentDashboard';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import SubscriptionPlans from './components/Subscription/SubscriptionPlans';
 
+
 function App() {
   const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState<'home' | 'login' | 'register' | 'reset-password' | 'subscription'>('home');
 
   useEffect(() => {
+    // Check URL path for routing
+    const path = window.location.pathname;
+    if (path === '/subscription') {
+      setCurrentView('subscription');
+      return;
+    }
+    
     // Check if this is a password reset redirect
     const urlParams = new URLSearchParams(window.location.search);
     const accessToken = urlParams.get('access_token');
@@ -69,12 +77,13 @@ function App() {
     return <SubscriptionPlans />;
   }
 
+
+
   // Default: Show homepage
   return (
     <HomePage
       onGetStarted={() => setCurrentView('register')}
       onSignIn={() => setCurrentView('login')}
-      onSubscription={() => setCurrentView('subscription')}
     />
   );
 }
