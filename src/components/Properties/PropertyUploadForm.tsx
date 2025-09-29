@@ -54,15 +54,32 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    // In a real app, you'd upload to a cloud service
-    // For now, we'll use placeholder URLs
-    const newImages = files.map((_, index) => 
-      `https://images.pexels.com/photos/${106399 + index}/pexels-photo-${106399 + index}.jpeg`
-    );
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...newImages].slice(0, 10) // Max 10 images
-    }));
+    const remainingSlots = 20 - formData.images.length;
+    const filesToProcess = files.slice(0, remainingSlots);
+    
+    // Convert files to base64 URLs for preview
+    const newImages: string[] = [];
+    let processed = 0;
+    
+    if (filesToProcess.length === 0) return;
+    
+    filesToProcess.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          newImages.push(event.target.result as string);
+          processed++;
+          
+          if (processed === filesToProcess.length) {
+            setFormData(prev => ({
+              ...prev,
+              images: [...prev.images, ...newImages]
+            }));
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const removeImage = (index: number) => {
@@ -345,7 +362,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Property Images * (Max 10)
+                  Property Images * ({formData.images.length}/20)
                 </label>
                 <div className="border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg p-6">
                   <input
@@ -355,6 +372,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
                     onChange={handleImageUpload}
                     className="hidden"
                     id="image-upload"
+                    disabled={formData.images.length >= 20}
                   />
                   <label
                     htmlFor="image-upload"
@@ -362,10 +380,10 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
                   >
                     <Camera className="w-8 h-8 text-gray-400 mb-2" />
                     <span className="text-sm text-gray-600 dark:text-gray-300">
-                      Click to upload images
+                      {formData.images.length < 20 ? 'Click to upload images' : 'Maximum 20 images reached'}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      JPG, PNG up to 10MB each
+                      JPG, PNG up to 10MB each • {20 - formData.images.length} slots remaining
                     </span>
                   </label>
                 </div>
@@ -373,22 +391,37 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
 
                 {/* Image Preview */}
                 {formData.images.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2 mt-3">
-                    {formData.images.map((image, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={image}
-                          alt={`Property ${index + 1}`}
-                          className="w-full h-20 object-cover rounded-lg"
-                        />
-                        <button
-                          onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Uploaded Images ({formData.images.length})
+                      </span>
+                      {formData.images.length >= 20 && (
+                        <span className="text-xs text-orange-600 dark:text-orange-400">
+                          Maximum limit reached
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                      {formData.images.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image}
+                            alt={`Property ${index + 1}`}
+                            className="w-full h-16 object-cover rounded-lg border border-gray-200 dark:border-slate-600"
+                          />
+                          <button
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                            {index + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
