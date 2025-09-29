@@ -189,7 +189,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, password: string, role: 'agent' | 'home_seeker', whatsappNumber?: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string, role: 'agent' | 'home_seeker'): Promise<boolean> => {
+    // Block agent registration through this function
+    if (role === 'agent') {
+      console.error('Agents must register through AgentRegistrationForm');
+      return false;
+    }
+
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -197,8 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           data: {
             name,
-            role,
-            whatsapp_number: whatsappNumber
+            role
           }
         }
       });
@@ -215,8 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name,
           email,
           role,
-          whatsappNumber,
-          isSubscribed: role === 'home_seeker' ? true : false,
+          isSubscribed: true,
           createdAt: new Date(authData.user.created_at),
         };
 

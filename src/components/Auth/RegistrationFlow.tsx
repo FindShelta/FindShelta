@@ -76,19 +76,12 @@ const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onBack }) => {
       return;
     }
 
-    if (selectedRole === 'agent' && !formData.whatsappNumber.trim()) {
-      setError('WhatsApp number is required for agents');
-      setLoading(false);
-      return;
-    }
-
     try {
       const success = await register(
         formData.name.trim(),
         formData.email.trim(),
         formData.password,
-        selectedRole!,
-        selectedRole === 'agent' ? formData.whatsappNumber.trim() : undefined
+        selectedRole!
       );
 
       if (success) {
@@ -363,25 +356,7 @@ const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onBack }) => {
                   </p>
                 </div>
 
-                {selectedRole === 'agent' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      WhatsApp Number *
-                    </label>
-                    <input
-                      type="tel"
-                      name="whatsappNumber"
-                      value={formData.whatsappNumber}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-4 border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white transition-all duration-300"
-                      placeholder="+234 XXX XXX XXXX"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      Clients will contact you via WhatsApp
-                    </p>
-                  </div>
-                )}
+
 
                 <button
                   type="submit"
