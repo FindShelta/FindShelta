@@ -663,6 +663,19 @@ const AgentDashboard: React.FC = () => {
                 ? 'Your agent registration is being reviewed by our admin team. You will receive an email notification once approved.'
                 : 'Your agent registration was not approved. Please contact our support team for assistance.'}
             </p>
+            {agentStatus === 'pending' && (
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  While waiting for approval, you can subscribe to be ready to start listing immediately.
+                </p>
+                <a
+                  href="/subscription"
+                  className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  View Subscription Plans
+                </a>
+              </div>
+            )}
             <div className="text-sm text-gray-500 dark:text-gray-400">
               <p>Need help? Contact us at support@findshelta.com</p>
             </div>
