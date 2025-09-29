@@ -9,6 +9,7 @@ interface AgentRegistrationFormProps {
 const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }) => {
   const { registerAgent } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -41,8 +42,7 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
       });
 
       if (success) {
-        alert('Agent registration submitted successfully! You will receive an email once approved.');
-        onClose();
+        setSuccess(true);
       } else {
         alert('Registration failed. Please try again.');
       }
@@ -62,6 +62,42 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
         : [...prev.specialization, spec]
     }));
   };
+
+  if (success) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white dark:bg-slate-800 rounded-xl max-w-md w-full p-8 text-center">
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Clock className="w-8 h-8 text-green-600 dark:text-green-400" />
+          </div>
+          
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Registration Submitted!
+          </h2>
+          
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Your agent registration has been submitted for review. You will receive an email notification once approved by our admin team.
+          </p>
+          
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-700 dark:text-blue-200">
+              <strong>What's next?</strong><br/>
+              • Admin review (1-2 business days)<br/>
+              • Email notification upon approval<br/>
+              • Access to agent dashboard
+            </p>
+          </div>
+          
+          <button
+            onClick={onClose}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors"
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

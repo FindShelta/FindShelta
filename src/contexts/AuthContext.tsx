@@ -281,7 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return false;
         }
 
-        setAgentStatus('pending');
+        // Don't set user or login - just show success message
         return true;
       }
 
