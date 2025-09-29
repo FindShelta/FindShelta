@@ -121,8 +121,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setAgentStatus(null);
           return;
         }
+        if (error.code === 'PGRST116') {
+          // No agent record found, set status to null
+          setAgentStatus(null);
+          return;
+        }
         console.error('Error checking agent status:', error);
-        setAgentStatus('pending');
+        setAgentStatus(null);
         return;
       }
 

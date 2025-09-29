@@ -59,6 +59,12 @@ const AgentDashboard: React.FC = () => {
           calculateStats(listingsData || []);
           return;
         }
+        if (agentError.code === 'PGRST116') {
+          // No agent record found - user is not an agent
+          setListings([]);
+          calculateStats([]);
+          return;
+        }
         console.error('Agent not found:', agentError);
         return;
       }
@@ -98,7 +104,19 @@ const AgentDashboard: React.FC = () => {
           .single();
 
         if (agentError || !agentData) {
-          // Not an agent or agent not found, set basic subscription
+          // Not an agent or agent not found
+          if (agentError?.code === 'PGRST116') {
+            // No agent record found - user is not an agent
+            setSubscriptionStatus({
+              isActive: false,
+              isVerified: false,
+              paymentStatus: 'pending',
+              expiryDate: null,
+              plan: null
+            });
+            return;
+          }
+          // Other error, set basic subscription
           setSubscriptionStatus({
             isActive: true,
             isVerified: true,
