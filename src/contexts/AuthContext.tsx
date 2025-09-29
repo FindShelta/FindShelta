@@ -242,7 +242,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerAgent = async (agentData: any): Promise<boolean> => {
     try {
-      // First create auth user
+      // Sign out first to prevent auto-login
+      await supabase.auth.signOut();
+      
+      // Create auth user without auto-login
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: agentData.email,
         password: agentData.password,
@@ -264,6 +267,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
+      // Immediately sign out to prevent auto-login
+      await supabase.auth.signOut();
+
       // Then create agent record with user_id
       const { error: agentError } = await supabase
         .from('agent_registration')
@@ -276,13 +282,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (agentError) {
         console.error('Agent record creation failed:', agentError.message);
-        // Clean up auth user if agent record creation fails
-        await supabase.auth.admin.deleteUser(authData.user.id);
         return false;
       }
 
-      // Don't auto-login - agents need approval first
-      await supabase.auth.signOut();
       return true;
     } catch (error) {
       console.error('Agent registration error:', error);
