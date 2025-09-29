@@ -14,29 +14,15 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
     fullName: '',
     email: '',
     password: '',
-    phone: '',
-    experienceYears: '',
-    specialization: [] as string[]
+    phone: ''
   });
-
-  const specializationOptions = [
-    'Residential Sales',
-    'Commercial Sales',
-    'Rental Properties',
-    'Property Management',
-    'Real Estate Investment',
-    'Land Development'
-  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const success = await registerAgent({
-        ...formData,
-        experienceYears: parseInt(formData.experienceYears) || 0
-      });
+      const success = await registerAgent(formData);
 
       if (success) {
         setSuccess(true);
@@ -51,14 +37,7 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
     }
   };
 
-  const handleSpecializationChange = (spec: string) => {
-    setFormData(prev => ({
-      ...prev,
-      specialization: prev.specialization.includes(spec)
-        ? prev.specialization.filter(s => s !== spec)
-        : [...prev.specialization, spec]
-    }));
-  };
+
 
   if (success) {
     return (
@@ -182,37 +161,7 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
                 Professional Information
               </h3>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Years of Experience
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.experienceYears}
-                  onChange={(e) => setFormData(prev => ({ ...prev, experienceYears: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Specialization (Select all that apply)
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {specializationOptions.map((spec) => (
-                    <label key={spec} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.specialization.includes(spec)}
-                        onChange={() => handleSpecializationChange(spec)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{spec}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+
               
 
             </div>

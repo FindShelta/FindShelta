@@ -249,8 +249,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           full_name: agentData.fullName,
           email: agentData.email,
           phone: agentData.phone,
-          experience_years: agentData.experienceYears,
-          specialization: agentData.specialization,
           status: 'pending'
         });
 
