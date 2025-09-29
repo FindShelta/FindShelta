@@ -318,19 +318,29 @@ const AgentDashboard: React.FC = () => {
 
   const ListingsTab = () => (
     <div className="space-y-6">
-      {agentStatus === 'pending' ? (
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
-          <p className="text-yellow-800 dark:text-yellow-200">
-            Your agent registration is pending approval. You will be able to list properties once approved by an admin.
+      {agentStatus !== 'approved' ? (
+        <div className={`rounded-lg p-4 ${
+          agentStatus === 'pending' 
+            ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700'
+            : agentStatus === 'rejected'
+            ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700'
+            : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700'
+        }`}>
+          <p className={`${
+            agentStatus === 'pending' 
+              ? 'text-yellow-800 dark:text-yellow-200'
+              : agentStatus === 'rejected'
+              ? 'text-red-800 dark:text-red-200'
+              : 'text-blue-800 dark:text-blue-200'
+          }`}>
+            {agentStatus === 'pending' 
+              ? 'Your agent registration is pending approval. You will be able to list properties once approved by an admin.'
+              : agentStatus === 'rejected'
+              ? 'Your agent registration was rejected. Please contact support for more information.'
+              : 'Agent approval required before you can list properties.'}
           </p>
         </div>
-      ) : agentStatus === 'rejected' ? (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
-          <p className="text-red-800 dark:text-red-200">
-            Your agent registration was rejected. Please contact support for more information.
-          </p>
-        </div>
-      ) : agentStatus === 'approved' && !subscriptionStatus.isActive ? (
+      ) : !subscriptionStatus.isActive ? (
         <div className={`border rounded-lg p-4 ${
           subscriptionStatus.paymentStatus === 'pending' 
             ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700'
@@ -367,7 +377,7 @@ const AgentDashboard: React.FC = () => {
           Your Listings
         </h3>
         
-        {agentStatus === 'pending' || agentStatus === 'rejected' ? (
+        {agentStatus !== 'approved' ? (
           <div className="text-center py-12">
             <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
@@ -608,7 +618,7 @@ const AgentDashboard: React.FC = () => {
         </div>
 
         {/* Tab Content */}
-        {agentStatus === 'rejected' ? (
+        {agentStatus !== 'approved' ? (
           <div className="bg-white dark:bg-slate-800 rounded-xl p-8 border border-gray-200 dark:border-slate-700 text-center">
             <div className="mb-4">
               {agentStatus === 'pending' && (
