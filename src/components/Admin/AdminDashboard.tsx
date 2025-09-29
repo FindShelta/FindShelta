@@ -5,6 +5,7 @@ import Header from '../Layout/Header';
 import PaymentDashboard from './PaymentDashboard';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import SecurityDashboard from './SecurityDashboard';
+import AgentApproval from './AgentApproval';
 
 interface Listing {
   id: string;
@@ -20,7 +21,7 @@ interface Listing {
 }
 
 const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'listings' | 'payments' | 'analytics' | 'security'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'agents' | 'payments' | 'analytics' | 'security'>('listings');
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
@@ -365,6 +366,7 @@ const AdminDashboard: React.FC = () => {
           <nav className="flex space-x-8">
             {[
               { id: 'listings', label: 'Property Listings', icon: Home },
+              { id: 'agents', label: 'Agent Approvals', icon: User },
               { id: 'payments', label: 'Payment Management', icon: CreditCard },
               { id: 'analytics', label: 'Analytics', icon: BarChart3 },
               { id: 'security', label: 'Security', icon: Shield }
@@ -515,6 +517,7 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'agents' && <AgentApproval />}
         {activeTab === 'payments' && <PaymentDashboard />}
         {activeTab === 'analytics' && <AnalyticsDashboard />}
         {activeTab === 'security' && <SecurityDashboard />}

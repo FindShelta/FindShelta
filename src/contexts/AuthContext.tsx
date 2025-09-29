@@ -7,6 +7,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string, role: 'agent' | 'home_seeker', whatsappNumber?: string) => Promise<boolean>;
   registerAgent: (agentData: any) => Promise<boolean>;
+  resetPassword: (email: string) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   loading: boolean;
   agentStatus: 'pending' | 'approved' | 'rejected' | null;
@@ -286,8 +288,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetPassword = async (email: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+
+      if (error) {
+        console.error('Password reset failed:', error.message);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Password reset error:', error);
+      return false;
+    }
+  };
+
+  const updatePassword = async (password: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+
+      if (error) {
+        console.error('Password update failed:', error.message);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Password update error:', error);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, registerAgent, logout, loading, agentStatus }}>
+    <AuthContext.Provider value={{ user, login, register, registerAgent, resetPassword, updatePassword, logout, loading, agentStatus }}>
       {children}
     </AuthContext.Provider>
   );

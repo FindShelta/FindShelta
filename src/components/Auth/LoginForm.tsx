@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft, Home, Sun, Moon, Mail, Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import ForgotPasswordForm from './ForgotPasswordForm';
+import ForgotPassword from './ForgotPassword';
 import FindSheltaLogo from '../common/FindShelterLogo';
 
 interface LoginFormProps {
@@ -55,7 +55,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToRegister }) => 
 
   if (showForgotPassword) {
     return (
-      <ForgotPasswordForm
+      <ForgotPassword
         onBack={() => setShowForgotPassword(false)}
       />
     );

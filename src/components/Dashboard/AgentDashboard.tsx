@@ -84,66 +84,21 @@ const AgentDashboard: React.FC = () => {
     }
   };
 
-  // Check subscription and payment status
+  // Check subscription status based on agent approval
   React.useEffect(() => {
     const checkSubscriptionStatus = async () => {
       if (!user?.id) return;
       
       try {
-        // Check if user exists in users table and get subscription info
-        const { data: userProfile, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
+        // Get agent approval info
+        const { data: agentData, error: agentError } = await supabase
+          .from('agent_registration')
+          .select('status, approved_at, created_at')
+          .eq('user_id', user.id)
           .single();
 
-        if (userError) {
-          console.log('No profile found for user:', user.id, userError.message);
-          // Set default subscription status for all users
-          setSubscriptionStatus({
-            isActive: true, // Allow listing for all users
-            isVerified: true,
-            paymentStatus: 'approved',
-            expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-            plan: 'monthly'
-          });
-          return;
-        }
-
-        // Try to check payments table if it exists
-        try {
-          const { data: payments } = await supabase
-            .from('payments')
-            .select('*')
-            .eq('agent_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          if (payments && payments.length > 0) {
-            const latestPayment = payments[0];
-            const isActive = latestPayment.status === 'approved' && 
-                            new Date(latestPayment.expires_at) > new Date();
-            
-            setSubscriptionStatus({
-              isActive,
-              isVerified: latestPayment.status === 'approved',
-              paymentStatus: latestPayment.status,
-              expiryDate: latestPayment.expires_at ? new Date(latestPayment.expires_at) : null,
-              plan: latestPayment.plan
-            });
-          } else {
-            // No payments found, set default for testing
-            setSubscriptionStatus({
-              isActive: true,
-              isVerified: true,
-              paymentStatus: 'approved',
-              expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-              plan: 'monthly'
-            });
-          }
-        } catch (paymentError) {
-          console.log('Payments table not accessible:', paymentError.message);
-          // Payments table doesn't exist or not accessible, set default
+        if (agentError || !agentData) {
+          // Not an agent or agent not found, set basic subscription
           setSubscriptionStatus({
             isActive: true,
             isVerified: true,
@@ -151,16 +106,49 @@ const AgentDashboard: React.FC = () => {
             expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             plan: 'monthly'
           });
+          return;
         }
+
+        if (agentData.status !== 'approved') {
+          // Agent not approved yet
+          setSubscriptionStatus({
+            isActive: false,
+            isVerified: false,
+            paymentStatus: 'pending',
+            expiryDate: null,
+            plan: null
+          });
+          return;
+        }
+
+        // Calculate subscription from approval date
+        const approvalDate = new Date(agentData.approved_at || agentData.created_at);
+        const now = new Date();
+        const monthsFromApproval = Math.floor((now.getTime() - approvalDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+        
+        // First month is free, then ₦15,000/month
+        const isFirstMonth = monthsFromApproval === 0;
+        const expiryDate = new Date(approvalDate);
+        expiryDate.setMonth(expiryDate.getMonth() + monthsFromApproval + 1);
+        
+        const isActive = now < expiryDate;
+        
+        setSubscriptionStatus({
+          isActive,
+          isVerified: true,
+          paymentStatus: isActive ? 'approved' : 'expired',
+          expiryDate,
+          plan: isFirstMonth ? 'free_trial' : 'monthly'
+        });
+        
       } catch (error) {
         console.error('Error checking subscription status:', error);
-        // Set default subscription for testing
         setSubscriptionStatus({
-          isActive: true,
-          isVerified: true,
-          paymentStatus: 'approved',
-          expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          plan: 'monthly'
+          isActive: false,
+          isVerified: false,
+          paymentStatus: 'error',
+          expiryDate: null,
+          plan: null
         });
       }
     };
@@ -244,69 +232,89 @@ const AgentDashboard: React.FC = () => {
     </div>
   );
 
-  const PaymentForm = () => (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-        Choose Your Plan
-      </h3>
-      
-      <div className="space-y-4 mb-6">
-        {[
-          { plan: 'monthly', price: '₦15,000', duration: '1 Month', popular: false },
-          { plan: 'quarterly', price: '₦35,000', duration: '3 Months', popular: true },
-          { plan: 'yearly', price: '₦110,000', duration: '12 Months', popular: false }
-        ].map((option) => (
-          <div key={option.plan} className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
-            option.popular 
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-              : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
-          }`}>
+  const PaymentForm = () => {
+    const getDaysRemaining = () => {
+      if (!subscriptionStatus.expiryDate) return 0;
+      const now = new Date();
+      const expiry = new Date(subscriptionStatus.expiryDate);
+      return Math.max(0, Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    };
+
+    const daysRemaining = getDaysRemaining();
+    const isExpired = subscriptionStatus.paymentStatus === 'expired';
+    const isTrial = subscriptionStatus.plan === 'free_trial';
+
+    return (
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+          Subscription Status
+        </h3>
+        
+        {isTrial && (
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4 mb-6">
+            <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">🎉 Free Trial Active</h4>
+            <p className="text-sm text-green-700 dark:text-green-200">
+              You're currently on a free trial. {daysRemaining} days remaining.
+            </p>
+          </div>
+        )}
+
+        {isExpired && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-6">
+            <h4 className="font-medium text-red-900 dark:text-red-100 mb-2">⚠️ Subscription Expired</h4>
+            <p className="text-sm text-red-700 dark:text-red-200">
+              Your subscription expired. Renew to continue listing properties.
+            </p>
+          </div>
+        )}
+
+        {!isExpired && !isTrial && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">✅ Subscription Active</h4>
+            <p className="text-sm text-blue-700 dark:text-blue-200">
+              {daysRemaining} days remaining until renewal.
+            </p>
+          </div>
+        )}
+        
+        <div className="space-y-4 mb-6">
+          <div className="border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center space-x-2">
-                  <input type="radio" name="plan" value={option.plan} className="text-blue-600" />
-                  <span className="font-medium text-gray-900 dark:text-white">{option.duration}</span>
-                  {option.popular && (
-                    <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">Popular</span>
-                  )}
+                  <span className="font-medium text-gray-900 dark:text-white">Monthly Plan</span>
+                  <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">Recommended</span>
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Full access to all features
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-gray-900 dark:text-white">{option.price}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {option.plan === 'monthly' ? 'per month' : option.plan === 'quarterly' ? 'per 3 months' : 'per year'}
-                </p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">₦15,000</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">per month</p>
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-6">
-        <h4 className="font-medium text-gray-900 dark:text-white mb-2">Payment Instructions</h4>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-          Transfer to: <strong>Opay - 9080151095 - Benneth Agantiem</strong>
-        </p>
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Upload Payment Proof
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-          />
+        <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-6">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-2">Payment Instructions</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+            Transfer ₦15,000 to: <strong>Opay - 9080151095 - Benneth Agantiem</strong>
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            After payment, contact support to activate your subscription.
+          </p>
+        </div>
+
+        <div className="text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            Need help? Contact us at <strong>support@findshelta.com</strong>
+          </p>
         </div>
       </div>
-
-      <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors">
-        Submit Payment for Verification
-      </button>
-    </div>
-  );
+    );
+  };
 
   const ListingsTab = () => (
     <div className="space-y-6">
@@ -322,7 +330,7 @@ const AgentDashboard: React.FC = () => {
             Your agent registration was rejected. Please contact support for more information.
           </p>
         </div>
-      ) : !subscriptionStatus.isActive ? (
+      ) : agentStatus === 'approved' && !subscriptionStatus.isActive ? (
         <div className={`border rounded-lg p-4 ${
           subscriptionStatus.paymentStatus === 'pending' 
             ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700'
@@ -375,7 +383,7 @@ const AgentDashboard: React.FC = () => {
           <div className="text-center py-12">
             <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
-              {subscriptionStatus.isActive ? 'No properties listed yet' : 'Complete subscription to start listing properties'}
+              {subscriptionStatus.isActive ? 'No properties listed yet' : 'Subscription required to list properties'}
             </p>
           </div>
         ) : (

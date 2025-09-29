@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import HomePage from './components/Landing/HomePage';
 import RegistrationFlow from './components/Auth/RegistrationFlow';
 import LoginForm from './components/Auth/LoginForm';
+import ResetPassword from './components/Auth/ResetPassword';
 import HomeSeekerDashboard from './components/Dashboard/HomeSeekerDashboard';
 import AgentDashboard from './components/Dashboard/AgentDashboard';
 import AdminDashboard from './components/Admin/AdminDashboard';
 
 function App() {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register' | 'reset-password'>('home');
+
+  useEffect(() => {
+    // Check if this is a password reset redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('access_token');
+    const type = urlParams.get('type');
+    
+    if (accessToken && type === 'recovery') {
+      setCurrentView('reset-password');
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -46,6 +58,10 @@ function App() {
         onBack={() => setCurrentView('login')}
       />
     );
+  }
+
+  if (currentView === 'reset-password') {
+    return <ResetPassword />;
   }
 
   // Default: Show homepage
