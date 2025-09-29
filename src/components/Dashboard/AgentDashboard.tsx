@@ -688,7 +688,7 @@ const AgentDashboard: React.FC = () => {
             {agentStatus === 'pending' && (
               <div className="mb-6">
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  While waiting for approval, you can subscribe to be ready to start listing immediately.
+                  Subscribe now to start listing properties immediately after approval.
                 </p>
                 <button
                   onClick={() => setShowSubscriptionModal(true)}
@@ -735,94 +735,138 @@ const AgentDashboard: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
-                  {/* Free Trial */}
-                  <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-slate-600">
-                    <div className="text-center mb-6">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                        Free Trial
-                      </h3>
-                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                        ₦0
-                      </div>
-                      <p className="text-gray-500 dark:text-gray-400">First month free</p>
-                    </div>
-                    
-                    <ul className="space-y-3 mb-6">
-                      <li className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-500" />
-                        <span className="text-gray-700 dark:text-gray-300 text-sm">List up to 10 properties</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-500" />
-                        <span className="text-gray-700 dark:text-gray-300 text-sm">Basic analytics</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-500" />
-                        <span className="text-gray-700 dark:text-gray-300 text-sm">Email support</span>
-                      </li>
-                    </ul>
-                    
-                    <div className="text-center">
-                      <div className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 px-3 py-2 rounded-lg text-sm">
-                        Included with approval
-                      </div>
-                    </div>
-                  </div>
-
+                <div className="grid md:grid-cols-3 gap-4 mb-8">
                   {/* Monthly Plan */}
-                  <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border-2 border-blue-500 relative">
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border-2 border-blue-500 relative">
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                      <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium">
                         Most Popular
                       </span>
                     </div>
                     
-                    <div className="text-center mb-6">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                        Monthly Plan
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                        Monthly
                       </h3>
-                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                         ₦15,000
                       </div>
-                      <p className="text-gray-500 dark:text-gray-400">per month</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">per month</p>
                     </div>
                     
-                    <ul className="space-y-3 mb-6">
-                      <li className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-500" />
-                        <span className="text-gray-700 dark:text-gray-300 text-sm">Unlimited property listings</span>
+                    <ul className="space-y-2 mb-4">
+                      <li className="flex items-center space-x-2">
+                        <Check className="w-3 h-3 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-xs">Unlimited listings</span>
                       </li>
-                      <li className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-500" />
-                        <span className="text-gray-700 dark:text-gray-300 text-sm">Advanced analytics</span>
+                      <li className="flex items-center space-x-2">
+                        <Check className="w-3 h-3 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-xs">Analytics</span>
                       </li>
-                      <li className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-500" />
-                        <span className="text-gray-700 dark:text-gray-300 text-sm">Priority support</span>
+                      <li className="flex items-center space-x-2">
+                        <Check className="w-3 h-3 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-xs">Priority support</span>
                       </li>
                     </ul>
-                    
-                    <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-4">
-                      <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">
-                        Transfer ₦15,000 to:
-                      </h4>
-                      <div className="space-y-1 text-xs">
-                        <div><strong>Bank:</strong> Opay</div>
-                        <div><strong>Account:</strong> 9080151095</div>
-                        <div><strong>Name:</strong> Benneth Agantiem</div>
-                      </div>
-                    </div>
                     
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText('9080151095');
                         alert('Account number copied!');
                       }}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors text-sm"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors text-xs"
                     >
-                      Copy Account Number
+                      Copy Account
                     </button>
+                  </div>
+
+                  {/* Quarterly Plan */}
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-200 dark:border-slate-600">
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                        Quarterly
+                      </h3>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                        ₦40,000
+                      </div>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">3 months</p>
+                      <p className="text-green-600 dark:text-green-400 text-xs font-medium">Save ₦5,000</p>
+                    </div>
+                    
+                    <ul className="space-y-2 mb-4">
+                      <li className="flex items-center space-x-2">
+                        <Check className="w-3 h-3 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-xs">Unlimited listings</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <Check className="w-3 h-3 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-xs">Analytics</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <Check className="w-3 h-3 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-xs">Priority support</span>
+                      </li>
+                    </ul>
+                    
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText('9080151095');
+                        alert('Account number copied!');
+                      }}
+                      className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 rounded-lg transition-colors text-xs"
+                    >
+                      Copy Account
+                    </button>
+                  </div>
+
+                  {/* Annual Plan */}
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-200 dark:border-slate-600">
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                        Annual
+                      </h3>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                        ₦150,000
+                      </div>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">12 months</p>
+                      <p className="text-green-600 dark:text-green-400 text-xs font-medium">Save ₦30,000</p>
+                    </div>
+                    
+                    <ul className="space-y-2 mb-4">
+                      <li className="flex items-center space-x-2">
+                        <Check className="w-3 h-3 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-xs">Unlimited listings</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <Check className="w-3 h-3 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-xs">Analytics</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <Check className="w-3 h-3 text-green-500" />
+                        <span className="text-gray-700 dark:text-gray-300 text-xs">Priority support</span>
+                      </li>
+                    </ul>
+                    
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText('9080151095');
+                        alert('Account number copied!');
+                      }}
+                      className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 rounded-lg transition-colors text-xs"
+                    >
+                      Copy Account
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-6">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">
+                    Payment Details:
+                  </h4>
+                  <div className="space-y-1 text-xs">
+                    <div><strong>Bank:</strong> Opay</div>
+                    <div><strong>Account:</strong> 9080151095</div>
+                    <div><strong>Name:</strong> Benneth Agantiem</div>
                   </div>
                 </div>
 

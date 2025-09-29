@@ -19,77 +19,115 @@ const SubscriptionPlans: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
-          {/* Free Trial */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-8 border border-gray-200 dark:border-slate-700">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Free Trial
-              </h3>
-              <div className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                ₦0
-              </div>
-              <p className="text-gray-500 dark:text-gray-400">First month free</p>
-            </div>
-            
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-center space-x-3">
-                <Check className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">List up to 10 properties</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <Check className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">Basic analytics</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <Check className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">Email support</span>
-              </li>
-            </ul>
-            
-            <div className="text-center">
-              <div className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 px-4 py-2 rounded-lg">
-                Included with approval
-              </div>
-            </div>
-          </div>
-
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {/* Monthly Plan */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-8 border-2 border-blue-500 relative">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border-2 border-blue-500 relative">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
                 Most Popular
               </span>
             </div>
             
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Monthly Plan
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                Monthly
               </h3>
-              <div className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 ₦15,000
               </div>
               <p className="text-gray-500 dark:text-gray-400">per month</p>
             </div>
             
-            <ul className="space-y-3 mb-8">
+            <ul className="space-y-3 mb-6">
               <li className="flex items-center space-x-3">
-                <Check className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">Unlimited property listings</span>
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-gray-700 dark:text-gray-300 text-sm">Unlimited listings</span>
               </li>
               <li className="flex items-center space-x-3">
-                <Check className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">Advanced analytics</span>
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-gray-700 dark:text-gray-300 text-sm">Analytics</span>
               </li>
               <li className="flex items-center space-x-3">
-                <Check className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">Priority support</span>
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-gray-700 dark:text-gray-300 text-sm">Priority support</span>
               </li>
             </ul>
             
             <button
               onClick={() => setShowPaymentInfo(true)}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors"
+            >
+              Subscribe Now
+            </button>
+          </div>
+
+          {/* Quarterly Plan */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                Quarterly
+              </h3>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                ₦40,000
+              </div>
+              <p className="text-gray-500 dark:text-gray-400">3 months</p>
+              <p className="text-green-600 dark:text-green-400 text-sm font-medium">Save ₦5,000</p>
+            </div>
+            
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center space-x-3">
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-gray-700 dark:text-gray-300 text-sm">Unlimited listings</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-gray-700 dark:text-gray-300 text-sm">Analytics</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-gray-700 dark:text-gray-300 text-sm">Priority support</span>
+              </li>
+            </ul>
+            
+            <button
+              onClick={() => setShowPaymentInfo(true)}
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 rounded-lg transition-colors"
+            >
+              Subscribe Now
+            </button>
+          </div>
+
+          {/* Annual Plan */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                Annual
+              </h3>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                ₦150,000
+              </div>
+              <p className="text-gray-500 dark:text-gray-400">12 months</p>
+              <p className="text-green-600 dark:text-green-400 text-sm font-medium">Save ₦30,000</p>
+            </div>
+            
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center space-x-3">
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-gray-700 dark:text-gray-300 text-sm">Unlimited listings</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-gray-700 dark:text-gray-300 text-sm">Analytics</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-gray-700 dark:text-gray-300 text-sm">Priority support</span>
+              </li>
+            </ul>
+            
+            <button
+              onClick={() => setShowPaymentInfo(true)}
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 rounded-lg transition-colors"
             >
               Subscribe Now
             </button>
@@ -109,7 +147,7 @@ const SubscriptionPlans: React.FC = () => {
 
               <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-6">
                 <h4 className="font-medium text-gray-900 dark:text-white mb-3">
-                  Transfer ₦15,000 to:
+                  Transfer payment to:
                 </h4>
                 <div className="space-y-2 text-sm">
                   <div><strong>Bank:</strong> Opay</div>
