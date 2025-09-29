@@ -36,14 +36,14 @@ const AgentDashboard: React.FC = () => {
       
       // Try to get agent record first
       const { data: agentData, error: agentError } = await supabase
-        .from('agents')
+        .from('agent_registration')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
       if (agentError) {
         if (agentError.code === '42P01') {
-          // Agents table doesn't exist, fall back to old method
+          // Agent registration table doesn't exist, fall back to old method
           const { data: listingsData, error: listingsError } = await supabase
             .from('listings')
             .select('*')

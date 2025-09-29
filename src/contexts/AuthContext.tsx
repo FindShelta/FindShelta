@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkAgentStatus = async (userId: string) => {
     try {
       const { data: agent, error } = await supabase
-        .from('agents')
+        .from('agent_registration')
         .select('status')
         .eq('user_id', userId)
         .single();
@@ -251,7 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (authData.user) {
         // Create agent record
         const { error: agentError } = await supabase
-          .from('agents')
+          .from('agent_registration')
           .insert({
             user_id: authData.user.id,
             full_name: agentData.fullName,
@@ -267,8 +267,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (agentError) {
           if (agentError.code === '42P01') {
-            console.error('Agents table does not exist. Please create it manually.');
-            alert('Agents table not found. Please contact administrator.');
+            console.error('Agent registration table does not exist. Please create it manually.');
+            alert('Agent registration table not found. Please contact administrator.');
             return false;
           }
           console.error('Agent record creation failed:', agentError.message);
