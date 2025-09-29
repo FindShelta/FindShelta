@@ -242,55 +242,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerAgent = async (agentData: any): Promise<boolean> => {
     try {
-      // First create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: agentData.email,
-        password: agentData.password,
-        options: {
-          data: {
-            name: agentData.fullName,
-            role: 'agent'
-          }
-        }
-      });
+      // Only create agent record - no auth user
+      const { error: agentError } = await supabase
+        .from('agent_registration')
+        .insert({
+          full_name: agentData.fullName,
+          email: agentData.email,
+          phone: agentData.phone,
+          company_name: agentData.companyName,
+          license_number: agentData.licenseNumber,
+          experience_years: agentData.experienceYears,
+          specialization: agentData.specialization,
+          bio: agentData.bio,
+          status: 'pending'
+        });
 
-      if (authError) {
-        console.error('Agent auth registration failed:', authError.message);
+      if (agentError) {
+        console.error('Agent record creation failed:', agentError.message);
         return false;
       }
 
-      if (authData.user) {
-        // Create agent record
-        const { error: agentError } = await supabase
-          .from('agent_registration')
-          .insert({
-            user_id: authData.user.id,
-            full_name: agentData.fullName,
-            email: agentData.email,
-            phone: agentData.phone,
-            company_name: agentData.companyName,
-            license_number: agentData.licenseNumber,
-            experience_years: agentData.experienceYears,
-            specialization: agentData.specialization,
-            bio: agentData.bio,
-            status: 'pending'
-          });
-
-        if (agentError) {
-          if (agentError.code === '42P01') {
-            console.error('Agent registration table does not exist. Please create it manually.');
-            alert('Agent registration table not found. Please contact administrator.');
-            return false;
-          }
-          console.error('Agent record creation failed:', agentError.message);
-          return false;
-        }
-
-        // Don't set user or login - just show success message
-        return true;
-      }
-
-      return false;
+      return true;
     } catch (error) {
       console.error('Agent registration error:', error);
       return false;
