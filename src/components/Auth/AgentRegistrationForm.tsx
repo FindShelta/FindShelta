@@ -15,8 +15,6 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
     email: '',
     password: '',
     phone: '',
-    companyName: '',
-    licenseNumber: '',
     experienceYears: '',
     specialization: [] as string[]
   });
@@ -184,43 +182,17 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
                 Professional Information
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Company Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.companyName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    License Number
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.licenseNumber}
-                    onChange={(e) => setFormData(prev => ({ ...prev, licenseNumber: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Years of Experience
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.experienceYears}
-                    onChange={(e) => setFormData(prev => ({ ...prev, experienceYears: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Years of Experience
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={formData.experienceYears}
+                  onChange={(e) => setFormData(prev => ({ ...prev, experienceYears: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                />
               </div>
               
               <div>
