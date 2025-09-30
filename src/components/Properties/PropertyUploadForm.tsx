@@ -130,29 +130,26 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
 
     setUploading(true);
     try {
-      // Check if user exists in users table, create if missing
-      const { data: existingUser, error: userCheckError } = await supabase
+      // Ensure user exists in users table using upsert
+      console.log('User data:', { id: user.id, email: user.email, metadata: user.user_metadata });
+      
+      const { error: userUpsertError } = await supabase
         .from('users')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-
-      if (userCheckError && userCheckError.code === 'PGRST116') {
-        // User doesn't exist, create user record
-        const { error: userCreateError } = await supabase
-          .from('users')
-          .insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || user.email
-          });
-        
-        if (userCreateError) {
-          console.error('Failed to create user record:', userCreateError);
-          alert('Failed to create user record. Please try again.');
-          return;
-        }
+        .upsert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.email || 'Unknown User'
+        }, {
+          onConflict: 'id'
+        });
+      
+      if (userUpsertError) {
+        console.error('Failed to upsert user record:', userUpsertError);
+        alert('Failed to create/update user record. Please try again.');
+        return;
       }
+      
+      console.log('User record ensured for ID:', user.id);
 
       // Get agent ID from agent_registration table
       const { data: agentData, error: agentError } = await supabase
