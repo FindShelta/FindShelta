@@ -130,6 +130,30 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
 
     setUploading(true);
     try {
+      // Check if user exists in users table, create if missing
+      const { data: existingUser, error: userCheckError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (userCheckError && userCheckError.code === 'PGRST116') {
+        // User doesn't exist, create user record
+        const { error: userCreateError } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.email
+          });
+        
+        if (userCreateError) {
+          console.error('Failed to create user record:', userCreateError);
+          alert('Failed to create user record. Please try again.');
+          return;
+        }
+      }
+
       // Get agent ID from agent_registration table
       const { data: agentData, error: agentError } = await supabase
         .from('agent_registration')
