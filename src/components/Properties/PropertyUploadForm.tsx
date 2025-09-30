@@ -148,23 +148,27 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
       const state = locationParts[1] || 'Lagos';
 
       // Create listing in database
+      const listingData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.type,
+        property_type: formData.type,
+        price: Number(formData.price),
+        location_city: city,
+        location_state: state,
+        amenities: formData.amenities,
+        images: formData.images,
+        video_url: formData.video || null,
+        agent_id: agentData.id,
+        is_approved: false,
+        status: 'pending'
+      };
+      
+      console.log('Inserting listing data:', listingData);
+      
       const { data: listing, error: listingError } = await supabase
         .from('listings')
-        .insert({
-          title: formData.title,
-          description: formData.description,
-          category: formData.type,
-          property_type: formData.type,
-          price: Number(formData.price),
-          location_city: city,
-          location_state: state,
-          amenities: formData.amenities,
-          images: formData.images,
-          video_url: formData.video || null,
-          agent_id: agentData.id,
-          is_approved: false,
-          status: 'pending'
-        })
+        .insert(listingData)
         .select()
         .single();
 
