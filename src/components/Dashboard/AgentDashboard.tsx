@@ -6,7 +6,7 @@ import Header from '../Layout/Header';
 import PropertyUploadForm from '../Properties/PropertyUploadForm';
 
 const AgentDashboard: React.FC = () => {
-  const { user, agentStatus } = useAuth();
+  const { user, agentStatus, refreshAgentStatus } = useAuth();
   const [activeTab, setActiveTab] = useState<'listings' | 'payment' | 'analytics'>('listings');
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [listings, setListings] = useState<any[]>([]);
@@ -104,6 +104,8 @@ const AgentDashboard: React.FC = () => {
           .eq('user_id', user.id)
           .single();
 
+        console.log('Agent data from database:', agentData); // Debug log
+
         if (agentError || !agentData) {
           // Not an agent or agent not found
           if (agentError?.code === 'PGRST116') {
@@ -164,7 +166,14 @@ const AgentDashboard: React.FC = () => {
 
     checkSubscriptionStatus();
     fetchListingsAndStats();
-  }, [user?.id]);
+  }, [user?.id, agentStatus]); // Add agentStatus as dependency to refresh when it changes
+
+  // Manual refresh function that uses auth context
+  const handleRefreshStatus = async () => {
+    setLoading(true);
+    await refreshAgentStatus();
+    setTimeout(() => setLoading(false), 500);
+  };
 
   const calculateStats = (listingsData: any[]) => {
     const totalListings = listingsData?.length || 0;
@@ -688,7 +697,13 @@ const AgentDashboard: React.FC = () => {
                 </button>
               </div>
             )}
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500 dark:text-gray-400 space-y-4">
+              <button
+                onClick={handleRefreshStatus}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                Refresh Status
+              </button>
               <p>Need help? Contact us at support@findshelta.com</p>
             </div>
           </div>

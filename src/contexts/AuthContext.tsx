@@ -10,6 +10,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshAgentStatus: () => Promise<void>;
   loading: boolean;
   agentStatus: 'pending' | 'approved' | 'rejected' | null;
 }
@@ -131,10 +132,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+      console.log('Agent status from DB:', agent?.status); // Debug log
       setAgentStatus(agent?.status || 'pending');
     } catch (error) {
       console.error('Error checking agent status:', error);
       setAgentStatus('pending');
+    }
+  };
+
+  const refreshAgentStatus = async () => {
+    if (user?.id) {
+      await checkAgentStatus(user.id);
     }
   };
 
@@ -327,7 +335,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, registerAgent, resetPassword, updatePassword, logout, loading, agentStatus }}>
+    <AuthContext.Provider value={{ user, login, register, registerAgent, resetPassword, updatePassword, logout, refreshAgentStatus, loading, agentStatus }}>
       {children}
     </AuthContext.Provider>
   );
