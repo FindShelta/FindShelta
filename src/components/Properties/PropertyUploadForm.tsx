@@ -162,7 +162,6 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
           amenities: formData.amenities,
           images: formData.images,
           video_url: formData.video || null,
-          whatsapp_number: formData.whatsappNumber,
           agent_id: agentData.id,
           is_approved: false,
           status: 'pending',
