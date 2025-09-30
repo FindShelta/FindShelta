@@ -140,24 +140,14 @@ const AgentDashboard: React.FC = () => {
           return;
         }
 
-        // Calculate subscription from approval date
-        const approvalDate = new Date(agentData.approved_at || agentData.created_at);
-        const now = new Date();
-        const monthsFromApproval = Math.floor((now.getTime() - approvalDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-        
-        // First month is free, then ₦15,000/month
-        const isFirstMonth = monthsFromApproval === 0;
-        const expiryDate = new Date(approvalDate);
-        expiryDate.setMonth(expiryDate.getMonth() + monthsFromApproval + 1);
-        
-        const isActive = now < expiryDate;
-        
+        // For approved agents, allow immediate access
+        // They can subscribe later but can start listing right away
         setSubscriptionStatus({
-          isActive,
+          isActive: true,
           isVerified: true,
-          paymentStatus: isActive ? 'approved' : 'expired',
-          expiryDate,
-          plan: isFirstMonth ? 'free_trial' : 'monthly'
+          paymentStatus: 'approved',
+          expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+          plan: 'active'
         });
         
       } catch (error) {
@@ -309,10 +299,10 @@ const AgentDashboard: React.FC = () => {
         )}
 
         {!isExpired && !isTrial && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
-            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">✅ Subscription Active</h4>
-            <p className="text-sm text-blue-700 dark:text-blue-200">
-              {daysRemaining} days remaining until renewal.
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4 mb-6">
+            <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">✅ Account Active</h4>
+            <p className="text-sm text-green-700 dark:text-green-200">
+              You can start listing properties. Subscribe for continued access.
             </p>
           </div>
         )}
