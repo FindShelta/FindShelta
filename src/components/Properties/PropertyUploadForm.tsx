@@ -162,9 +162,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
           video_url: formData.video || null,
           agent_id: agentData.id,
           is_approved: false,
-          status: 'pending',
-          views: 0,
-          bookmarks: 0
+          status: 'pending'
         })
         .select()
         .single();
