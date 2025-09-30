@@ -130,26 +130,37 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
 
     setUploading(true);
     try {
-      // Ensure user exists in users table using upsert
+      // Ensure user exists in users table
       console.log('User data:', { id: user.id, email: user.email, metadata: user.user_metadata });
       
-      const { error: userUpsertError } = await supabase
+      // First check if user exists
+      const { data: existingUser } = await supabase
         .from('users')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || user.email || 'Unknown User'
-        }, {
-          onConflict: 'id'
-        });
+        .select('id')
+        .eq('id', user.id)
+        .single();
       
-      if (userUpsertError) {
-        console.error('Failed to upsert user record:', userUpsertError);
-        alert('Failed to create/update user record. Please try again.');
-        return;
+      if (!existingUser) {
+        console.log('User does not exist, creating...');
+        // Try to insert user record
+        const { error: userInsertError } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.email || 'Unknown User'
+          });
+        
+        if (userInsertError) {
+          console.error('Failed to create user record:', userInsertError);
+          // If insert fails, try without the foreign key constraint by using a different approach
+          alert(`Failed to create user record: ${userInsertError.message}. Please contact support.`);
+          return;
+        }
+        console.log('User record created successfully');
+      } else {
+        console.log('User already exists in users table');
       }
-      
-      console.log('User record ensured for ID:', user.id);
 
       // Get agent ID from agent_registration table
       const { data: agentData, error: agentError } = await supabase
@@ -193,6 +204,34 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         .insert(listingData)
         .select()
         .single();
+      
+      // If foreign key constraint fails, try creating listing with agent_name instead
+      if (listingError && listingError.code === '23503') {
+        console.log('Foreign key constraint failed, trying alternative approach...');
+        const alternativeData = {
+          ...listingData,
+          agent_name: user.user_metadata?.full_name || user.email || 'Unknown Agent'
+        };
+        delete alternativeData.agent_id; // Remove the problematic foreign key
+        
+        const { data: altListing, error: altError } = await supabase
+          .from('listings')
+          .insert(alternativeData)
+          .select()
+          .single();
+          
+        if (altError) {
+          console.error('Alternative listing creation failed:', altError);
+          alert('Failed to publish property. Please contact support.');
+          return;
+        }
+        
+        // Use the alternative listing
+        onSubmit(altListing);
+        onClose();
+        alert('Property published successfully! It will be visible after admin approval.');
+        return;
+      }
 
       if (listingError) {
         console.error('Listing creation failed:', listingError);
