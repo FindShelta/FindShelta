@@ -156,6 +156,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         price: Number(formData.price),
         location_city: city,
         location_state: state,
+        location_address: formData.location,
         amenities: formData.amenities,
         images: formData.images,
         video_url: formData.video || null,
