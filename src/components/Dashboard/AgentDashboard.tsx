@@ -58,11 +58,11 @@ const AgentDashboard: React.FC = () => {
       
       console.log('Agent ID found:', agentData.id); // Debug log
       
-      // Fetch agent's listings using agent_id from agent_registration table
+      // Fetch agent's listings using user.id as agent_id
       const { data: listingsData, error: listingsError } = await supabase
         .from('listings')
         .select('*')
-        .eq('agent_id', agentData.id)
+        .eq('agent_id', user.id)
         .order('created_at', { ascending: false });
 
       if (listingsError) {
