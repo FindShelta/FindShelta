@@ -46,7 +46,7 @@ const AdminDashboard: React.FC = () => {
           title, 
           created_at, 
           price, 
-          category, 
+          property_type, 
           location_city, 
           location_state, 
           images, 
@@ -74,7 +74,7 @@ const AdminDashboard: React.FC = () => {
       const mappedListings = (data || []).map(listing => ({
         ...listing,
         agent_name: listing.users?.full_name || 'Unknown Agent',
-        type: listing.category,
+        type: listing.property_type,
         location: `${listing.location_city}, ${listing.location_state}`,
         approved: listing.is_approved,
         rejected: listing.status === 'rejected'

@@ -491,7 +491,7 @@ const AgentDashboard: React.FC = () => {
                         {listing.location_city}, {listing.location_state}
                       </p>
                       <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                        ₦{listing.price?.toLocaleString()}{listing.category === 'rent' ? '/year' : listing.category === 'shortstay' ? '/night' : ''}
+                        ₦{listing.price?.toLocaleString()}{listing.property_type === 'rent' ? '/year' : listing.property_type === 'shortstay' ? '/night' : ''}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         Created: {new Date(listing.created_at).toLocaleDateString()}
