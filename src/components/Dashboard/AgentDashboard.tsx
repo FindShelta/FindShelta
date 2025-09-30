@@ -130,7 +130,7 @@ const AgentDashboard: React.FC = () => {
           return;
         }
 
-        if (agentData.status !== 'approved') {
+        if (agentData.status !== 'approved' && agentData.status !== 'approve') {
           // Agent not approved yet
           setSubscriptionStatus({
             isActive: false,
@@ -363,7 +363,7 @@ const AgentDashboard: React.FC = () => {
 
   const ListingsTab = () => (
     <div className="space-y-6">
-      {agentStatus !== 'approved' ? (
+      {agentStatus !== 'approved' && agentStatus !== 'approve' ? (
         <div className={`rounded-lg p-4 ${
           agentStatus === 'pending' 
             ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700'
@@ -422,7 +422,7 @@ const AgentDashboard: React.FC = () => {
           Your Listings
         </h3>
         
-        {agentStatus !== 'approved' ? (
+        {agentStatus !== 'approved' && agentStatus !== 'approve' ? (
           <div className="text-center py-12">
             <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
@@ -663,7 +663,7 @@ const AgentDashboard: React.FC = () => {
         </div>
 
         {/* Tab Content */}
-        {agentStatus !== 'approved' ? (
+        {agentStatus !== 'approved' && agentStatus !== 'approve' ? (
           <div className="bg-white dark:bg-slate-800 rounded-xl p-8 border border-gray-200 dark:border-slate-700 text-center">
             <div className="mb-4">
               {agentStatus === 'pending' && (
