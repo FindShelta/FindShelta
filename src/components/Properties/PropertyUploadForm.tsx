@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, Plus, Trash2, Camera, Video, MapPin, Home, DollarSign, Bed, Bath, Wifi, Car, Shield, Clock } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface PropertyUploadFormProps {
   onClose: () => void;
@@ -7,6 +9,7 @@ interface PropertyUploadFormProps {
 }
 
 const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubmit }) => {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     title: '',
@@ -120,30 +123,68 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
 
   const handleSubmit = async () => {
     if (!validateStep(3)) return;
+    if (!user?.id) {
+      alert('You must be logged in to publish a property');
+      return;
+    }
 
     setUploading(true);
     try {
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const propertyData = {
-        ...formData,
-        id: Date.now().toString(),
-        agentId: 'current-agent-id',
-        agentName: 'Current Agent',
-        agentWhatsapp: formData.whatsappNumber,
-        createdAt: new Date(),
-        views: 0,
-        bookmarks: 0,
-        price: Number(formData.price),
-        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : undefined,
-        bathrooms: formData.bathrooms ? Number(formData.bathrooms) : undefined,
-      };
+      // Get agent ID from agent_registration table
+      const { data: agentData, error: agentError } = await supabase
+        .from('agent_registration')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
 
-      onSubmit(propertyData);
+      if (agentError || !agentData) {
+        alert('Agent registration not found. Please contact support.');
+        return;
+      }
+
+      // Parse location into city and state
+      const locationParts = formData.location.split(',').map(part => part.trim());
+      const city = locationParts[0] || formData.location;
+      const state = locationParts[1] || 'Lagos';
+
+      // Create listing in database
+      const { data: listing, error: listingError } = await supabase
+        .from('listings')
+        .insert({
+          title: formData.title,
+          description: formData.description,
+          price: Number(formData.price),
+          category: formData.type,
+          location_city: city,
+          location_state: state,
+          bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
+          bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
+          amenities: formData.amenities,
+          images: formData.images,
+          video_url: formData.video || null,
+          whatsapp_number: formData.whatsappNumber,
+          agent_id: agentData.id,
+          is_approved: false,
+          status: 'pending',
+          views: 0,
+          bookmarks: 0
+        })
+        .select()
+        .single();
+
+      if (listingError) {
+        console.error('Listing creation failed:', listingError);
+        alert('Failed to publish property. Please try again.');
+        return;
+      }
+
+      // Call onSubmit with the created listing data
+      onSubmit(listing);
       onClose();
+      alert('Property published successfully! It will be visible after admin approval.');
     } catch (error) {
       console.error('Upload failed:', error);
+      alert('Failed to publish property. Please try again.');
     } finally {
       setUploading(false);
     }
