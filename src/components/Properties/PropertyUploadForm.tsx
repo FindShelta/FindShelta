@@ -153,8 +153,8 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         .insert({
           title: formData.title,
           description: formData.description,
+          property_type: formData.type,
           price: Number(formData.price),
-          category: formData.type,
           location_city: city,
           location_state: state,
           amenities: formData.amenities,
