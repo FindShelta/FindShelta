@@ -43,34 +43,22 @@ const AgentDashboard: React.FC = () => {
         .single();
 
       if (agentError) {
-        if (agentError.code === '42P01') {
-          // Agent registration table doesn't exist, fall back to old method
-          const { data: listingsData, error: listingsError } = await supabase
-            .from('listings')
-            .select('*')
-            .eq('agent_id', user.id)
-            .order('created_at', { ascending: false });
-
-          if (listingsError) {
-            console.error('Error fetching listings:', listingsError);
-            return;
-          }
-
-          setListings(listingsData || []);
-          calculateStats(listingsData || []);
-          return;
-        }
         if (agentError.code === 'PGRST116') {
           // No agent record found - user is not an agent
+          console.log('No agent record found for user');
           setListings([]);
           calculateStats([]);
           return;
         }
-        console.error('Agent not found:', agentError);
+        console.error('Error fetching agent data:', agentError);
+        setListings([]);
+        calculateStats([]);
         return;
       }
       
-      // Fetch agent's listings using agent_id
+      console.log('Agent ID found:', agentData.id); // Debug log
+      
+      // Fetch agent's listings using agent_id from agent_registration table
       const { data: listingsData, error: listingsError } = await supabase
         .from('listings')
         .select('*')
@@ -79,13 +67,18 @@ const AgentDashboard: React.FC = () => {
 
       if (listingsError) {
         console.error('Error fetching listings:', listingsError);
+        setListings([]);
+        calculateStats([]);
         return;
       }
 
+      console.log('Listings found:', listingsData?.length || 0); // Debug log
       setListings(listingsData || []);
       calculateStats(listingsData || []);
     } catch (error) {
       console.error('Error fetching listings and stats:', error);
+      setListings([]);
+      calculateStats([]);
     } finally {
       setLoading(false);
     }
@@ -198,6 +191,7 @@ const AgentDashboard: React.FC = () => {
 
   const handlePropertySubmit = (propertyData: any) => {
     // Refresh listings after new property is added
+    console.log('New property submitted:', propertyData);
     fetchListingsAndStats();
     setShowUploadForm(false);
   };
@@ -418,9 +412,19 @@ const AgentDashboard: React.FC = () => {
       )}
       
       <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Your Listings
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Your Listings
+          </h3>
+          <button
+            onClick={fetchListingsAndStats}
+            disabled={loading}
+            className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors flex items-center space-x-1"
+          >
+            <Clock className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
         
         {agentStatus !== 'approved' && agentStatus !== 'approve' ? (
           <div className="text-center py-12">
@@ -443,28 +447,52 @@ const AgentDashboard: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {listings.map((listing) => (
-              <div key={listing.id} className="border border-gray-200 dark:border-slate-600 rounded-lg p-4">
-                <div className="flex items-start space-x-4">
-                  <img
-                    src={listing.images?.[0] || '/placeholder-property.jpg'}
-                    alt={listing.title}
-                    className="w-20 h-20 object-cover rounded-lg"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 dark:text-white">{listing.title}</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{listing.location}</p>
-                    <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                      ₦{listing.price?.toLocaleString()}{listing.type === 'rent' ? '/year' : listing.type === 'shortstay' ? '/night' : ''}
-                    </p>
-                  </div>
-                  <div className="text-right text-sm text-gray-500 dark:text-gray-400">
-                    <p>{listing.views || 0} views</p>
-                    <p>{listing.bookmarks || 0} bookmarks</p>
+            {listings.map((listing) => {
+              const getStatusColor = (status: string, isApproved: boolean) => {
+                if (isApproved) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+                if (status === 'rejected') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+                return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+              };
+              
+              const getStatusText = (status: string, isApproved: boolean) => {
+                if (isApproved) return 'Approved';
+                if (status === 'rejected') return 'Rejected';
+                return 'Pending Approval';
+              };
+              
+              return (
+                <div key={listing.id} className="border border-gray-200 dark:border-slate-600 rounded-lg p-4">
+                  <div className="flex items-start space-x-4">
+                    <img
+                      src={listing.images?.[0] || '/placeholder-property.jpg'}
+                      alt={listing.title}
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-medium text-gray-900 dark:text-white">{listing.title}</h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(listing.status, listing.is_approved)}`}>
+                          {getStatusText(listing.status, listing.is_approved)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        {listing.location_city}, {listing.location_state}
+                      </p>
+                      <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                        ₦{listing.price?.toLocaleString()}{listing.category === 'rent' ? '/year' : listing.category === 'shortstay' ? '/night' : ''}
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        Created: {new Date(listing.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right text-sm text-gray-500 dark:text-gray-400">
+                      <p>{listing.views || 0} views</p>
+                      <p>{listing.bookmarks || 0} bookmarks</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
