@@ -141,7 +141,7 @@ const AgentDashboard: React.FC = () => {
           isActive: true,
           isVerified: true,
           paymentStatus: 'approved',
-          expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+          expiryDate: null,
           plan: 'active'
         });
         
@@ -218,7 +218,7 @@ const AgentDashboard: React.FC = () => {
           <div className="mt-2 space-y-1">
             <p className="text-gray-600 dark:text-gray-300">
               {subscriptionStatus.isActive 
-                ? `Active until ${subscriptionStatus.expiryDate?.toLocaleDateString()}` 
+                ? 'Active subscription' 
                 : subscriptionStatus.paymentStatus === 'pending'
                 ? 'Payment verification pending'
                 : subscriptionStatus.paymentStatus === 'rejected'
@@ -656,9 +656,7 @@ const AgentDashboard: React.FC = () => {
                       <CheckCircle className="w-5 h-5" />
                       <span className="font-medium">Active</span>
                     </div>
-                    <span className="text-gray-600 dark:text-gray-300">
-                      Until {subscriptionStatus.expiryDate?.toLocaleDateString()}
-                    </span>
+
                   </>
                 ) : (
                   <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400">
