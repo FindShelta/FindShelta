@@ -18,6 +18,8 @@ const AgentDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [editingListing, setEditingListing] = useState<any>(null);
 
   // Enhanced subscription status with payment verification
   const [subscriptionStatus, setSubscriptionStatus] = useState({
@@ -73,6 +75,14 @@ const AgentDashboard: React.FC = () => {
       }
 
       console.log('Listings found:', listingsData?.length || 0); // Debug log
+      if (listingsData?.[0]) {
+        console.log('Sample listing data:', {
+          id: listingsData[0].id,
+          title: listingsData[0].title,
+          is_approved: listingsData[0].is_approved,
+          status: listingsData[0].status
+        });
+      }
       setListings(listingsData || []);
       calculateStats(listingsData || []);
     } catch (error) {
@@ -83,6 +93,18 @@ const AgentDashboard: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Auto-refresh listings every 10 seconds to catch status updates
+  React.useEffect(() => {
+    if (agentStatus === 'approved' || agentStatus === 'approve') {
+      const interval = setInterval(() => {
+        console.log('Auto-refreshing listings...');
+        fetchListingsAndStats();
+      }, 10000); // Refresh every 10 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [agentStatus, user?.id]);
 
   // Check subscription status based on agent approval
   React.useEffect(() => {
@@ -428,14 +450,19 @@ const AgentDashboard: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Your Listings
           </h3>
-          <button
-            onClick={fetchListingsAndStats}
-            disabled={loading}
-            className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors flex items-center space-x-1"
-          >
-            <Clock className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={fetchListingsAndStats}
+              disabled={loading}
+              className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors flex items-center space-x-1"
+            >
+              <Clock className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Auto-refreshes every 10s
+            </span>
+          </div>
         </div>
         
         {agentStatus !== 'approved' && agentStatus !== 'approve' ? (
@@ -461,13 +488,14 @@ const AgentDashboard: React.FC = () => {
           <div className="space-y-4">
             {listings.map((listing) => {
               const getStatusColor = (status: string, isApproved: boolean) => {
-                if (isApproved) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+                console.log('Status check:', { status, isApproved, listingId: listing.id });
+                if (isApproved || status === 'approved') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
                 if (status === 'rejected') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
                 return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
               };
               
               const getStatusText = (status: string, isApproved: boolean) => {
-                if (isApproved) return 'Approved';
+                if (isApproved || status === 'approved') return 'Approved';
                 if (status === 'rejected') return 'Rejected';
                 return 'Pending Approval';
               };
@@ -496,11 +524,22 @@ const AgentDashboard: React.FC = () => {
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         Created: {new Date(listing.created_at).toLocaleDateString()}
                       </p>
-                    </div>
-                    <div className="text-right text-sm text-gray-500 dark:text-gray-400">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(listing.status, listing.is_approved)}`}>
-                        {getStatusText(listing.status, listing.is_approved)}
-                      </span>
+                      <div className="flex items-center space-x-2 mt-2">
+                        <button
+                          onClick={() => setSelectedListing(listing)}
+                          className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                        >
+                          View Details
+                        </button>
+                        {(listing.status === 'pending' || listing.status === 'rejected') && (
+                          <button
+                            onClick={() => setEditingListing(listing)}
+                            className="px-3 py-1 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -762,6 +801,114 @@ const AgentDashboard: React.FC = () => {
           />
         )}
         
+        {/* Listing Detail Modal */}
+        {selectedListing && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-slate-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {selectedListing.title}
+                  </h2>
+                  <button
+                    onClick={() => setSelectedListing(null)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <img
+                      src={selectedListing.images?.[0] || '/placeholder-property.jpg'}
+                      alt={selectedListing.title}
+                      className="w-full h-64 object-cover rounded-lg mb-4"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      {selectedListing.images?.slice(1, 5).map((image: string, index: number) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`${selectedListing.title} ${index + 2}`}
+                          className="w-full h-20 object-cover rounded"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedListing.status, selectedListing.is_approved)}`}>
+                        {getStatusText(selectedListing.status, selectedListing.is_approved)}
+                      </span>
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        ₦{selectedListing.price?.toLocaleString()}
+                        {selectedListing.property_type === 'rent' ? '/year' : selectedListing.property_type === 'shortstay' ? '/night' : ''}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Location</h3>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        {selectedListing.location_city}, {selectedListing.location_state}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Description</h3>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        {selectedListing.description || 'No description provided'}
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-white">Bedrooms</h4>
+                        <p className="text-gray-600 dark:text-gray-300">{selectedListing.bedrooms || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-white">Bathrooms</h4>
+                        <p className="text-gray-600 dark:text-gray-300">{selectedListing.bathrooms || 'N/A'}</p>
+                      </div>
+                    </div>
+                    
+                    {selectedListing.amenities && selectedListing.amenities.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Amenities</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedListing.amenities.map((amenity: string, index: number) => (
+                            <span key={index} className="px-2 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded text-sm">
+                              {amenity}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Created: {new Date(selectedListing.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Edit Listing Modal */}
+        {editingListing && (
+          <PropertyUploadForm
+            onClose={() => setEditingListing(null)}
+            onSubmit={(data) => {
+              console.log('Listing updated:', data);
+              fetchListingsAndStats();
+              setEditingListing(null);
+            }}
+            initialData={editingListing}
+            isEditing={true}
+          />
+        )}
+
         {/* Subscription Plans Modal */}
         {showSubscriptionModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

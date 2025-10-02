@@ -6,23 +6,25 @@ import { useAuth } from '../../contexts/AuthContext';
 interface PropertyUploadFormProps {
   onClose: () => void;
   onSubmit: (propertyData: any) => void;
+  initialData?: any;
+  isEditing?: boolean;
 }
 
-const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubmit }) => {
+const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubmit, initialData, isEditing = false }) => {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    price: '',
-    type: 'sale' as 'sale' | 'rent' | 'shortstay',
-    location: '',
-    bedrooms: '',
-    bathrooms: '',
-    amenities: [] as string[],
-    images: [] as string[],
-    video: '',
-    whatsappNumber: ''
+    title: initialData?.title || '',
+    description: initialData?.description || '',
+    price: initialData?.price?.toString() || '',
+    type: (initialData?.category || initialData?.property_type || 'sale') as 'sale' | 'rent' | 'shortstay',
+    location: initialData?.location_address || `${initialData?.location_city || ''}, ${initialData?.location_state || ''}`.replace(', ', '') || '',
+    bedrooms: initialData?.bedrooms?.toString() || '',
+    bathrooms: initialData?.bathrooms?.toString() || '',
+    amenities: initialData?.amenities || [] as string[],
+    images: initialData?.images || [] as string[],
+    video: initialData?.video_url || '',
+    whatsappNumber: initialData?.agent_whatsapp || ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
@@ -130,6 +132,48 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
 
     setUploading(true);
     try {
+      if (isEditing && initialData?.id) {
+        // Update existing listing
+        const locationParts = formData.location.split(',').map(part => part.trim());
+        const city = locationParts[0] || formData.location;
+        const state = locationParts[1] || 'Lagos';
+
+        const updateData = {
+          title: formData.title,
+          description: formData.description,
+          category: formData.type,
+          property_type: formData.type,
+          price: Number(formData.price),
+          location_city: city,
+          location_state: state,
+          location_address: formData.location,
+          bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
+          bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
+          amenities: formData.amenities,
+          images: formData.images,
+          video_url: formData.video || null,
+          agent_whatsapp: formData.whatsappNumber,
+          status: 'pending' // Reset to pending for re-approval
+        };
+
+        const { data: updatedListing, error: updateError } = await supabase
+          .from('listings')
+          .update(updateData)
+          .eq('id', initialData.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('Update failed:', updateError);
+          alert('Failed to update property. Please try again.');
+          return;
+        }
+
+        onSubmit(updatedListing);
+        onClose();
+        alert('Property updated successfully! It will be reviewed again by admin.');
+        return;
+      }
       // Ensure user exists in users table
       console.log('User data:', { id: user.id, email: user.email, metadata: user.user_metadata });
       
@@ -276,7 +320,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-700">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              {getStepTitle()}
+              {isEditing ? `Edit: ${getStepTitle()}` : getStepTitle()}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Step {currentStep} of 3
@@ -599,7 +643,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
               ) : (
                 <>
                   <Upload className="w-4 h-4" />
-                  <span>Publish Property</span>
+                  <span>{isEditing ? 'Update Property' : 'Publish Property'}</span>
                 </>
               )}
             </button>

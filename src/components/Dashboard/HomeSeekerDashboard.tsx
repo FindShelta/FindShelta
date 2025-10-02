@@ -25,6 +25,13 @@ const HomeSeekerDashboard: React.FC = () => {
   // Fetch properties from Supabase
   useEffect(() => {
     fetchProperties();
+    
+    // Auto-refresh every 30 seconds to catch newly approved listings
+    const interval = setInterval(() => {
+      fetchProperties();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchProperties = async () => {
@@ -38,6 +45,7 @@ const HomeSeekerDashboard: React.FC = () => {
           description,
           price,
           category,
+          property_type,
           location_city,
           location_state,
           bedrooms,
@@ -50,7 +58,9 @@ const HomeSeekerDashboard: React.FC = () => {
           agent_whatsapp,
           created_at,
           views,
-          bookmarks
+          bookmarks,
+          is_approved,
+          status
         `)
         .eq('is_approved', true)
         .order('created_at', { ascending: false });
@@ -60,6 +70,9 @@ const HomeSeekerDashboard: React.FC = () => {
         return;
       }
 
+      console.log('Fetched approved properties:', data?.length || 0);
+      console.log('Sample property:', data?.[0]);
+
       // Transform data to match Property interface
       const transformedProperties: Property[] = (data || []).map(listing => ({
         id: listing.id,
@@ -67,7 +80,7 @@ const HomeSeekerDashboard: React.FC = () => {
         description: listing.description,
         price: listing.price,
         currency: 'NGN',
-        type: listing.category as 'sale' | 'rent' | 'shortstay',
+        type: (listing.category || listing.property_type) as 'sale' | 'rent' | 'shortstay',
         location: `${listing.location_city}, ${listing.location_state}`,
         bedrooms: listing.bedrooms,
         bathrooms: listing.bathrooms,
