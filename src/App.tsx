@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
+import { ComparisonProvider } from './contexts/ComparisonContext';
+import { AlertProvider } from './contexts/AlertContext';
+import { FavoritesProvider } from './contexts/FavoritesContext';
 import HomePage from './components/Landing/HomePage';
 import RegistrationFlow from './components/Auth/RegistrationFlow';
 import LoginForm from './components/Auth/LoginForm';
@@ -48,7 +51,15 @@ function App() {
     if (user.role === 'admin') {
       return <AdminDashboard />;
     }
-    return user.role === 'agent' ? <AgentDashboard /> : <HomeSeekerDashboard />;
+    return user.role === 'agent' ? <AgentDashboard /> : (
+      <ComparisonProvider>
+        <AlertProvider>
+          <FavoritesProvider>
+            <HomeSeekerDashboard />
+          </FavoritesProvider>
+        </AlertProvider>
+      </ComparisonProvider>
+    );
   }
 
   // Show different views based on currentView state

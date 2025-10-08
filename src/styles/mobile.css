@@ -1,0 +1,260 @@
+/* Mobile Responsive Utilities */
+
+/* Hide scrollbars but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch-friendly tap targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent zoom on input focus on iOS */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+select,
+textarea {
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Better mobile modal positioning */
+.mobile-modal {
+  margin: 0.5rem;
+  max-height: calc(100vh - 1rem);
+}
+
+@media (min-width: 640px) {
+  .mobile-modal {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+}
+
+/* Improved touch interactions */
+.touch-action-manipulation {
+  touch-action: manipulation;
+}
+
+/* Better mobile grid layouts */
+.mobile-grid-auto {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+@media (max-width: 640px) {
+  .mobile-grid-auto {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Safe area padding for devices with notches */
+.safe-area-padding {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.safe-area-padding-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-padding-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Improved mobile typography */
+@media (max-width: 640px) {
+  .mobile-text-responsive {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .mobile-heading-responsive {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+}
+
+/* Better mobile button spacing */
+.mobile-button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .mobile-button-stack {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+}
+
+/* Improved mobile card layouts */
+.mobile-card-responsive {
+  padding: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .mobile-card-responsive {
+    padding: 1.5rem;
+  }
+}
+
+/* Better mobile form layouts */
+.mobile-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .mobile-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-form-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Improved mobile navigation */
+.mobile-nav-responsive {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-nav-responsive::-webkit-scrollbar {
+  display: none;
+}
+
+/* Better mobile image handling */
+.mobile-image-responsive {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* Improved mobile spacing */
+.mobile-spacing-sm {
+  padding: 0.75rem;
+}
+
+.mobile-spacing-md {
+  padding: 1rem;
+}
+
+.mobile-spacing-lg {
+  padding: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .mobile-spacing-sm {
+    padding: 1rem;
+  }
+  
+  .mobile-spacing-md {
+    padding: 1.5rem;
+  }
+  
+  .mobile-spacing-lg {
+    padding: 2rem;
+  }
+}
+
+/* Better mobile text truncation */
+.mobile-text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-text-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mobile-text-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Improved mobile animations */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-animation-reduce {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Better mobile focus states */
+.mobile-focus-visible:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Improved mobile hover states */
+@media (hover: hover) {
+  .mobile-hover-enabled:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Better mobile loading states */
+.mobile-loading-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Improved mobile accessibility */
+.mobile-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

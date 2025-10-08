@@ -94,17 +94,7 @@ const AgentDashboard: React.FC = () => {
     }
   };
 
-  // Auto-refresh listings every 10 seconds to catch status updates
-  React.useEffect(() => {
-    if (agentStatus === 'approved' || agentStatus === 'approve') {
-      const interval = setInterval(() => {
-        console.log('Auto-refreshing listings...');
-        fetchListingsAndStats();
-      }, 10000); // Refresh every 10 seconds
 
-      return () => clearInterval(interval);
-    }
-  }, [agentStatus, user?.id]);
 
   // Check subscription status based on agent approval
   React.useEffect(() => {
@@ -229,6 +219,38 @@ const AgentDashboard: React.FC = () => {
     fetchListingsAndStats();
     setShowUploadForm(false);
   };
+
+  const handleDeleteListing = async (listingId: string) => {
+    if (!confirm('Are you sure you want to delete this listing?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('listings')
+        .delete()
+        .eq('id', listingId)
+        .eq('agent_id', user?.id);
+
+      if (error) throw error;
+      
+      // Refresh listings after deletion
+      fetchListingsAndStats();
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      alert('Failed to delete listing');
+    }
+  };
+
+  // Add a function to force refresh from outside
+  React.useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchListingsAndStats();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   const SubscriptionStatus = () => (
     <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700 mb-6">
@@ -459,9 +481,7 @@ const AgentDashboard: React.FC = () => {
               <Clock className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              Auto-refreshes every 10s
-            </span>
+
           </div>
         </div>
         
@@ -488,15 +508,18 @@ const AgentDashboard: React.FC = () => {
           <div className="space-y-4">
             {listings.map((listing) => {
               const getStatusColor = (status: string, isApproved: boolean) => {
-                console.log('Status check:', { status, isApproved, listingId: listing.id });
-                if (isApproved || status === 'approved') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+                // Prioritize status field over is_approved field
+                if (status === 'approved' || status === 'approve') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
                 if (status === 'rejected') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+                if (isApproved) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
                 return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
               };
               
               const getStatusText = (status: string, isApproved: boolean) => {
-                if (isApproved || status === 'approved') return 'Approved';
+                // Prioritize status field over is_approved field
+                if (status === 'approved' || status === 'approve') return 'Approved';
                 if (status === 'rejected') return 'Rejected';
+                if (isApproved) return 'Approved';
                 return 'Pending Approval';
               };
               
@@ -531,14 +554,18 @@ const AgentDashboard: React.FC = () => {
                         >
                           View Details
                         </button>
-                        {(listing.status === 'pending' || listing.status === 'rejected') && (
-                          <button
-                            onClick={() => setEditingListing(listing)}
-                            className="px-3 py-1 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
-                          >
-                            Edit
-                          </button>
-                        )}
+                        <button
+                          onClick={() => setEditingListing(listing)}
+                          className="px-3 py-1 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteListing(listing.id)}
+                          className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -631,51 +658,51 @@ const AgentDashboard: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalListings}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Listings</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalListings}</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Listings</p>
               </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalViews}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Views</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalViews}</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Views</p>
               </div>
-              <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                <Eye className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              <div className="p-2 sm:p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                <Eye className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBookmarks}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Bookmarks</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBookmarks}</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Bookmarks</p>
               </div>
-              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                <Bookmark className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+              <div className="p-2 sm:p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.thisMonth}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">This Month</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.thisMonth}</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">This Month</p>
               </div>
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
@@ -714,26 +741,27 @@ const AgentDashboard: React.FC = () => {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 mb-8">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 mb-6 sm:mb-8">
           <div className="flex space-x-1 p-1">
             {[
-              { id: 'listings', label: 'My Listings', icon: Upload },
-              { id: 'payment', label: 'Subscription', icon: CreditCard },
-              { id: 'analytics', label: 'Analytics', icon: BarChart3 }
+              { id: 'listings', label: 'My Listings', icon: Upload, shortLabel: 'Listings' },
+              { id: 'payment', label: 'Subscription', icon: CreditCard, shortLabel: 'Payment' },
+              { id: 'analytics', label: 'Analytics', icon: BarChart3, shortLabel: 'Stats' }
             ].map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${
+                  className={`flex-1 flex items-center justify-center space-x-1 sm:space-x-2 py-2 sm:py-3 px-2 sm:px-4 rounded-lg font-medium text-xs sm:text-sm transition-all ${
                     activeTab === tab.id
                       ? 'bg-blue-600 text-white shadow-md'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
+                  <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.shortLabel}</span>
                 </button>
               );
             })}

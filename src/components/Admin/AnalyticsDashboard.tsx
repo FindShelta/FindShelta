@@ -78,8 +78,19 @@ const AnalyticsDashboard: React.FC = () => {
 
       const totalViews = listings?.reduce((sum, listing) => sum + (listing.views_count || 0), 0) || 0;
 
-      // Calculate monthly growth (simplified)
-      const monthlyGrowth = Math.floor(Math.random() * 20) + 5; // Mock data
+      // Calculate monthly growth based on actual data
+      const previousPeriodStart = new Date(startDate);
+      previousPeriodStart.setDate(previousPeriodStart.getDate() - (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      const { data: previousPayments } = await supabase
+        .from('payments')
+        .select('amount')
+        .eq('status', 'approved')
+        .gte('created_at', previousPeriodStart.toISOString())
+        .lt('created_at', startDate.toISOString());
+      
+      const previousRevenue = previousPayments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+      const monthlyGrowth = previousRevenue > 0 ? Math.round(((totalRevenue - previousRevenue) / previousRevenue) * 100) : 0;
 
       // Fetch recent activity
       const recentActivity = [
