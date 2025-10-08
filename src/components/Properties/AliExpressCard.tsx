@@ -1,6 +1,6 @@
 import React from 'react';
 import { Property } from '../../types';
-import LazyImage from '../Common/LazyImage';
+import LazyImage from '../common/LazyImage';
 import { MapPin, Bed, Bath, Heart, Play, Scale, Phone } from 'lucide-react';
 
 interface AliExpressCardProps {

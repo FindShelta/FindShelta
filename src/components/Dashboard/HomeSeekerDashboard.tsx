@@ -14,7 +14,7 @@ import FavoritesList from '../Favorites/FavoritesList';
 import SavedSearchesList from '../Favorites/SavedSearchesList';
 import VirtualTour from '../Tours/VirtualTour';
 import MapSearch from '../Search/MapSearch';
-import LazyImage from '../Common/LazyImage';
+import LazyImage from '../common/LazyImage';
 import AliExpressCard from '../Properties/AliExpressCard';
 import usePerformance from '../../hooks/usePerformance';
 import { Search, Filter, Heart, MapPin, Bed, Bath, Car, Wifi, Shield, Star, Phone, X, Scale, Bell, Settings, Save, Bookmark, Play, MessageCircle, Map, TrendingDown } from 'lucide-react';
