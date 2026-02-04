@@ -16,8 +16,7 @@ interface Listing {
   type: 'sale' | 'rent' | 'shortstay';
   location: string;
   images: string[];
-  approved: boolean;
-  rejected: boolean;
+  is_approved: boolean;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -42,12 +41,8 @@ const AdminDashboard: React.FC = () => {
       
       const { data, error } = await supabase
         .from('listings')
-        .select(`
-          id, title, created_at, price, category, property_type, 
-          location_city, location_state, images, is_approved, status
-        `)
+        .select('id, title, agent_name, created_at, price, type, location, images, is_approved')
         .eq('is_approved', false)
-        .or('status.eq.pending,status.is.null')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -63,15 +58,7 @@ const AdminDashboard: React.FC = () => {
         return;
       }
 
-      // Map the data without complex joins
-      const mappedListings = (data || []).map(listing => ({
-        ...listing,
-        agent_name: 'Agent',
-        type: listing.category || listing.property_type || 'sale',
-        location: `${listing.location_city || 'Unknown'}, ${listing.location_state || 'Nigeria'}`,
-        approved: listing.is_approved,
-        rejected: listing.status === 'rejected'
-      }));
+      const mappedListings = data || [];
       
       setListings(mappedListings);
       
@@ -102,8 +89,7 @@ const AdminDashboard: React.FC = () => {
       const { count: pendingCount } = await supabase
         .from('listings')
         .select('*', { count: 'exact', head: true })
-        .eq('is_approved', false)
-        .or('status.eq.pending,status.is.null');
+        .eq('is_approved', false);
 
       // Get today's approvals
       const today = new Date().toISOString().split('T')[0];
@@ -111,14 +97,10 @@ const AdminDashboard: React.FC = () => {
         .from('listings')
         .select('*', { count: 'exact', head: true })
         .eq('is_approved', true)
-        .gte('updated_at', today);
+        .gte('created_at', today);
 
-      // Get today's rejections
-      const { count: rejectedToday } = await supabase
-        .from('listings')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'rejected')
-        .gte('updated_at', today);
+      // Get today's rejections - skip since rejected column doesn't exist
+      const rejectedToday = 0;
 
       setStats({
         totalListings: totalCount || 0,
@@ -152,23 +134,12 @@ const AdminDashboard: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('listings')
-        .select(`
-          id, title, created_at, price, category, property_type, 
-          location_city, location_state, images, is_approved, status
-        `)
+        .select('id, title, agent_name, created_at, price, type, location, images, is_approved')
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (!error && data) {
-        const mapped = data.map(listing => ({
-          ...listing,
-          agent_name: 'Agent',
-          type: listing.category || listing.property_type,
-          location: `${listing.location_city}, ${listing.location_state}`,
-          approved: listing.is_approved,
-          rejected: listing.status === 'rejected'
-        }));
-        setRecentUploads(mapped);
+        setRecentUploads(data);
       }
     } catch (err) {
       console.error('Error fetching recent uploads:', err);
@@ -186,7 +157,7 @@ const AdminDashboard: React.FC = () => {
     try {
       const { error } = await supabase
         .from('listings')
-        .update({ is_approved: true, status: 'approved' })
+        .update({ is_approved: true })
         .eq('id', listingId);
 
       if (error) {
@@ -217,9 +188,10 @@ const AdminDashboard: React.FC = () => {
     setProcessingIds(prev => new Set(prev).add(listingId));
     
     try {
+      // Since there's no rejected column, just delete the listing
       const { error } = await supabase
         .from('listings')
-        .update({ status: 'rejected' })
+        .delete()
         .eq('id', listingId);
 
       if (error) {

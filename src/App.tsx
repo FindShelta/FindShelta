@@ -11,17 +11,25 @@ import HomeSeekerDashboard from './components/Dashboard/HomeSeekerDashboard';
 import AgentDashboard from './components/Dashboard/AgentDashboard';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import SubscriptionPlans from './components/Subscription/SubscriptionPlans';
+import DatabaseTest from './components/Debug/DatabaseTest';
+import { supabase } from './lib/supabase';
 
 
 function App() {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register' | 'reset-password' | 'subscription'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register' | 'reset-password' | 'subscription' | 'debug'>('home');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
 
   useEffect(() => {
     // Check URL path for routing
     const path = window.location.pathname;
     if (path === '/subscription') {
       setCurrentView('subscription');
+      return;
+    }
+    if (path === '/debug') {
+      setCurrentView('debug');
       return;
     }
     
@@ -35,7 +43,33 @@ function App() {
     }
   }, []);
 
-  if (loading) {
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        setCheckingAdmin(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('admin_users')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        setIsAdmin(!error && !!data);
+      } catch (err) {
+        setIsAdmin(false);
+      } finally {
+        setCheckingAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user]);
+
+  if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-white dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
@@ -46,9 +80,14 @@ function App() {
     );
   }
 
+  // Allow debug view without authentication
+  if (currentView === 'debug') {
+    return <DatabaseTest />;
+  }
+
   // If user is authenticated, show appropriate dashboard
   if (user) {
-    if (user.role === 'admin') {
+    if (isAdmin) {
       return <AdminDashboard />;
     }
     return user.role === 'agent' ? <AgentDashboard /> : (

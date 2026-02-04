@@ -71,12 +71,8 @@ const HomeSeekerDashboard: React.FC = () => {
 
       const { data, error, count } = await supabase
         .from('listings')
-        .select(`
-          id, title, description, price, category, property_type,
-          location_city, location_state, amenities, images, agent_id, created_at
-        `, { count: 'exact' })
-        .or('is_approved.eq.true,status.eq.approved,status.eq.approve')
-        .neq('status', 'rejected')
+        .select('id, title, description, price, type, location, amenities, images, agent_id, agent_name, agent_whatsapp, created_at, views, bookmarks, bedrooms, bathrooms', { count: 'exact' })
+        .eq('is_approved', true)
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -93,18 +89,18 @@ const HomeSeekerDashboard: React.FC = () => {
         description: listing.description || 'No description available',
         price: listing.price || 0,
         currency: 'NGN',
-        type: (listing.category || listing.property_type || 'sale') as 'sale' | 'rent' | 'shortstay',
-        location: `${listing.location_city || 'Unknown'}, ${listing.location_state || 'Nigeria'}`,
-        bedrooms: 2,
-        bathrooms: 2,
+        type: listing.type || 'sale',
+        location: listing.location || 'Nigeria',
+        bedrooms: listing.bedrooms || 2,
+        bathrooms: listing.bathrooms || 2,
         amenities: listing.amenities || ['wifi', 'parking'],
         images: listing.images && listing.images.length > 0 ? listing.images : ['https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'],
         agentId: listing.agent_id,
-        agentName: 'Agent',
-        agentWhatsapp: '2347025790877',
+        agentName: listing.agent_name || 'Agent',
+        agentWhatsapp: listing.agent_whatsapp || '2347025790877',
         createdAt: new Date(listing.created_at),
-        views: 0,
-        bookmarks: 0
+        views: listing.views || 0,
+        bookmarks: listing.bookmarks || 0
       }));
 
       if (reset) {
