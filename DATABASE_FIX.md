@@ -1,4 +1,4 @@
-# Database Query Fix
+# Database Query Fix - Vercel Deploy
 
 ## Issue
 The application was not fetching listings from the database due to incorrect column names in queries.
