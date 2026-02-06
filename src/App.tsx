@@ -13,6 +13,7 @@ import AdminDashboard from './components/Admin/AdminDashboard';
 import SubscriptionPlans from './components/Subscription/SubscriptionPlans';
 import DatabaseTest from './components/Debug/DatabaseTest';
 import { supabase } from './lib/supabase';
+import './utils/makeAdmin';
 
 
 function App() {
