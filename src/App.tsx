@@ -10,6 +10,7 @@ import ResetPassword from './components/Auth/ResetPassword';
 import HomeSeekerDashboard from './components/Dashboard/HomeSeekerDashboard';
 import AgentDashboard from './components/Dashboard/AgentDashboard';
 import AdminDashboard from './components/Admin/AdminDashboard';
+import AdminApp from './components/Admin/AdminApp';
 import SubscriptionPlans from './components/Subscription/SubscriptionPlans';
 import DatabaseTest from './components/Debug/DatabaseTest';
 import { supabase } from './lib/supabase';
@@ -18,7 +19,7 @@ import './utils/makeAdmin';
 
 function App() {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register' | 'reset-password' | 'subscription' | 'debug'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register' | 'reset-password' | 'subscription' | 'debug' | 'admin'>('home');
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
 
@@ -31,6 +32,10 @@ function App() {
     }
     if (path === '/debug') {
       setCurrentView('debug');
+      return;
+    }
+    if (path === '/admin') {
+      setCurrentView('admin');
       return;
     }
     
@@ -81,9 +86,13 @@ function App() {
     );
   }
 
-  // Allow debug view without authentication
+  // Allow debug and admin views without authentication
   if (currentView === 'debug') {
     return <DatabaseTest />;
+  }
+
+  if (currentView === 'admin') {
+    return <AdminApp />;
   }
 
   // If user is authenticated, show appropriate dashboard
