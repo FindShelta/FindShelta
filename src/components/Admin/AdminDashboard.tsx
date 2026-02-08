@@ -10,7 +10,7 @@ import AgentApproval from './AgentApproval';
 interface Listing {
   id: string;
   title: string;
-  agent_name: string;
+  agent_id: string;
   created_at: string;
   price: number;
   type: 'sale' | 'rent' | 'shortstay';
@@ -41,7 +41,7 @@ const AdminDashboard: React.FC = () => {
       
       const { data, error } = await supabase
         .from('listings')
-        .select('id, title, agent_name, created_at, price, type, location, images, is_approved')
+        .select('id, title, agent_id, created_at, price, type, location, images, is_approved')
         .or('is_approved.eq.false,is_approved.is.null')
         .order('created_at', { ascending: false })
         .limit(50);
@@ -137,7 +137,7 @@ const AdminDashboard: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('listings')
-        .select('id, title, agent_name, created_at, price, type, location, images, is_approved')
+        .select('id, title, agent_id, created_at, price, type, location, images, is_approved')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -170,7 +170,7 @@ const AdminDashboard: React.FC = () => {
       // Send notification
       const listing = listings.find(l => l.id === listingId);
       if (listing) {
-        await sendNotification(listing.agent_name, listing.title, 'approved');
+        await sendNotification(listing.agent_id, listing.title, 'approved');
       }
 
       // Remove from local state
@@ -204,7 +204,7 @@ const AdminDashboard: React.FC = () => {
       // Send notification
       const listing = listings.find(l => l.id === listingId);
       if (listing) {
-        await sendNotification(listing.agent_name, listing.title, 'rejected');
+        await sendNotification(listing.agent_id, listing.title, 'rejected');
       }
 
       // Remove from local state

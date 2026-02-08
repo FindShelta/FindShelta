@@ -8,10 +8,10 @@ const DatabaseTest: React.FC = () => {
   useEffect(() => {
     const testDatabase = async () => {
       try {
-        // Test 1: Get first listing with specific fields
+        // Test 1: Get first listing with ALL fields
         const { data: sample, error: sampleError } = await supabase
           .from('listings')
-          .select('id, title, is_approved, rejected')
+          .select('*')
           .limit(1);
 
         console.log('Sample listing:', sample);
