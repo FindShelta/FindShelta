@@ -42,9 +42,12 @@ const AdminDashboard: React.FC = () => {
       const { data, error } = await supabase
         .from('listings')
         .select('id, title, agent_name, created_at, price, type, location, images, is_approved')
-        .eq('is_approved', false)
+        .or('is_approved.eq.false,is_approved.is.null')
         .order('created_at', { ascending: false })
         .limit(50);
+
+      console.log('Fetched listings:', data);
+      console.log('Error:', error);
 
       if (error) {
         console.log('Listings table not accessible:', error.message);
@@ -85,11 +88,11 @@ const AdminDashboard: React.FC = () => {
         .from('listings')
         .select('*', { count: 'exact', head: true });
 
-      // Get pending listings
+      // Get pending listings (false or null)
       const { count: pendingCount } = await supabase
         .from('listings')
         .select('*', { count: 'exact', head: true })
-        .eq('is_approved', false);
+        .or('is_approved.eq.false,is_approved.is.null');
 
       // Get today's approvals
       const today = new Date().toISOString().split('T')[0];
