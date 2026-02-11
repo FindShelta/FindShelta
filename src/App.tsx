@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { ComparisonProvider } from './contexts/ComparisonContext';
 import { AlertProvider } from './contexts/AlertContext';
@@ -10,72 +11,46 @@ import ResetPassword from './components/Auth/ResetPassword';
 import HomeSeekerDashboard from './components/Dashboard/HomeSeekerDashboard';
 import AgentDashboard from './components/Dashboard/AgentDashboard';
 import AdminDashboard from './components/Admin/AdminDashboard';
-import AdminApp from './components/Admin/AdminApp';
+import AdminLogin from './components/Admin/AdminLogin';
 import SubscriptionPlans from './components/Subscription/SubscriptionPlans';
 import DatabaseTest from './components/Debug/DatabaseTest';
 import { supabase } from './lib/supabase';
 import './utils/makeAdmin';
 
 
-function App() {
-  const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register' | 'reset-password' | 'subscription' | 'debug' | 'admin'>('home');
+const AdminRoute = () => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Check URL path for routing
-    const path = window.location.pathname;
-    if (path === '/subscription') {
-      setCurrentView('subscription');
-      return;
-    }
-    if (path === '/debug') {
-      setCurrentView('debug');
-      return;
-    }
-    if (path === '/admin') {
-      setCurrentView('admin');
-      return;
-    }
-    
-    // Check if this is a password reset redirect
-    const urlParams = new URLSearchParams(window.location.search);
-    const accessToken = urlParams.get('access_token');
-    const type = urlParams.get('type');
-    
-    if (accessToken && type === 'recovery') {
-      setCurrentView('reset-password');
-    }
-  }, []);
-
-  useEffect(() => {
-    const checkAdminStatus = async () => {
+    const checkAdmin = async () => {
       if (!user) {
-        setIsAdmin(false);
-        setCheckingAdmin(false);
+        setLoading(false);
         return;
       }
-
-      try {
-        const { data, error } = await supabase
-          .from('admin_users')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        setIsAdmin(!error && !!data);
-      } catch (err) {
-        setIsAdmin(false);
-      } finally {
-        setCheckingAdmin(false);
-      }
+      const { data } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      setIsAdmin(!!data);
+      setLoading(false);
     };
-
-    checkAdminStatus();
+    checkAdmin();
   }, [user]);
 
-  if (loading || checkingAdmin) {
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>;
+  if (!user) return <AdminLogin />;
+  if (!isAdmin) return <Navigate to="/" />;
+  return <AdminDashboard />;
+};
+
+function App() {
+  const { user, loading } = useAuth();
+  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register'>('home');
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
@@ -86,65 +61,38 @@ function App() {
     );
   }
 
-  // Allow debug and admin views without authentication
-  if (currentView === 'debug') {
-    return <DatabaseTest />;
-  }
-
-  if (currentView === 'admin') {
-    return <AdminApp />;
-  }
-
-  // If user is authenticated, show appropriate dashboard
-  if (user) {
-    if (isAdmin) {
-      return <AdminDashboard />;
-    }
-    return user.role === 'agent' ? <AgentDashboard /> : (
-      <ComparisonProvider>
-        <AlertProvider>
-          <FavoritesProvider>
-            <HomeSeekerDashboard />
-          </FavoritesProvider>
-        </AlertProvider>
-      </ComparisonProvider>
-    );
-  }
-
-  // Show different views based on currentView state
-  if (currentView === 'login') {
-    return (
-      <LoginForm
-        onBack={() => setCurrentView('home')}
-        onSwitchToRegister={() => setCurrentView('register')}
-      />
-    );
-  }
-
-  if (currentView === 'register') {
-    return (
-      <RegistrationFlow
-        onBack={() => setCurrentView('login')}
-      />
-    );
-  }
-
-  if (currentView === 'reset-password') {
-    return <ResetPassword />;
-  }
-
-  if (currentView === 'subscription') {
-    return <SubscriptionPlans />;
-  }
-
-
-
-  // Default: Show homepage
   return (
-    <HomePage
-      onGetStarted={() => setCurrentView('register')}
-      onSignIn={() => setCurrentView('login')}
-    />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/admin" element={<AdminRoute />} />
+        <Route path="/debug" element={<DatabaseTest />} />
+        <Route path="/subscription" element={<SubscriptionPlans />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/login" element={<LoginForm onBack={() => window.location.href = '/'} onSwitchToRegister={() => window.location.href = '/register'} />} />
+        <Route path="/register" element={<RegistrationFlow onBack={() => window.location.href = '/login'} />} />
+        <Route path="/" element={
+          user ? (
+            user.role === 'agent' ? <AgentDashboard /> : (
+              <ComparisonProvider>
+                <AlertProvider>
+                  <FavoritesProvider>
+                    <HomeSeekerDashboard />
+                  </FavoritesProvider>
+                </AlertProvider>
+              </ComparisonProvider>
+            )
+          ) : (
+            currentView === 'login' ? (
+              <LoginForm onBack={() => setCurrentView('home')} onSwitchToRegister={() => setCurrentView('register')} />
+            ) : currentView === 'register' ? (
+              <RegistrationFlow onBack={() => setCurrentView('login')} />
+            ) : (
+              <HomePage onGetStarted={() => setCurrentView('register')} onSignIn={() => setCurrentView('login')} />
+            )
+          )
+        } />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

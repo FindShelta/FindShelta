@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import { Shield, Lock, Mail } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-interface AdminLoginProps {
-  onLogin: (email: string, password: string) => boolean;
-}
-
-const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
+const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    const success = onLogin(email, password);
+    const success = await login(email, password);
     if (!success) {
       setError('Invalid credentials');
+    } else {
+      navigate('/admin');
     }
   };
 

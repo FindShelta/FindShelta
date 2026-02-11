@@ -13,10 +13,12 @@ interface Listing {
   agent_id: string;
   created_at: string;
   price: number;
-  type: 'sale' | 'rent' | 'shortstay';
-  location: string;
+  category: 'sale' | 'rent' | 'shortstay';
+  location_city: string;
+  location_state: string;
   images: string[];
   is_approved: boolean;
+  agent_name?: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -41,7 +43,7 @@ const AdminDashboard: React.FC = () => {
       
       const { data, error } = await supabase
         .from('listings')
-        .select('id, title, agent_id, created_at, price, type, location, images, is_approved')
+        .select('*')
         .or('is_approved.eq.false,is_approved.is.null')
         .order('created_at', { ascending: false })
         .limit(50);
@@ -137,7 +139,7 @@ const AdminDashboard: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('listings')
-        .select('id, title, agent_id, created_at, price, type, location, images, is_approved')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -221,14 +223,14 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number, type: string) => {
+  const formatPrice = (price: number, category: string) => {
     const formatter = new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
     });
     
-    const suffix = type === 'rent' ? '/month' : type === 'shortstay' ? '/night' : '';
+    const suffix = category === 'rent' ? '/month' : category === 'shortstay' ? '/night' : '';
     return formatter.format(price) + suffix;
   };
 
@@ -242,8 +244,8 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
+  const getTypeColor = (category: string) => {
+    switch (category) {
       case 'sale':
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
       case 'rent':
@@ -424,18 +426,16 @@ const AdminDashboard: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                         <div className="absolute top-4 right-4">
                           <span className={`px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md border ${
-                            listing.approved 
+                            listing.is_approved 
                               ? 'bg-emerald-500/90 text-white border-emerald-400/50'
-                              : listing.rejected
-                              ? 'bg-red-500/90 text-white border-red-400/50'
                               : 'bg-amber-500/90 text-white border-amber-400/50'
                           }`}>
-                            {listing.approved ? '✓ Live' : listing.rejected ? '✗ Declined' : '⏳ Review'}
+                            {listing.is_approved ? '✓ Live' : '⏳ Review'}
                           </span>
                         </div>
                         <div className="absolute bottom-4 left-4 right-4">
                           <div className="text-white font-bold text-lg mb-1 drop-shadow-lg">
-                            {formatPrice(listing.price, listing.type)}
+                            {formatPrice(listing.price, listing.category)}
                           </div>
                         </div>
                       </div>
@@ -446,11 +446,11 @@ const AdminDashboard: React.FC = () => {
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center text-slate-600 dark:text-slate-400 text-sm">
                             <User className="w-4 h-4 mr-2 text-blue-500" />
-                            <span className="font-medium">{listing.agent_name}</span>
+                            <span className="font-medium">{listing.agent_name || 'Agent'}</span>
                           </div>
                           <div className="flex items-center text-slate-600 dark:text-slate-400 text-sm">
                             <Home className="w-4 h-4 mr-2 text-emerald-500" />
-                            <span>{listing.location}</span>
+                            <span>{listing.location_city}, {listing.location_state}</span>
                           </div>
                         </div>
                         <div className="flex items-center justify-between pt-4 border-t border-slate-200/50 dark:border-slate-700/50">
@@ -541,18 +541,18 @@ const AdminDashboard: React.FC = () => {
                             </div>
                             <div className="flex items-center space-x-1">
                               <Home className="w-3 h-3 sm:w-4 sm:h-4" />
-                              <span className="truncate">{listing.location}</span>
+                              <span className="truncate">{listing.location_city}, {listing.location_state}</span>
                             </div>
                           </div>
                         </div>
                         
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
                           <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(listing.type)}`}>
-                              {listing.type === 'sale' ? 'Sale' : listing.type === 'rent' ? 'Rent' : 'Stay'}
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(listing.category)}`}>
+                              {listing.category === 'sale' ? 'Sale' : listing.category === 'rent' ? 'Rent' : 'Stay'}
                             </span>
                             <span className="text-sm sm:text-lg font-bold text-blue-600 dark:text-blue-400">
-                              {formatPrice(listing.price, listing.type)}
+                              {formatPrice(listing.price, listing.category)}
                             </span>
                           </div>
                         </div>
