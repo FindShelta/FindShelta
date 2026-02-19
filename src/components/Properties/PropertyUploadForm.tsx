@@ -57,34 +57,45 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
     }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const remainingSlots = 20 - formData.images.length;
     const filesToProcess = files.slice(0, remainingSlots);
     
-    // Convert files to base64 URLs for preview
-    const newImages: string[] = [];
-    let processed = 0;
-    
     if (filesToProcess.length === 0) return;
     
-    filesToProcess.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          newImages.push(event.target.result as string);
-          processed++;
-          
-          if (processed === filesToProcess.length) {
-            setFormData(prev => ({
-              ...prev,
-              images: [...prev.images, ...newImages]
-            }));
-          }
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    setUploading(true);
+    const newImageUrls: string[] = [];
+    
+    for (const file of filesToProcess) {
+      try {
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+        
+        const { data, error } = await supabase.storage
+          .from('property-images')
+          .upload(fileName, file, {
+            contentType: file.type,
+            upsert: false
+          });
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('property-images')
+          .getPublicUrl(fileName);
+
+        newImageUrls.push(publicUrl);
+      } catch (err) {
+        console.error('Failed to upload image:', err);
+        alert('Failed to upload some images. Please try again.');
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...newImageUrls]
+    }));
+    setUploading(false);
   };
 
   const removeImage = (index: number) => {
