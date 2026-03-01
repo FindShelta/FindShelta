@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { ComparisonProvider } from './contexts/ComparisonContext';
 import { AlertProvider } from './contexts/AlertContext';
@@ -17,8 +17,81 @@ import DatabaseTest from './components/Debug/DatabaseTest';
 import { supabase } from './lib/supabase';
 import './utils/makeAdmin';
 
+const FullScreenLoader: React.FC<{ label?: string }> = ({ label = 'Loading...' }) => (
+  <div className="min-h-screen flex items-center justify-center p-6">
+    <div className="glass-card rounded-2xl px-8 py-7 text-center">
+      <div className="w-8 h-8 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p className="text-[color:var(--text-muted)]">{label}</p>
+    </div>
+  </div>
+);
 
-const AdminRoute = () => {
+const DashboardRoute: React.FC = () => {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role === 'agent') {
+    return <AgentDashboard />;
+  }
+
+  return (
+    <ComparisonProvider>
+      <AlertProvider>
+        <FavoritesProvider>
+          <HomeSeekerDashboard />
+        </FavoritesProvider>
+      </AlertProvider>
+    </ComparisonProvider>
+  );
+};
+
+const LandingRoute: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return (
+    <HomePage
+      onGetStarted={() => navigate('/register')}
+      onSignIn={() => navigate('/login')}
+    />
+  );
+};
+
+const LoginRoute: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return (
+    <LoginForm
+      onBack={() => navigate('/')}
+      onSwitchToRegister={() => navigate('/register')}
+    />
+  );
+};
+
+const RegisterRoute: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <RegistrationFlow onBack={() => navigate('/login')} />;
+};
+
+const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -29,69 +102,63 @@ const AdminRoute = () => {
         setLoading(false);
         return;
       }
+
       const { data } = await supabase
         .from('admin_users')
         .select('id')
         .eq('user_id', user.id)
         .single();
+
       setIsAdmin(!!data);
       setLoading(false);
     };
+
     checkAdmin();
   }, [user]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>;
-  if (!user) return <AdminLogin />;
-  if (!isAdmin) return <Navigate to="/" />;
+  if (loading) {
+    return <FullScreenLoader label="Checking admin access..." />;
+  }
+
+  if (!user) {
+    return <AdminLogin />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <AdminDashboard />;
 };
 
+const NotFoundRoute: React.FC = () => <Navigate to="/" replace />;
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingRoute />} />
+      <Route path="/login" element={<LoginRoute />} />
+      <Route path="/register" element={<RegisterRoute />} />
+      <Route path="/dashboard" element={<DashboardRoute />} />
+      <Route path="/admin" element={<AdminRoute />} />
+      <Route path="/subscription" element={<SubscriptionPlans />} />
+      <Route path="/debug" element={<DatabaseTest />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="*" element={<NotFoundRoute />} />
+    </Routes>
+  );
+}
+
 function App() {
-  const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'login' | 'register'>('home');
+  const { loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="glass-card rounded-2xl px-8 py-7 text-center">
-          <div className="w-8 h-8 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[color:var(--text-muted)]">Loading...</p>
-        </div>
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/admin" element={<AdminRoute />} />
-        <Route path="/debug" element={<DatabaseTest />} />
-        <Route path="/subscription" element={<SubscriptionPlans />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/login" element={<LoginForm onBack={() => window.location.href = '/'} onSwitchToRegister={() => window.location.href = '/register'} />} />
-        <Route path="/register" element={<RegistrationFlow onBack={() => window.location.href = '/login'} />} />
-        <Route path="/" element={
-          user ? (
-            user.role === 'agent' ? <AgentDashboard /> : (
-              <ComparisonProvider>
-                <AlertProvider>
-                  <FavoritesProvider>
-                    <HomeSeekerDashboard />
-                  </FavoritesProvider>
-                </AlertProvider>
-              </ComparisonProvider>
-            )
-          ) : (
-            currentView === 'login' ? (
-              <LoginForm onBack={() => setCurrentView('home')} onSwitchToRegister={() => setCurrentView('register')} />
-            ) : currentView === 'register' ? (
-              <RegistrationFlow onBack={() => setCurrentView('login')} />
-            ) : (
-              <HomePage onGetStarted={() => setCurrentView('register')} onSignIn={() => setCurrentView('login')} />
-            )
-          )
-        } />
-      </Routes>
+      <AppRoutes />
     </BrowserRouter>
   );
 }
