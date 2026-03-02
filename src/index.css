@@ -1,31 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg: #f7f8f4;
-  --surface: rgba(255, 255, 255, 0.82);
+  --bg: #f3f5ef;
+  --surface: rgba(255, 255, 255, 0.88);
   --surface-solid: #ffffff;
-  --text: #1d2320;
-  --text-muted: #5b6760;
-  --border: #d2ddd5;
-  --brand: #0f766e;
-  --brand-strong: #0b5f59;
-  --accent: #f59e0b;
+  --surface-strong: #f7f8f3;
+  --text: #142018;
+  --text-muted: #5d6a60;
+  --border: #d4dfd5;
+  --brand: #146c62;
+  --brand-strong: #0f544e;
+  --accent: #ca8a04;
+  --danger: #be123c;
+  --ring: color-mix(in srgb, var(--brand), transparent 72%);
 }
 
 .dark {
-  --bg: #091213;
-  --surface: rgba(12, 22, 24, 0.82);
-  --surface-solid: #0f1b1d;
-  --text: #e8f5ee;
-  --text-muted: #9eb5a8;
-  --border: #22403c;
-  --brand: #2dd4bf;
-  --brand-strong: #5eead4;
-  --accent: #fbbf24;
+  --bg: #081012;
+  --surface: rgba(13, 22, 26, 0.84);
+  --surface-solid: #102027;
+  --surface-strong: #0f1a20;
+  --text: #e9f3ec;
+  --text-muted: #9eb3a6;
+  --border: #213b38;
+  --brand: #34d2bf;
+  --brand-strong: #20b6a5;
+  --accent: #f4b942;
+  --danger: #fb7185;
+  --ring: color-mix(in srgb, var(--brand), transparent 76%);
 }
 
 * {
@@ -44,34 +50,69 @@ body {
   font-family: 'Manrope', system-ui, sans-serif;
   color: var(--text);
   background:
-    radial-gradient(70rem 35rem at 0% 0%, rgba(15, 118, 110, 0.16), transparent 60%),
-    radial-gradient(50rem 32rem at 100% 10%, rgba(245, 158, 11, 0.12), transparent 60%),
+    radial-gradient(60rem 30rem at 8% -10%, rgba(20, 108, 98, 0.2), transparent 58%),
+    radial-gradient(52rem 30rem at 102% 10%, rgba(202, 138, 4, 0.16), transparent 62%),
     var(--bg);
+  letter-spacing: -0.01em;
 }
 
 h1,
 h2,
 h3,
 h4 {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Sora', 'Manrope', sans-serif;
+  letter-spacing: -0.02em;
 }
 
 .glass-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: 0 20px 50px -32px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 24px 56px -34px rgba(15, 23, 17, 0.5);
+  backdrop-filter: blur(12px);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 22px 52px -36px rgba(10, 20, 14, 0.55);
   backdrop-filter: blur(10px);
 }
 
+.section-shell {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
 .brand-button {
-  background: linear-gradient(120deg, var(--brand), var(--brand-strong));
+  background: linear-gradient(120deg, var(--brand), var(--brand-strong) 72%);
   color: #f8fffb;
-  border: 1px solid color-mix(in srgb, var(--brand-strong), #ffffff 18%);
+  border: 1px solid color-mix(in srgb, var(--brand-strong), #ffffff 20%);
+  box-shadow: 0 14px 30px -20px color-mix(in srgb, var(--brand), #000000 28%);
 }
 
 .brand-button:hover {
-  filter: brightness(1.04);
+  filter: brightness(1.05);
   transform: translateY(-1px);
+}
+
+.brand-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.ghost-button {
+  background: color-mix(in srgb, var(--surface-solid), transparent 15%);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.ghost-button:hover {
+  border-color: color-mix(in srgb, var(--brand), transparent 50%);
+  background: color-mix(in srgb, var(--surface-solid), transparent 4%);
+}
+
+.ghost-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
 }
 
 .brand-input {
@@ -92,9 +133,9 @@ h4 {
 
 .hero-gradient {
   background:
-    radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.22), transparent 36%),
-    radial-gradient(circle at 85% 15%, rgba(15, 118, 110, 0.28), transparent 40%),
-    linear-gradient(130deg, #0b1e20 6%, #0c2d2f 48%, #1b2a16 100%);
+    radial-gradient(circle at 8% 16%, rgba(202, 138, 4, 0.2), transparent 34%),
+    radial-gradient(circle at 84% 18%, rgba(20, 108, 98, 0.26), transparent 38%),
+    linear-gradient(132deg, #0a1d20 8%, #0f3335 48%, #222f1a 100%);
 }
 
 @keyframes float {
@@ -148,4 +189,19 @@ h4 {
 
 .theme-toggle-enter {
   animation: bounce-in 0.6s ease-out;
+}
+
+@keyframes appear-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.appear-up {
+  animation: appear-up 0.55s ease-out both;
 }

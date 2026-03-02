@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sun, Moon, Home, User, Menu, Search, LogOut, ChevronDown } from 'lucide-react';
+import { Sun, Moon, User, Menu, LogOut, ChevronDown } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import NotificationCenter from './NotificationCenter';
@@ -29,95 +29,78 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = false }) 
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-3 sm:px-4 py-2 sm:py-3">
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
-        {/* Left side */}
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          {showMenuButton && (
-            <button
-              onClick={onMenuClick}
-              className="lg:hidden p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"
-            >
-              <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300" />
-            </button>
-          )}
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            <FindSheltaLogo size={window.innerWidth < 640 ? 36 : 48} />
-          </div>
-        </div>
-
-        {/* Right side */}
-        <div className="flex items-center space-x-1 sm:space-x-3">
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {isDark ? (
-              <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
-            ) : (
-              <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+    <header className="sticky top-0 z-50 border-b border-[color:var(--border)] bg-[color:var(--surface)]/95 backdrop-blur-xl">
+      <div className="section-shell">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center gap-3">
+            {showMenuButton && (
+              <button
+                onClick={onMenuClick}
+                className="ghost-button inline-flex items-center justify-center rounded-lg p-2 lg:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
             )}
-          </button>
-
-          {/* User menu */}
-          {user && (
-            <div className="flex items-center space-x-1 sm:space-x-2">
-              {/* Notification Center */}
-              <NotificationCenter />
-              
-              <div className="hidden md:block text-right">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-24 lg:max-w-none">
-                  {user.name}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                  {user.role.replace('_', ' ')}
-                </p>
-              </div>
-              {/* User Menu Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-1 sm:space-x-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300" />
-                  <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-300" />
-                </button>
-                
-                {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-56 sm:w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 z-50">
-                    <div className="px-4 py-2 border-b border-gray-200 dark:border-slate-700">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {user.name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {user.email}
-                      </p>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                      className="w-full flex items-center space-x-2 px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>{isLoggingOut ? 'Signing out...' : 'Sign out'}</span>
-                    </button>
-                  </div>
-                )}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <FindSheltaLogo size={44} />
+              <div className="hidden sm:block">
+                <p className="text-sm font-semibold tracking-[0.14em] text-[color:var(--text-muted)]">FINDSHELTA</p>
+                <p className="text-xs text-[color:var(--text-muted)]">Property Marketplace</p>
               </div>
             </div>
-          )}
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={toggleTheme}
+              className="ghost-button inline-flex h-10 w-10 items-center justify-center rounded-lg"
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? <Sun className="h-4 w-4 text-[color:var(--accent)]" /> : <Moon className="h-4 w-4" />}
+            </button>
+
+            {user && (
+              <>
+                <NotificationCenter />
+                <div className="hidden text-right md:block">
+                  <p className="max-w-40 truncate text-sm font-semibold text-[color:var(--text)]">{user.name}</p>
+                  <p className="text-xs capitalize text-[color:var(--text-muted)]">{user.role.replace('_', ' ')}</p>
+                </div>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowUserMenu((prev) => !prev)}
+                    className="ghost-button inline-flex items-center gap-1 rounded-lg px-3 py-2"
+                    aria-label="Open user menu"
+                  >
+                    <User className="h-4 w-4" />
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+
+                  {showUserMenu && (
+                    <div className="panel absolute right-0 mt-2 w-56 rounded-xl p-2 z-50">
+                      <div className="border-b border-[color:var(--border)] px-2 pb-3">
+                        <p className="truncate text-sm font-semibold text-[color:var(--text)]">{user.name}</p>
+                        <p className="truncate text-xs text-[color:var(--text-muted)]">{user.email}</p>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="mt-2 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:text-rose-300 dark:hover:bg-rose-900/20"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>{isLoggingOut ? 'Signing out...' : 'Sign out'}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
-      
-      {/* Click outside to close menu */}
-      {showUserMenu && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setShowUserMenu(false)}
-        />
-      )}
+
+      {showUserMenu && <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />}
     </header>
   );
 };
