@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { ComparisonProvider } from './contexts/ComparisonContext';
@@ -10,11 +10,9 @@ import LoginForm from './components/Auth/LoginForm';
 import ResetPassword from './components/Auth/ResetPassword';
 import HomeSeekerDashboard from './components/Dashboard/HomeSeekerDashboard';
 import AgentDashboard from './components/Dashboard/AgentDashboard';
-import AdminDashboard from './components/Admin/AdminDashboard';
-import AdminLogin from './components/Admin/AdminLogin';
+import AdminPortal from './components/Admin/AdminPortal';
 import SubscriptionPlans from './components/Subscription/SubscriptionPlans';
 import DatabaseTest from './components/Debug/DatabaseTest';
-import { supabase } from './lib/supabase';
 import './utils/makeAdmin';
 
 const FullScreenLoader: React.FC<{ label?: string }> = ({ label = 'Loading...' }) => (
@@ -91,46 +89,6 @@ const RegisterRoute: React.FC = () => {
   return <RegistrationFlow onBack={() => navigate('/login')} />;
 };
 
-const AdminRoute: React.FC = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      const { data } = await supabase
-        .from('admin_users')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      setIsAdmin(!!data);
-      setLoading(false);
-    };
-
-    checkAdmin();
-  }, [user]);
-
-  if (loading) {
-    return <FullScreenLoader label="Checking admin access..." />;
-  }
-
-  if (!user) {
-    return <AdminLogin />;
-  }
-
-  if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <AdminDashboard />;
-};
-
 const NotFoundRoute: React.FC = () => <Navigate to="/" replace />;
 
 function AppRoutes() {
@@ -140,7 +98,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginRoute />} />
       <Route path="/register" element={<RegisterRoute />} />
       <Route path="/dashboard" element={<DashboardRoute />} />
-      <Route path="/admin" element={<AdminRoute />} />
+      <Route path="/admin" element={<AdminPortal />} />
       <Route path="/subscription" element={<SubscriptionPlans />} />
       <Route path="/debug" element={<DatabaseTest />} />
       <Route path="/reset-password" element={<ResetPassword />} />

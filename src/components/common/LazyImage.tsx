@@ -15,6 +15,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -38,11 +39,16 @@ const LazyImage: React.FC<LazyImageProps> = ({
   return (
     <img
       ref={imgRef}
-      src={isInView ? src : placeholder}
+      src={isInView && !hasError ? src : placeholder}
       alt={alt}
       className={`${className} ${!isLoaded ? 'opacity-50' : 'opacity-100'} transition-opacity duration-300`}
       onLoad={() => setIsLoaded(true)}
+      onError={() => {
+        setHasError(true);
+        setIsLoaded(true);
+      }}
       loading="lazy"
+      decoding="async"
     />
   );
 };

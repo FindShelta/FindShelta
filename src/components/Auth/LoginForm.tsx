@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ArrowLeft, Home, Sun, Moon, Mail, Search } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Sun, Moon, Mail, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import ForgotPassword from './ForgotPassword';
@@ -47,92 +47,101 @@ const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToRegister }) => 
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
   if (showForgotPassword) {
-    return (
-      <ForgotPassword
-        onBack={() => setShowForgotPassword(false)}
-      />
-    );
+    return <ForgotPassword onBack={() => setShowForgotPassword(false)} />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4 transition-colors duration-300">
-      {/* Theme Toggle - Top Right */}
-      <div className="fixed top-4 right-4 z-50">
+    <div className="section-shell min-h-screen py-8 sm:py-12">
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          onClick={onBack}
+          className="ghost-button inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
         <button
           onClick={toggleTheme}
-          className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300 hover:scale-105"
+          className="ghost-button inline-flex h-10 w-10 items-center justify-center rounded-lg"
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {isDark ? (
-            <Sun className="w-5 h-5 text-yellow-500" />
-          ) : (
-            <Moon className="w-5 h-5 text-slate-600" />
-          )}
+          {isDark ? <Sun className="h-4 w-4 text-[color:var(--accent)]" /> : <Moon className="h-4 w-4" />}
         </button>
       </div>
 
-      <div className="max-w-md w-full space-y-6">
-        {/* Back Button */}
-        <button
-          onClick={onBack}
-          className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </button>
+      <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+        <aside className="enterprise-header">
+          <div className="mb-8 flex items-center gap-3">
+            <FindSheltaLogo size={52} />
+            <div>
+              <p className="text-xl font-bold text-[color:var(--text)]">FindShelta</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Enterprise Property Platform</p>
+            </div>
+          </div>
+          <h1 className="max-w-md text-3xl font-bold leading-tight text-[color:var(--text)] sm:text-4xl">Secure access to your workspace</h1>
+          <p className="mt-4 max-w-md text-sm text-[color:var(--text-muted)] sm:text-base">
+            Continue with your account to manage listings, follow-up with agents, and track saved searches.
+          </p>
 
-        {/* Login Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-slate-700 transition-all duration-300">
-          <div className="text-center mb-8 space-y-4">
-            <div className="flex justify-center">
-              <FindSheltaLogo size={128} className="transition-transform duration-300 hover:scale-105" />
+          <div className="mt-8 space-y-3 text-sm text-[color:var(--text-muted)]">
+            <div className="enterprise-kpi flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-[color:var(--accent)]" />
+              Verified listings pipeline
             </div>
-            <div className="space-y-2">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">WELCOME TO FINDSHELTA</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">let's get started!!!</p>
+            <div className="enterprise-kpi flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-[color:var(--accent)]" />
+              Direct communication workflow
             </div>
+            <div className="enterprise-kpi flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-[color:var(--accent)]" />
+              Alerts and saved searches
+            </div>
+          </div>
+        </aside>
+
+        <div className="panel rounded-3xl p-6 sm:p-8 lg:p-10">
+          <div className="mb-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Account Access</p>
+            <h2 className="mt-2 text-3xl font-bold text-[color:var(--text)]">Welcome back</h2>
+            <p className="mt-2 text-sm text-[color:var(--text-muted)]">Use your email and password to enter your dashboard.</p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300 text-sm transition-all duration-300">
+            <div className="mb-4 rounded-xl border border-rose-300 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-700 dark:bg-rose-900/20 dark:text-rose-300">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-300">
-                Email Address
-              </label>
+              <label className="mb-2 block text-sm font-medium text-[color:var(--text)]">Email Address</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white transition-all duration-300"
-                placeholder="Enter your email"
+                className="brand-input w-full rounded-xl px-4 py-3"
+                placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300">
-                  Password
-                </label>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="block text-sm font-medium text-[color:var(--text)]">Password</label>
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors duration-200 hover:underline"
+                  className="text-xs font-semibold text-[color:var(--brand)] hover:underline"
                 >
-                  Forgot Password?
+                  Forgot password?
                 </button>
               </div>
               <div className="relative">
@@ -142,51 +151,45 @@ const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToRegister }) => 
                   value={formData.password}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white transition-all duration-300"
+                  className="brand-input w-full rounded-xl px-4 py-3 pr-12"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--text-muted)]"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Enhanced Forgot Password Section */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 text-center">
-              <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
-                Can't access your account?
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowForgotPassword(true)}
-                className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
-              >
-                <Mail className="w-4 h-4" />
-                <span>Reset Password</span>
-              </button>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-all duration-300 hover:scale-[1.02]"
-            >
+            <button type="submit" disabled={loading} className="brand-button w-full rounded-xl py-3 font-semibold disabled:opacity-60">
               {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-4 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-strong)] p-4">
+            <div className="flex items-start gap-2 text-sm text-[color:var(--text-muted)]">
+              <ShieldCheck className="mt-0.5 h-4 w-4 text-[color:var(--brand)]" />
+              Password reset is available from this page if you cannot access your account.
+            </div>
             <button
-              onClick={onSwitchToRegister}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors duration-200"
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white"
             >
-              Don't have an account? Create one now
+              <Mail className="h-4 w-4" />
+              Reset Password
             </button>
           </div>
+
+          <p className="mt-6 text-center text-sm text-[color:var(--text-muted)]">
+            No account yet?{' '}
+            <button onClick={onSwitchToRegister} className="font-semibold text-[color:var(--brand)] hover:underline">
+              Create one
+            </button>
+          </p>
         </div>
       </div>
     </div>

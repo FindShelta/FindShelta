@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Upload, CreditCard, BarChart3, Eye, Bookmark, Calendar, AlertCircle, CheckCircle, Clock, Check } from 'lucide-react';
+import { Plus, Upload, CreditCard, BarChart3, Eye, Bookmark, Calendar, AlertCircle, CheckCircle, Clock, Check, X, MapPin, Bed, Bath } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import Header from '../Layout/Header';
@@ -633,133 +633,78 @@ const AgentDashboard: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+    <div className="min-h-screen">
       <Header />
-      
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">
-                Welcome back, {user?.name}!
-              </h1>
-              <p className="text-emerald-100">
-                Manage your properties and grow your business
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold">{stats.totalListings}</div>
-              <div className="text-emerald-100 text-sm">Active Listings</div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalListings}</p>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Listings</p>
-              </div>
-              <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
-              </div>
+      <div className="section-shell py-6 sm:py-8">
+        <section className="enterprise-header">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Agent Workspace</p>
+              <h1 className="mt-2 text-3xl font-bold text-[color:var(--text)] sm:text-4xl">Welcome back, {user?.name}</h1>
+              <p className="mt-2 text-sm text-[color:var(--text-muted)] sm:text-base">Manage listings, monitor approval status, and track performance.</p>
+            </div>
+            <div className="enterprise-kpi text-center">
+              <p className="text-2xl font-bold text-[color:var(--text)]">{stats.totalListings}</p>
+              <p className="text-xs text-[color:var(--text-muted)]">Active Listings</p>
             </div>
           </div>
-          
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalViews}</p>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Views</p>
-              </div>
-              <div className="p-2 sm:p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                <Eye className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
-            </div>
+        </section>
+
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="enterprise-card">
+            <p className="text-2xl font-bold text-[color:var(--text)]">{stats.totalListings}</p>
+            <p className="text-sm text-[color:var(--text-muted)]">Total Listings</p>
           </div>
-          
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBookmarks}</p>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Bookmarks</p>
-              </div>
-              <div className="p-2 sm:p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
+          <div className="enterprise-card">
+            <p className="text-2xl font-bold text-[color:var(--text)]">{stats.totalViews}</p>
+            <p className="text-sm text-[color:var(--text-muted)]">Total Views</p>
           </div>
-          
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.thisMonth}</p>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">This Month</p>
-              </div>
-              <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
+          <div className="enterprise-card">
+            <p className="text-2xl font-bold text-[color:var(--text)]">{stats.totalBookmarks}</p>
+            <p className="text-sm text-[color:var(--text-muted)]">Bookmarks</p>
+          </div>
+          <div className="enterprise-card">
+            <p className="text-2xl font-bold text-[color:var(--text)]">{stats.thisMonth}</p>
+            <p className="text-sm text-[color:var(--text-muted)]">This Month</p>
           </div>
         </div>
 
-        {/* Subscription Status Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700 mb-8">
+        <div className="panel mt-6 rounded-xl p-5">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Subscription Status
-              </h3>
-              <div className="flex items-center space-x-3">
+              <h3 className="text-lg font-semibold text-[color:var(--text)]">Subscription Status</h3>
+              <div className="mt-2 flex items-center gap-2 text-sm">
                 {subscriptionStatus.isActive ? (
-                  <>
-                    <div className="flex items-center space-x-2 text-green-600 dark:text-green-400">
-                      <CheckCircle className="w-5 h-5" />
-                      <span className="font-medium">Active</span>
-                    </div>
-
-                  </>
+                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-300"><CheckCircle className="h-4 w-4" /> Active</span>
                 ) : (
-                  <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400">
-                    <Clock className="w-5 h-5" />
-                    <span className="font-medium">Payment Pending</span>
-                  </div>
+                  <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-300"><Clock className="h-4 w-4" /> Payment pending</span>
                 )}
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                {subscriptionStatus.plan} plan
-              </div>
-            </div>
+            <p className="text-sm capitalize text-[color:var(--text-muted)]">{subscriptionStatus.plan || 'No plan'}</p>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 mb-6 sm:mb-8">
-          <div className="flex space-x-1 p-1">
+        <div className="panel mt-6 rounded-xl p-2">
+          <div className="grid grid-cols-3 gap-1">
             {[
               { id: 'listings', label: 'My Listings', icon: Upload, shortLabel: 'Listings' },
               { id: 'payment', label: 'Subscription', icon: CreditCard, shortLabel: 'Payment' },
-              { id: 'analytics', label: 'Analytics', icon: BarChart3, shortLabel: 'Stats' }
+              { id: 'analytics', label: 'Analytics', icon: BarChart3, shortLabel: 'Stats' },
             ].map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`flex-1 flex items-center justify-center space-x-1 sm:space-x-2 py-2 sm:py-3 px-2 sm:px-4 rounded-lg font-medium text-xs sm:text-sm transition-all ${
+                  className={`flex items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-semibold sm:text-sm ${
                     activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'
+                      ? 'bg-[color:var(--brand)] text-white'
+                      : 'text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)]'
                   }`}
                 >
-                  <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <Icon className="h-4 w-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
                   <span className="sm:hidden">{tab.shortLabel}</span>
                 </button>
@@ -831,92 +776,87 @@ const AgentDashboard: React.FC = () => {
         
         {/* Listing Detail Modal */}
         {selectedListing && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-slate-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {selectedListing.title}
-                  </h2>
-                  <button
-                    onClick={() => setSelectedListing(null)}
-                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  >
-                    ✕
-                  </button>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4">
+            <div className="panel max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-2xl">
+              <div className="sticky top-0 z-10 flex items-start justify-between border-b border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 sm:px-6">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">Listing Preview</p>
+                  <h2 className="text-lg font-bold text-[color:var(--text)] sm:text-2xl">{selectedListing.title}</h2>
                 </div>
-                
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <img
-                      src={selectedListing.images?.[0] || '/placeholder-property.jpg'}
-                      alt={selectedListing.title}
-                      className="w-full h-64 object-cover rounded-lg mb-4"
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                      {selectedListing.images?.slice(1, 5).map((image: string, index: number) => (
+                <button
+                  onClick={() => setSelectedListing(null)}
+                  className="ghost-button inline-flex h-9 w-9 items-center justify-center rounded-lg"
+                  aria-label="Close preview"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="grid gap-5 p-4 sm:grid-cols-2 sm:gap-6 sm:p-6">
+                <div>
+                  <img
+                    src={selectedListing.images?.[0] || '/placeholder-property.jpg'}
+                    alt={selectedListing.title}
+                    className="h-64 w-full rounded-xl border border-[color:var(--border)] object-cover sm:h-80"
+                  />
+                  {!!selectedListing.images?.length && selectedListing.images.length > 1 && (
+                    <div className="mt-3 grid grid-cols-5 gap-2">
+                      {selectedListing.images.slice(0, 10).map((image: string, index: number) => (
                         <img
                           key={index}
                           src={image}
-                          alt={`${selectedListing.title} ${index + 2}`}
-                          className="w-full h-20 object-cover rounded"
+                          alt={`${selectedListing.title} ${index + 1}`}
+                          className="h-14 w-full rounded-md border border-[color:var(--border)] object-cover"
                         />
                       ))}
                     </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className={`rounded-md px-2 py-1 text-xs font-semibold ${getStatusColor(selectedListing.status, selectedListing.is_approved)}`}>
+                      {getStatusText(selectedListing.status, selectedListing.is_approved)}
+                    </span>
+                    <p className="text-2xl font-bold text-[color:var(--brand)] sm:text-3xl">
+                      NGN {selectedListing.price?.toLocaleString()}
+                      {selectedListing.property_type === 'rent' ? '/year' : selectedListing.property_type === 'shortstay' ? '/night' : ''}
+                    </p>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedListing.status, selectedListing.is_approved)}`}>
-                        {getStatusText(selectedListing.status, selectedListing.is_approved)}
-                      </span>
-                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        ₦{selectedListing.price?.toLocaleString()}
-                        {selectedListing.property_type === 'rent' ? '/year' : selectedListing.property_type === 'shortstay' ? '/night' : ''}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Location</h3>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        {selectedListing.location_city}, {selectedListing.location_state}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Description</h3>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        {selectedListing.description || 'No description provided'}
-                      </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white">Bedrooms</h4>
-                        <p className="text-gray-600 dark:text-gray-300">{selectedListing.bedrooms || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white">Bathrooms</h4>
-                        <p className="text-gray-600 dark:text-gray-300">{selectedListing.bathrooms || 'N/A'}</p>
-                      </div>
-                    </div>
-                    
-                    {selectedListing.amenities && selectedListing.amenities.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Amenities</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedListing.amenities.map((amenity: string, index: number) => (
-                            <span key={index} className="px-2 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded text-sm">
-                              {amenity}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Created: {new Date(selectedListing.created_at).toLocaleDateString()}
-                    </div>
+
+                  <div className="flex items-start gap-2 text-sm text-[color:var(--text-muted)]">
+                    <MapPin className="mt-0.5 h-4 w-4 text-[color:var(--brand)]" />
+                    <span>{selectedListing.location_city}, {selectedListing.location_state}</span>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="enterprise-kpi flex items-center gap-2"><Bed className="h-4 w-4 text-[color:var(--brand)]" /> {selectedListing.bedrooms || 'N/A'} Bedrooms</div>
+                    <div className="enterprise-kpi flex items-center gap-2"><Bath className="h-4 w-4 text-[color:var(--brand)]" /> {selectedListing.bathrooms || 'N/A'} Bathrooms</div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)]">Description</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-[color:var(--text-muted)]">
+                      {selectedListing.description || 'No description provided'}
+                    </p>
+                  </div>
+
+                  {selectedListing.amenities && selectedListing.amenities.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)]">Amenities</h3>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedListing.amenities.map((amenity: string, index: number) => (
+                          <span key={index} className="rounded-md bg-[color:var(--surface-strong)] px-2 py-1 text-xs font-medium text-[color:var(--text-muted)]">
+                            {amenity}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-[color:var(--text-muted)]">
+                    Created: {new Date(selectedListing.created_at).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             </div>
@@ -1106,3 +1046,4 @@ const AgentDashboard: React.FC = () => {
 };
 
 export default AgentDashboard;
+

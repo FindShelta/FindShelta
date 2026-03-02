@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { Property } from '../../types';
 import LazyImage from '../common/LazyImage';
-import { MapPin, Bed, Bath, Heart, Play, Scale, Phone } from 'lucide-react';
+import { MapPin, Bed, Bath, Heart, Play, Scale, MessageCircle } from 'lucide-react';
 
 interface AliExpressCardProps {
   property: Property;
@@ -14,129 +14,151 @@ interface AliExpressCardProps {
   isMobile?: boolean;
 }
 
-const AliExpressCard: React.FC<AliExpressCardProps> = ({
-  property,
-  onSelect,
-  onBookmarkToggle,
-  onTourClick,
-  onCompareClick,
-  isFavorite,
-  isInComparison,
-  isMobile = false
-}) => {
-  const formatPrice = (price: number) => {
-    if (price >= 1000000) {
-      return `₦${(price / 1000000).toFixed(1)}M`;
-    }
-    return `₦${(price / 1000).toFixed(0)}K`;
-  };
+const typeStyles: Record<Property['type'], { label: string; chip: string }> = {
+  sale: { label: 'For Sale', chip: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+  rent: { label: 'For Rent', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  shortstay: { label: 'Short Stay', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
+};
 
-  return (
-    <div
-      className="group bg-white dark:bg-slate-800 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-200 dark:border-slate-700 hover:border-orange-400 dark:hover:border-orange-500"
-      onClick={() => onSelect(property)}
-    >
-      {/* Property Image */}
-      <div className="relative aspect-square overflow-hidden">
-        <LazyImage
-          src={property.images[0]}
-          alt={property.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onBookmarkToggle(property.id);
-          }}
-          className={`absolute top-2 right-2 ${isMobile ? 'p-1' : 'p-1.5'} bg-white/80 rounded-full hover:bg-white transition-colors`}
-        >
-          <Heart
-            className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${
-              isFavorite ? 'text-red-500 fill-current' : 'text-gray-600'
-            }`}
+const formatPrice = (price: number, type: Property['type']) => {
+  const value = new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    maximumFractionDigits: 0,
+  }).format(price || 0);
+
+  if (type === 'rent') return `${value}/year`;
+  if (type === 'shortstay') return `${value}/night`;
+  return value;
+};
+
+const AliExpressCard: React.FC<AliExpressCardProps> = memo(
+  ({
+    property,
+    onSelect,
+    onBookmarkToggle,
+    onTourClick,
+    onCompareClick,
+    isFavorite,
+    isInComparison,
+    isMobile = false,
+  }) => {
+    const compactLocation = useMemo(() => property.location?.split(',')[0]?.trim() || property.location, [property.location]);
+
+    const openWhatsApp = (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      const sanitizedNumber = (property.agentWhatsapp || '').replace(/[^0-9]/g, '');
+      const text = encodeURIComponent(`Hi, I am interested in ${property.title}.`);
+      window.open(`https://wa.me/${sanitizedNumber}?text=${text}`, '_blank', 'noopener,noreferrer');
+    };
+
+    const onCardKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onSelect(property);
+      }
+    };
+
+    return (
+      <article
+        role="button"
+        tabIndex={0}
+        aria-label={`Open property ${property.title}`}
+        onClick={() => onSelect(property)}
+        onKeyDown={onCardKeyDown}
+        className="group overflow-hidden rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]"
+      >
+        <div className="relative aspect-[4/3] overflow-hidden border-b border-[color:var(--border)] bg-[color:var(--surface-strong)]">
+          <LazyImage
+            src={property.images[0]}
+            alt={property.title}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           />
-        </button>
-        <div className="absolute top-2 left-2">
-          <span className={`${isMobile ? 'px-1.5 py-0.5' : 'px-2 py-1'} rounded text-xs font-medium text-white ${
-            property.type === 'sale'
-              ? 'bg-blue-500'
-              : property.type === 'rent'
-              ? 'bg-green-500'
-              : 'bg-orange-500'
-          }`}>
-            {property.type === 'sale' ? 'Sale' : property.type === 'rent' ? 'Rent' : 'Stay'}
-          </span>
-        </div>
-      </div>
 
-      {/* Property Details */}
-      <div className="p-2">
-        <div className={`${isMobile ? 'text-sm' : 'text-lg'} font-bold text-orange-600 dark:text-orange-400 mb-1`}>
-          {formatPrice(property.price)}
-        </div>
-        <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-900 dark:text-white mb-1 line-clamp-2 leading-tight`}>
-          {property.title}
-        </h3>
-        <div className={`flex items-center text-gray-500 dark:text-gray-400 ${isMobile ? 'text-xs mb-1' : 'text-xs mb-2'}`}>
-          <MapPin className={`${isMobile ? 'w-2.5 h-2.5' : 'w-3 h-3'} mr-1`} />
-          <span className="truncate">{isMobile ? property.location.split(',')[0] : property.location}</span>
-        </div>
-        
-        {/* Property Stats */}
-        <div className={`flex items-center ${isMobile ? 'space-x-2' : 'space-x-3'} text-xs text-gray-600 dark:text-gray-300 ${isMobile ? '' : 'mb-2'}`}>
-          <div className={`flex items-center ${isMobile ? 'space-x-0.5' : 'space-x-1'}`}>
-            <Bed className={`${isMobile ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} />
-            <span>{property.bedrooms}</span>
+          <div className="absolute left-2 top-2">
+            <span className={`rounded-md px-2 py-1 text-[11px] font-semibold ${typeStyles[property.type].chip}`}>
+              {typeStyles[property.type].label}
+            </span>
           </div>
-          <div className={`flex items-center ${isMobile ? 'space-x-0.5' : 'space-x-1'}`}>
-            <Bath className={`${isMobile ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} />
-            <span>{property.bathrooms}</span>
-          </div>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onBookmarkToggle(property.id);
+            }}
+            className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text-muted)] hover:text-rose-500"
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current text-rose-500' : ''}`} />
+          </button>
         </div>
 
-        {/* Action Buttons - Only on Desktop */}
-        {!isMobile && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onTourClick(property);
-                }}
-                className="p-1 bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300 rounded hover:bg-purple-100 hover:text-purple-600 transition-colors"
-                title="Virtual Tour"
-              >
-                <Play className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCompareClick(property);
-                }}
-                className={`p-1 rounded transition-colors ${
-                  isInComparison
-                    ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                    : 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300 hover:bg-blue-100 hover:text-blue-600'
-                }`}
-                title="Compare"
-              >
-                <Scale className="w-3 h-3" />
-              </button>
+        <div className={`${isMobile ? 'p-2.5' : 'p-3.5'} space-y-2.5`}>
+          <div>
+            <p className="text-base font-bold text-[color:var(--text)]">{formatPrice(property.price, property.type)}</p>
+            <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} mt-1 line-clamp-2 font-semibold leading-snug text-[color:var(--text)]`}>
+              {property.title}
+            </h3>
+            <div className="mt-1 flex items-center gap-1 text-xs text-[color:var(--text-muted)]">
+              <MapPin className="h-3.5 w-3.5" />
+              <span className="truncate">{isMobile ? compactLocation : property.location}</span>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3 text-xs text-[color:var(--text-muted)]">
+            <span className="inline-flex items-center gap-1">
+              <Bed className="h-3.5 w-3.5" />
+              {property.bedrooms ?? '-'}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Bath className="h-3.5 w-3.5" />
+              {property.bathrooms ?? '-'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(`https://wa.me/${property.agentWhatsapp}`, '_blank');
+                onTourClick(property);
               }}
-              className="px-2 py-1 bg-orange-500 text-white rounded text-xs font-medium hover:bg-orange-600 transition-colors"
+              className="ghost-button inline-flex items-center justify-center rounded-md px-2 py-1.5 text-xs font-semibold"
+              aria-label="Open virtual tour"
+              title="Virtual tour"
             >
-              Contact
+              <Play className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onCompareClick(property);
+              }}
+              className={`inline-flex items-center justify-center rounded-md px-2 py-1.5 text-xs font-semibold ${
+                isInComparison
+                  ? 'bg-[color:var(--brand)] text-white'
+                  : 'ghost-button'
+              }`}
+              aria-label={isInComparison ? 'Added to comparison' : 'Add to comparison'}
+              title={isInComparison ? 'Added to comparison' : 'Add to comparison'}
+            >
+              <Scale className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={openWhatsApp}
+              className="brand-button inline-flex items-center justify-center rounded-md px-2 py-1.5 text-xs font-semibold"
+              aria-label="Contact on WhatsApp"
+              title="Contact on WhatsApp"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
             </button>
           </div>
-        )}
-      </div>
-    </div>
-  );
-};
+        </div>
+      </article>
+    );
+  }
+);
+
+AliExpressCard.displayName = 'AliExpressCard';
 
 export default AliExpressCard;

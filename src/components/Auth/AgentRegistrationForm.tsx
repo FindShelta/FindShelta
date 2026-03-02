@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, User, Phone, Mail, FileText, Award, Clock } from 'lucide-react';
+import { Building2, User, Clock, X, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface AgentRegistrationFormProps {
@@ -13,7 +13,7 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    password: ''
+    password: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,9 +21,8 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
     setLoading(true);
 
     try {
-      const success = await registerAgent(formData);
-
-      if (success) {
+      const ok = await registerAgent(formData);
+      if (ok) {
         setSuccess(true);
       } else {
         alert('Registration failed. Please try again.');
@@ -36,37 +35,26 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
     }
   };
 
-
-
   if (success) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white dark:bg-slate-800 rounded-xl max-w-md w-full p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Clock className="w-8 h-8 text-green-600 dark:text-green-400" />
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="panel w-full max-w-lg rounded-2xl p-8 text-center">
+          <div className="mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300">
+            <Clock className="h-7 w-7" />
           </div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Registration Submitted!
-          </h2>
-          
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Your agent registration has been submitted for review. You will receive an email notification once approved by our admin team.
+          <h2 className="text-2xl font-bold text-[color:var(--text)]">Registration submitted</h2>
+          <p className="mt-3 text-sm text-[color:var(--text-muted)]">
+            Your agent profile is under review. We will notify you once approval is complete.
           </p>
-          
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-700 dark:text-blue-200">
-              <strong>What's next?</strong><br/>
-              • Admin review (1-2 business days)<br/>
-              • Email notification upon approval<br/>
-              • Access to agent dashboard
-            </p>
+
+          <div className="mt-5 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-strong)] p-4 text-left text-sm text-[color:var(--text-muted)]">
+            <p className="font-semibold text-[color:var(--text)]">Next steps</p>
+            <p className="mt-1">1. Admin review in 1-2 business days</p>
+            <p>2. Approval update sent by email</p>
+            <p>3. Listing access enabled in agent dashboard</p>
           </div>
-          
-          <button
-            onClick={onClose}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors"
-          >
+
+          <button onClick={onClose} className="brand-button mt-6 w-full rounded-lg py-3 font-semibold">
             Back to Login
           </button>
         </div>
@@ -75,115 +63,70 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Agent Registration
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              ✕
-            </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="panel w-full max-w-2xl rounded-2xl p-6 sm:p-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Agent Onboarding</p>
+            <h2 className="mt-1 text-2xl font-bold text-[color:var(--text)]">Register as an Agent</h2>
+          </div>
+          <button onClick={onClose} className="ghost-button inline-flex h-9 w-9 items-center justify-center rounded-lg" aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-[color:var(--text)]">Full Name</label>
+              <input
+                type="text"
+                required
+                value={formData.fullName}
+                onChange={(e) => setFormData((prev) => ({ ...prev, fullName: e.target.value }))}
+                className="brand-input w-full rounded-lg px-3 py-2.5"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-[color:var(--text)]">Email</label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                className="brand-input w-full rounded-lg px-3 py-2.5"
+              />
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Personal Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                <User className="w-5 h-5 mr-2" />
-                Personal Information
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.fullName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Password *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  />
-                </div>
-                
+          <div>
+            <label className="mb-2 block text-sm font-medium text-[color:var(--text)]">Password</label>
+            <input
+              type="password"
+              required
+              value={formData.password}
+              onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
+              className="brand-input w-full rounded-lg px-3 py-2.5"
+            />
+          </div>
 
-              </div>
+          <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-strong)] p-4 text-sm text-[color:var(--text-muted)]">
+            <div className="mb-2 flex items-center gap-2 font-semibold text-[color:var(--text)]">
+              <ShieldCheck className="h-4 w-4 text-[color:var(--brand)]" />
+              Approval process
             </div>
+            Registration is reviewed before listing access is enabled.
+          </div>
 
-            {/* Professional Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                <Building2 className="w-5 h-5 mr-2" />
-                Professional Information
-              </h3>
-              
-
-              
-
-            </div>
-
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-              <div className="flex items-start space-x-3">
-                <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-blue-900 dark:text-blue-100">Approval Process</h4>
-                  <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                    Your registration will be reviewed by our admin team. You will receive an email notification once approved and can then start listing properties.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex space-x-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-              >
-                {loading ? 'Submitting...' : 'Submit Registration'}
-              </button>
-            </div>
-          </form>
-        </div>
+          <div className="flex gap-3">
+            <button type="button" onClick={onClose} className="ghost-button w-full rounded-lg py-2.5 font-semibold">
+              Cancel
+            </button>
+            <button type="submit" disabled={loading} className="brand-button w-full rounded-lg py-2.5 font-semibold disabled:opacity-60">
+              {loading ? 'Submitting...' : 'Submit Registration'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

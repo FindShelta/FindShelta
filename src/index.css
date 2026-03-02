@@ -1,37 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg: #f3f5ef;
-  --surface: rgba(255, 255, 255, 0.88);
+  --bg: #f3f5f9;
+  --surface: rgba(255, 255, 255, 0.92);
   --surface-solid: #ffffff;
-  --surface-strong: #f7f8f3;
-  --text: #142018;
-  --text-muted: #5d6a60;
-  --border: #d4dfd5;
-  --brand: #146c62;
-  --brand-strong: #0f544e;
-  --accent: #ca8a04;
+  --surface-strong: #eef2f8;
+  --text: #0f172a;
+  --text-muted: #5b6478;
+  --border: #d7dee9;
+  --brand: #1d4ed8;
+  --brand-strong: #1e3a8a;
+  --accent: #0f766e;
   --danger: #be123c;
-  --ring: color-mix(in srgb, var(--brand), transparent 72%);
+  --ring: color-mix(in srgb, var(--brand), transparent 74%);
 }
 
 .dark {
-  --bg: #081012;
-  --surface: rgba(13, 22, 26, 0.84);
-  --surface-solid: #102027;
-  --surface-strong: #0f1a20;
-  --text: #e9f3ec;
-  --text-muted: #9eb3a6;
-  --border: #213b38;
-  --brand: #34d2bf;
-  --brand-strong: #20b6a5;
-  --accent: #f4b942;
+  --bg: #0a1220;
+  --surface: rgba(15, 23, 42, 0.9);
+  --surface-solid: #111d33;
+  --surface-strong: #13233f;
+  --text: #e8eefb;
+  --text-muted: #98a7c7;
+  --border: #253553;
+  --brand: #60a5fa;
+  --brand-strong: #3b82f6;
+  --accent: #2dd4bf;
   --danger: #fb7185;
-  --ring: color-mix(in srgb, var(--brand), transparent 76%);
+  --ring: color-mix(in srgb, var(--brand), transparent 78%);
 }
 
 * {
@@ -47,35 +47,34 @@ body,
 }
 
 body {
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
   color: var(--text);
   background:
-    radial-gradient(60rem 30rem at 8% -10%, rgba(20, 108, 98, 0.2), transparent 58%),
-    radial-gradient(52rem 30rem at 102% 10%, rgba(202, 138, 4, 0.16), transparent 62%),
+    radial-gradient(60rem 35rem at -2% -5%, rgba(29, 78, 216, 0.14), transparent 58%),
+    radial-gradient(58rem 35rem at 104% 8%, rgba(15, 118, 110, 0.1), transparent 62%),
     var(--bg);
-  letter-spacing: -0.01em;
 }
 
 h1,
 h2,
 h3,
 h4 {
-  font-family: 'Sora', 'Manrope', sans-serif;
+  font-family: 'Space Grotesk', 'IBM Plex Sans', sans-serif;
   letter-spacing: -0.02em;
 }
 
 .glass-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: 0 24px 56px -34px rgba(15, 23, 17, 0.5);
-  backdrop-filter: blur(12px);
+  box-shadow: 0 14px 36px -26px rgba(12, 19, 34, 0.45);
+  backdrop-filter: blur(10px);
 }
 
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: 0 22px 52px -36px rgba(10, 20, 14, 0.55);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 30px -24px rgba(9, 18, 35, 0.42);
+  backdrop-filter: blur(8px);
 }
 
 .section-shell {
@@ -83,10 +82,10 @@ h4 {
 }
 
 .brand-button {
-  background: linear-gradient(120deg, var(--brand), var(--brand-strong) 72%);
+  background: linear-gradient(120deg, var(--brand), var(--brand-strong));
   color: #f8fffb;
-  border: 1px solid color-mix(in srgb, var(--brand-strong), #ffffff 20%);
-  box-shadow: 0 14px 30px -20px color-mix(in srgb, var(--brand), #000000 28%);
+  border: 1px solid color-mix(in srgb, var(--brand-strong), #ffffff 24%);
+  box-shadow: 0 10px 20px -14px color-mix(in srgb, var(--brand), #000000 34%);
 }
 
 .brand-button:hover {
@@ -133,9 +132,9 @@ h4 {
 
 .hero-gradient {
   background:
-    radial-gradient(circle at 8% 16%, rgba(202, 138, 4, 0.2), transparent 34%),
-    radial-gradient(circle at 84% 18%, rgba(20, 108, 98, 0.26), transparent 38%),
-    linear-gradient(132deg, #0a1d20 8%, #0f3335 48%, #222f1a 100%);
+    radial-gradient(circle at 8% 16%, rgba(96, 165, 250, 0.24), transparent 34%),
+    radial-gradient(circle at 84% 18%, rgba(45, 212, 191, 0.16), transparent 38%),
+    linear-gradient(132deg, #0f1f3a 8%, #173767 48%, #143156 100%);
 }
 
 @keyframes float {
@@ -204,4 +203,20 @@ h4 {
 
 .appear-up {
   animation: appear-up 0.55s ease-out both;
+}
+
+.enterprise-shell {
+  @apply section-shell;
+}
+
+.enterprise-header {
+  @apply panel rounded-2xl px-5 py-4 sm:px-6;
+}
+
+.enterprise-card {
+  @apply panel rounded-xl p-5;
+}
+
+.enterprise-kpi {
+  @apply rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-strong)] px-4 py-3;
 }
