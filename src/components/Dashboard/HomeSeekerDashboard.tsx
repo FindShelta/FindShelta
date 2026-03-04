@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Property } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useComparison } from '../../contexts/ComparisonContext';
@@ -171,6 +171,14 @@ const HomeSeekerDashboard: React.FC = () => {
   };
 
   const filteredProperties = getFilteredProperties();
+  const categorizedProperties = useMemo(
+    () => ({
+      sale: filteredProperties.filter((property) => property.type === 'sale'),
+      rent: filteredProperties.filter((property) => property.type === 'rent'),
+      shortstay: filteredProperties.filter((property) => property.type === 'shortstay'),
+    }),
+    [filteredProperties]
+  );
 
   const handleSearch = () => {
     // Search is handled by getFilteredProperties
@@ -562,7 +570,9 @@ const HomeSeekerDashboard: React.FC = () => {
       {/* Properties Grid */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[color:var(--text)] sm:text-xl">Available Properties</h2>
+          <h2 className="text-lg font-semibold text-[color:var(--text)] sm:text-xl">
+            {activeCategory === 'all' ? 'Categorized Listings' : 'Available Properties'}
+          </h2>
           <p className="text-xs text-[color:var(--text-muted)] sm:text-sm">{filteredProperties.length} results</p>
         </div>
         {loading ? (
@@ -573,23 +583,61 @@ const HomeSeekerDashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {filteredProperties.map((property) => (
-              <AliExpressCard
-                key={property.id}
-                property={property}
-                onSelect={setSelectedProperty}
-                onBookmarkToggle={handleBookmarkToggle}
-                onTourClick={(prop) => {
-                  setSelectedTourProperty(prop);
-                  setShowVirtualTour(true);
-                }}
-                onCompareClick={addToComparison}
-                isFavorite={isFavorite(property.id)}
-                isInComparison={isInComparison(property.id)}
-              />
-            ))}
-          </div>
+          <>
+            {activeCategory === 'all' ? (
+              <div className="space-y-8">
+                {[
+                  { key: 'sale', title: 'For Sale', items: categorizedProperties.sale },
+                  { key: 'rent', title: 'For Rent', items: categorizedProperties.rent },
+                  { key: 'shortstay', title: 'Short Stay', items: categorizedProperties.shortstay },
+                ].map((section) =>
+                  section.items.length > 0 ? (
+                    <section key={section.key}>
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-base font-semibold text-[color:var(--text)] sm:text-lg">{section.title}</h3>
+                        <span className="text-xs text-[color:var(--text-muted)]">{section.items.length} listings</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                        {section.items.map((property) => (
+                          <AliExpressCard
+                            key={property.id}
+                            property={property}
+                            onSelect={setSelectedProperty}
+                            onBookmarkToggle={handleBookmarkToggle}
+                            onTourClick={(prop) => {
+                              setSelectedTourProperty(prop);
+                              setShowVirtualTour(true);
+                            }}
+                            onCompareClick={addToComparison}
+                            isFavorite={isFavorite(property.id)}
+                            isInComparison={isInComparison(property.id)}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  ) : null
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {filteredProperties.map((property) => (
+                  <AliExpressCard
+                    key={property.id}
+                    property={property}
+                    onSelect={setSelectedProperty}
+                    onBookmarkToggle={handleBookmarkToggle}
+                    onTourClick={(prop) => {
+                      setSelectedTourProperty(prop);
+                      setShowVirtualTour(true);
+                    }}
+                    onCompareClick={addToComparison}
+                    isFavorite={isFavorite(property.id)}
+                    isInComparison={isInComparison(property.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* Load More Button */}

@@ -17,6 +17,10 @@ type PendingListing = {
   agent_id: string | null;
 };
 
+type ListingCategory = 'all' | 'sale' | 'rent' | 'shortstay';
+
+const DEFAULT_ADMIN_EMAILS = ['agantiembennett@gmail.com', 'pythonbook@hotmail.com'];
+
 const AdminPortal: React.FC = () => {
   const { user, loading: authLoading, login, logout } = useAuth();
   const [email, setEmail] = useState('');
@@ -26,16 +30,22 @@ const AdminPortal: React.FC = () => {
   const [checkingAdmin, setCheckingAdmin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pendingListings, setPendingListings] = useState<PendingListing[]>([]);
+  const [activeCategory, setActiveCategory] = useState<ListingCategory>('all');
   const [listingsLoading, setListingsLoading] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [dashboardError, setDashboardError] = useState('');
 
   const adminEmails = useMemo(
     () =>
-      (import.meta.env.VITE_ADMIN_EMAILS || '')
-        .split(',')
-        .map((entry: string) => entry.trim().toLowerCase())
-        .filter(Boolean),
+      Array.from(
+        new Set([
+          ...DEFAULT_ADMIN_EMAILS,
+          ...(import.meta.env.VITE_ADMIN_EMAILS || '')
+            .split(',')
+            .map((entry: string) => entry.trim().toLowerCase())
+            .filter(Boolean),
+        ])
+      ),
     []
   );
 
@@ -50,6 +60,36 @@ const AdminPortal: React.FC = () => {
     if (type === 'shortstay') return `${amount}/night`;
     return amount;
   };
+
+  const formatCategoryLabel = (category: ListingCategory) => {
+    if (category === 'shortstay') return 'Short Stay';
+    if (category === 'sale') return 'Sale';
+    if (category === 'rent') return 'Rent';
+    return 'All';
+  };
+
+  const categoryCounts = useMemo(() => {
+    const counts = {
+      all: pendingListings.length,
+      sale: 0,
+      rent: 0,
+      shortstay: 0,
+    };
+
+    for (const listing of pendingListings) {
+      const key = (listing.property_type || 'sale') as Exclude<ListingCategory, 'all'>;
+      if (key in counts) {
+        counts[key] += 1;
+      }
+    }
+
+    return counts;
+  }, [pendingListings]);
+
+  const filteredPendingListings = useMemo(() => {
+    if (activeCategory === 'all') return pendingListings;
+    return pendingListings.filter((listing) => (listing.property_type || 'sale') === activeCategory);
+  }, [activeCategory, pendingListings]);
 
   const checkAdminAccess = useCallback(async () => {
     if (!user) {
@@ -268,8 +308,25 @@ const AdminPortal: React.FC = () => {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[color:var(--text)]">Pending Queue</h2>
             <span className="rounded-md bg-[color:var(--surface-strong)] px-2 py-1 text-xs font-semibold text-[color:var(--text-muted)]">
-              {pendingListings.length} pending
+              {filteredPendingListings.length} shown / {pendingListings.length} pending
             </span>
+          </div>
+
+          <div className="mb-4 flex flex-wrap gap-2">
+            {(['all', 'sale', 'rent', 'shortstay'] as ListingCategory[]).map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setActiveCategory(category)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  activeCategory === category
+                    ? 'bg-[color:var(--brand)] text-white'
+                    : 'bg-[color:var(--surface-strong)] text-[color:var(--text-muted)] hover:text-[color:var(--text)]'
+                }`}
+              >
+                {formatCategoryLabel(category)} ({categoryCounts[category]})
+              </button>
+            ))}
           </div>
 
           {dashboardError && (
@@ -280,14 +337,16 @@ const AdminPortal: React.FC = () => {
 
           {listingsLoading ? (
             <div className="py-10 text-center text-sm text-[color:var(--text-muted)]">Loading pending listings...</div>
-          ) : pendingListings.length === 0 ? (
+          ) : filteredPendingListings.length === 0 ? (
             <div className="py-10 text-center">
               <ShieldCheck className="mx-auto h-8 w-8 text-emerald-500" />
-              <p className="mt-2 text-sm text-[color:var(--text-muted)]">No pending listings right now.</p>
+              <p className="mt-2 text-sm text-[color:var(--text-muted)]">
+                No pending {activeCategory === 'all' ? '' : formatCategoryLabel(activeCategory).toLowerCase() + ' '}listings right now.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {pendingListings.map((listing) => (
+              {filteredPendingListings.map((listing) => (
                 <article key={listing.id} className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-strong)] p-3 sm:p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                     <img
