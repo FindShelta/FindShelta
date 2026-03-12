@@ -8,9 +8,10 @@ interface PropertyUploadFormProps {
   onSubmit: (propertyData: any) => void;
   initialData?: any;
   isEditing?: boolean;
+  allowAdminUpload?: boolean;
 }
 
-const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubmit, initialData, isEditing = false }) => {
+const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubmit, initialData, isEditing = false, allowAdminUpload = false }) => {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -24,10 +25,11 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
     amenities: initialData?.amenities || [] as string[],
     images: initialData?.images || [] as string[],
     video: initialData?.video_url || '',
-    whatsappNumber: initialData?.agent_whatsapp || ''
+    whatsappNumber: initialData?.agent_whatsapp || user?.whatsappNumber || ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
+  const isAdminUpload = allowAdminUpload;
 
   const amenityOptions = [
     { id: 'wifi', label: 'WiFi', icon: Wifi },
@@ -164,7 +166,8 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
           images: formData.images,
           video_url: formData.video || null,
           agent_whatsapp: formData.whatsappNumber,
-          status: 'pending' // Reset to pending for re-approval
+          status: isAdminUpload ? 'approved' : 'pending',
+          is_approved: isAdminUpload
         };
 
         const { data: updatedListing, error: updateError } = await supabase
@@ -217,16 +220,17 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         console.log('User already exists in users table');
       }
 
-      // Get agent ID from agent_registration table
-      const { data: agentData, error: agentError } = await supabase
-        .from('agent_registration')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      if (!isAdminUpload) {
+        const { data: agentData, error: agentError } = await supabase
+          .from('agent_registration')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
 
-      if (agentError || !agentData) {
-        alert('Agent registration not found. Please contact support.');
-        return;
+        if (agentError || !agentData) {
+          alert('Agent registration not found. Please contact support.');
+          return;
+        }
       }
 
       // Parse location into city and state
@@ -248,8 +252,10 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         images: formData.images,
         video_url: formData.video || null,
         agent_id: user.id,
-        is_approved: false,
-        status: 'pending'
+        agent_name: user.name || user.email || 'Unknown Agent',
+        agent_whatsapp: formData.whatsappNumber,
+        is_approved: isAdminUpload,
+        status: isAdminUpload ? 'approved' : 'pending'
       };
       
       console.log('Inserting listing data:', listingData);
@@ -284,7 +290,11 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         // Use the alternative listing
         onSubmit(altListing);
         onClose();
-        alert('Property published successfully! It will be visible after admin approval.');
+        alert(
+          isAdminUpload
+            ? 'Property published successfully and is now live.'
+            : 'Property published successfully! It will be visible after admin approval.'
+        );
         return;
       }
 
@@ -297,7 +307,11 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
       // Call onSubmit with the created listing data
       onSubmit(listing);
       onClose();
-      alert('Property published successfully! It will be visible after admin approval.');
+      alert(
+        isAdminUpload
+          ? 'Property published successfully and is now live.'
+          : 'Property published successfully! It will be visible after admin approval.'
+      );
     } catch (error) {
       console.error('Upload failed:', error);
       alert('Failed to publish property. Please try again.');

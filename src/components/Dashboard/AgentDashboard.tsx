@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Plus, Upload, CreditCard, BarChart3, Eye, Bookmark, Calendar, AlertCircle, CheckCircle, Clock, Check, X, MapPin, Bed, Bath } from 'lucide-react';
+import { Plus, Upload, CreditCard, BarChart3, Eye, Bookmark, Calendar, AlertCircle, CheckCircle, Clock, Check, X, MapPin, Bed, Bath, User, Save, Phone } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import Header from '../Layout/Header';
 import PropertyUploadForm from '../Properties/PropertyUploadForm';
 
 const AgentDashboard: React.FC = () => {
-  const { user, agentStatus, refreshAgentStatus } = useAuth();
-  const [activeTab, setActiveTab] = useState<'listings' | 'payment' | 'analytics'>('listings');
+  const { user, agentStatus, refreshAgentStatus, updateWhatsappNumber } = useAuth();
+  const [activeTab, setActiveTab] = useState<'listings' | 'payment' | 'analytics' | 'profile'>('listings');
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [listings, setListings] = useState<any[]>([]);
   const [stats, setStats] = useState({
@@ -20,6 +20,9 @@ const AgentDashboard: React.FC = () => {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState<any>(null);
   const [editingListing, setEditingListing] = useState<any>(null);
+  const [profileWhatsapp, setProfileWhatsapp] = useState(user?.whatsappNumber || '');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Enhanced subscription status with payment verification
   const [subscriptionStatus, setSubscriptionStatus] = useState({
@@ -172,6 +175,10 @@ const AgentDashboard: React.FC = () => {
     checkSubscriptionStatus();
     fetchListingsAndStats();
   }, [user?.id, agentStatus]); // Add agentStatus as dependency to refresh when it changes
+
+  React.useEffect(() => {
+    setProfileWhatsapp(user?.whatsappNumber || '');
+  }, [user?.whatsappNumber]);
 
   // Manual refresh function that uses auth context
   const handleRefreshStatus = async () => {
@@ -632,6 +639,107 @@ const AgentDashboard: React.FC = () => {
     </div>
   );
 
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!profileWhatsapp.trim()) {
+      setProfileMessage({ type: 'error', text: 'WhatsApp number is required.' });
+      return;
+    }
+
+    setProfileSaving(true);
+    setProfileMessage(null);
+
+    const updated = await updateWhatsappNumber(profileWhatsapp);
+
+    if (updated) {
+      setProfileMessage({
+        type: 'success',
+        text: 'WhatsApp number updated. Existing listings now use the new number.'
+      });
+      fetchListingsAndStats();
+    } else {
+      setProfileMessage({
+        type: 'error',
+        text: 'Failed to update WhatsApp number. Please try again.'
+      });
+    }
+
+    setProfileSaving(false);
+  };
+
+  const ProfileTab = () => (
+    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Profile</h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Update the WhatsApp number shown on your property listings.
+        </p>
+      </div>
+
+      <form onSubmit={handleProfileSubmit} className="space-y-5">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Agent Name</label>
+            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-600 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-300">
+              <User className="h-4 w-4 text-gray-400" />
+              <span>{user?.name || 'Agent'}</span>
+            </div>
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Email</label>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-600 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-300">
+              {user?.email}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="agent-whatsapp" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            WhatsApp Phone Number
+          </label>
+          <div className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2.5 focus-within:border-green-500 dark:border-slate-700">
+            <Phone className="h-4 w-4 text-gray-400" />
+            <input
+              id="agent-whatsapp"
+              type="tel"
+              value={profileWhatsapp}
+              onChange={(e) => setProfileWhatsapp(e.target.value)}
+              placeholder="e.g. 2348012345678"
+              className="w-full bg-transparent text-sm text-gray-900 outline-none dark:text-white"
+            />
+          </div>
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            This number will be used when home seekers tap Contact on your listings.
+          </p>
+        </div>
+
+        {profileMessage && (
+          <div
+            className={`rounded-lg px-4 py-3 text-sm ${
+              profileMessage.type === 'success'
+                ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-200'
+                : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-200'
+            }`}
+          >
+            {profileMessage.text}
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={profileSaving}
+            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60"
+          >
+            <Save className="h-4 w-4" />
+            {profileSaving ? 'Saving...' : 'Save Profile'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -687,11 +795,12 @@ const AgentDashboard: React.FC = () => {
         </div>
 
         <div className="panel mt-6 rounded-xl p-2">
-          <div className="grid grid-cols-3 gap-1">
+          <div className="grid grid-cols-4 gap-1">
             {[
               { id: 'listings', label: 'My Listings', icon: Upload, shortLabel: 'Listings' },
               { id: 'payment', label: 'Subscription', icon: CreditCard, shortLabel: 'Payment' },
               { id: 'analytics', label: 'Analytics', icon: BarChart3, shortLabel: 'Stats' },
+              { id: 'profile', label: 'Profile', icon: User, shortLabel: 'Profile' },
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -763,6 +872,7 @@ const AgentDashboard: React.FC = () => {
             {activeTab === 'listings' && <ListingsTab />}
             {activeTab === 'payment' && <PaymentForm />}
             {activeTab === 'analytics' && <AnalyticsTab />}
+            {activeTab === 'profile' && <ProfileTab />}
           </>
         )}
         

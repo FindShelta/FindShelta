@@ -18,6 +18,7 @@ import LazyImage from '../common/LazyImage';
 import AliExpressCard from '../Properties/AliExpressCard';
 import usePerformance from '../../hooks/usePerformance';
 import { Search, Filter, Heart, MapPin, Bed, Bath, Car, Wifi, Shield, Star, Phone, X, Scale, Bell, Settings, Save, Bookmark, Play, MessageCircle, Map, TrendingDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 
 const HomeSeekerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -76,7 +77,7 @@ const HomeSeekerDashboard: React.FC = () => {
 
       const { data, error, count } = await supabase
         .from('listings')
-        .select('id, title, description, price, property_type, location_state, location_city, location_address, amenities, images, agent_id, created_at, views_count, bookmarks_count', { count: 'exact' })
+        .select('id, title, description, price, property_type, location_state, location_city, location_address, amenities, images, agent_id, agent_name, agent_whatsapp, created_at, views_count, bookmarks_count', { count: 'exact' })
         .eq('is_approved', true)
         .order('created_at', { ascending: false })
         .range(from, to);
@@ -101,8 +102,8 @@ const HomeSeekerDashboard: React.FC = () => {
         amenities: listing.amenities || ['wifi', 'parking'],
         images: listing.images && listing.images.length > 0 ? listing.images : ['https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'],
         agentId: listing.agent_id,
-        agentName: 'Agent',
-        agentWhatsapp: '2347025790877',
+        agentName: listing.agent_name || 'Agent',
+        agentWhatsapp: listing.agent_whatsapp || '',
         createdAt: new Date(listing.created_at),
         views: listing.views_count || 0,
         bookmarks: listing.bookmarks_count || 0
@@ -872,16 +873,10 @@ const HomeSeekerDashboard: React.FC = () => {
                     <Scale className="h-4 w-4" />
                     Compare
                   </button>
-                  <button
-                    onClick={() =>
-                      window.open(
-                        `https://wa.me/${(selectedProperty.agentWhatsapp || '').replace(/[^0-9]/g, '')}`,
-                        '_blank',
-                        'noopener,noreferrer'
-                      )
-                    }
-                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 sm:text-sm"
-                  >
+                    <button
+                      onClick={() => window.open(buildListingWhatsAppUrl(selectedProperty), '_blank', 'noopener,noreferrer')}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 sm:text-sm"
+                    >
                     <Phone className="h-4 w-4" />
                     Contact
                   </button>

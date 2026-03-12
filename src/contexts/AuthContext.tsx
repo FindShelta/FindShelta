@@ -9,6 +9,7 @@ interface AuthContextType {
   registerAgent: (agentData: any) => Promise<boolean>;
   resetPassword: (email: string) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
+  updateWhatsappNumber: (whatsappNumber: string) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshAgentStatus: () => Promise<void>;
   loading: boolean;
@@ -334,8 +335,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateWhatsappNumber = async (whatsappNumber: string): Promise<boolean> => {
+    const normalizedWhatsapp = whatsappNumber.trim();
+
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: {
+          whatsapp_number: normalizedWhatsapp
+        }
+      });
+
+      if (error) {
+        console.error('WhatsApp update failed:', error.message);
+        return false;
+      }
+
+      if (user?.id) {
+        const { error: listingsError } = await supabase
+          .from('listings')
+          .update({ agent_whatsapp: normalizedWhatsapp })
+          .eq('agent_id', user.id);
+
+        if (listingsError) {
+          console.error('Listing WhatsApp sync failed:', listingsError.message);
+          return false;
+        }
+      }
+
+      setUser((prev) => (
+        prev
+          ? {
+              ...prev,
+              whatsappNumber: data.user.user_metadata?.whatsapp_number || normalizedWhatsapp
+            }
+          : prev
+      ));
+
+      return true;
+    } catch (error) {
+      console.error('WhatsApp update error:', error);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, registerAgent, resetPassword, updatePassword, logout, refreshAgentStatus, loading, agentStatus }}>
+    <AuthContext.Provider value={{ user, login, register, registerAgent, resetPassword, updatePassword, updateWhatsappNumber, logout, refreshAgentStatus, loading, agentStatus }}>
       {children}
     </AuthContext.Provider>
   );

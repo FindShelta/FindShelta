@@ -2,6 +2,7 @@ import React from 'react';
 import { X, MapPin, Bed, Bath, Star, Phone, Wifi, Car, Shield } from 'lucide-react';
 import { useComparison } from '../../contexts/ComparisonContext';
 import { Property } from '../../types';
+import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 
 interface PropertyComparisonProps {
   isOpen: boolean;
@@ -153,7 +154,7 @@ const PropertyComparison: React.FC<PropertyComparisonProps> = ({ isOpen, onClose
 
                       {/* Contact Button */}
                       <button
-                        onClick={() => window.open(`https://wa.me/${property.agentWhatsapp}`, '_blank')}
+                        onClick={() => window.open(buildListingWhatsAppUrl(property), '_blank', 'noopener,noreferrer')}
                         className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                       >
                         <Phone className="w-4 h-4" />

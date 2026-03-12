@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, LogOut, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Check, LogOut, Plus, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import Header from '../Layout/Header';
+import PropertyUploadForm from '../Properties/PropertyUploadForm';
 
 type PendingListing = {
   id: string;
@@ -34,6 +35,7 @@ const AdminPortal: React.FC = () => {
   const [listingsLoading, setListingsLoading] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [dashboardError, setDashboardError] = useState('');
+  const [showUploadForm, setShowUploadForm] = useState(false);
 
   const adminEmails = useMemo(
     () =>
@@ -203,6 +205,11 @@ const AdminPortal: React.FC = () => {
     }
   };
 
+  const handleListingSubmitted = async (_propertyData?: any) => {
+    setShowUploadForm(false);
+    await fetchPendingListings();
+  };
+
   if (authLoading || checkingAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -295,6 +302,13 @@ const AdminPortal: React.FC = () => {
               <button onClick={fetchPendingListings} className="ghost-button inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold">
                 <RefreshCw className="h-4 w-4" />
                 Refresh
+              </button>
+              <button
+                onClick={() => setShowUploadForm(true)}
+                className="brand-button inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold"
+              >
+                <Plus className="h-4 w-4" />
+                Upload Listing
               </button>
               <button onClick={logout} className="ghost-button inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold">
                 <LogOut className="h-4 w-4" />
@@ -390,6 +404,14 @@ const AdminPortal: React.FC = () => {
           )}
         </div>
       </div>
+
+      {showUploadForm && (
+        <PropertyUploadForm
+          onClose={() => setShowUploadForm(false)}
+          onSubmit={handleListingSubmitted}
+          allowAdminUpload={true}
+        />
+      )}
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { memo, useMemo } from 'react';
 import { Property } from '../../types';
 import LazyImage from '../common/LazyImage';
 import { MapPin, Bed, Bath, Heart, Play, Scale, MessageCircle } from 'lucide-react';
+import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 
 interface AliExpressCardProps {
   property: Property;
@@ -47,9 +48,7 @@ const AliExpressCard: React.FC<AliExpressCardProps> = memo(
 
     const openWhatsApp = (e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
-      const sanitizedNumber = (property.agentWhatsapp || '').replace(/[^0-9]/g, '');
-      const text = encodeURIComponent(`Hi, I am interested in ${property.title}.`);
-      window.open(`https://wa.me/${sanitizedNumber}?text=${text}`, '_blank', 'noopener,noreferrer');
+      window.open(buildListingWhatsAppUrl(property), '_blank', 'noopener,noreferrer');
     };
 
     const onCardKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {

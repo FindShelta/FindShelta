@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { Property } from '../../types';
 import LazyImage from '../Common/LazyImage';
 import { MapPin, Bed, Bath, Star, Phone, Play, Scale, Heart } from 'lucide-react';
+import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 
 interface PropertyCardProps {
   property: Property;
@@ -120,7 +121,7 @@ const PropertyCard: React.FC<PropertyCardProps> = memo(({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(`https://wa.me/${property.agentWhatsapp}`, '_blank');
+                window.open(buildListingWhatsAppUrl(property), '_blank', 'noopener,noreferrer');
               }}
               className="inline-flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg sm:rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl text-xs sm:text-sm"
             >

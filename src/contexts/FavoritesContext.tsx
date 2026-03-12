@@ -104,8 +104,8 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
           amenities: listing.amenities || ['wifi', 'parking'],
           images: listing.images && listing.images.length > 0 ? listing.images : ['https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'],
           agentId: listing.agent_id,
-          agentName: 'Agent',
-          agentWhatsapp: '2347025790877',
+          agentName: listing.agent_name || 'Agent',
+          agentWhatsapp: listing.agent_whatsapp || '',
           createdAt: new Date(listing.created_at),
           views: 0,
           bookmarks: 0

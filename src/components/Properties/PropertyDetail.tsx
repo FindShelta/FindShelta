@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Share2, Bookmark, MessageCircle, MapPin, Bed, Bath, Wifi, Car, Shield, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { Property } from '../../types';
+import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 
 interface PropertyDetailProps {
   property: Property;
@@ -36,9 +37,7 @@ const PropertyDetail: React.FC<PropertyDetailProps> = ({ property, onBack }) => 
   };
 
   const handleWhatsAppContact = () => {
-    const message = encodeURIComponent(`Hi! I'm interested in your property: ${property.title} listed at ${formatPrice(property.price, property.type)}`);
-    const whatsappUrl = `https://wa.me/${property.agentWhatsapp.replace(/[^0-9]/g, '')}?text=${message}`;
-    window.open(whatsappUrl, '_blank');
+    window.open(buildListingWhatsAppUrl(property), '_blank');
   };
 
   const nextImage = () => {

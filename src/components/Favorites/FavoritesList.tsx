@@ -1,6 +1,7 @@
 import React from 'react';
 import { Heart, MapPin, Bed, Bath, Star, Phone, Trash2 } from 'lucide-react';
 import { useFavorites } from '../../contexts/FavoritesContext';
+import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 
 const FavoritesList: React.FC = () => {
   const { favoriteProperties, loading, removeFromFavorites } = useFavorites();
@@ -84,7 +85,7 @@ const FavoritesList: React.FC = () => {
                 {formatPrice(property.price, property.type)}
               </div>
               <button
-                onClick={() => window.open(`https://wa.me/${property.agentWhatsapp}`, '_blank')}
+                onClick={() => window.open(buildListingWhatsAppUrl(property), '_blank', 'noopener,noreferrer')}
                 className="flex items-center space-x-1 px-2 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
               >
                 <Phone className="w-3 h-3" />
