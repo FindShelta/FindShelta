@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, MapPin, Bed, Bath, Star, Phone, Trash2 } from 'lucide-react';
+import { Heart, MapPin, Bed, Bath, Phone, Trash2, Camera, ArrowUpRight } from 'lucide-react';
 import { useFavorites } from '../../contexts/FavoritesContext';
 import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 
@@ -40,60 +40,87 @@ const FavoritesList: React.FC = () => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {favoriteProperties.map((property) => (
-        <div key={property.id} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-slate-700">
+        <article key={property.id} className="overflow-hidden rounded-[1.25rem] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
           <div className="relative">
             <img
               src={property.images[0]}
               alt={property.title}
-              className="w-full h-40 object-cover"
+              className="h-48 w-full object-cover"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
+            <div className="absolute left-3 top-3 flex items-center gap-2">
+              <span className="rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+                {property.type === 'sale' ? 'For Sale' : property.type === 'rent' ? 'For Rent' : 'Short Stay'}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+                <Camera className="h-3 w-3" />
+                {property.images?.length || 0}
+              </span>
+            </div>
             <button
               onClick={() => removeFromFavorites(property.id)}
-              className="absolute top-2 right-2 p-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 rounded-full transition-colors"
+              className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/90 text-red-500 shadow-sm backdrop-blur-sm transition hover:bg-white"
             >
-              <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+              <Trash2 className="h-4 w-4" />
             </button>
+            <div className="absolute bottom-0 left-0 right-0 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">Saved Listing</p>
+              <p className="text-xl font-bold text-white">{formatPrice(property.price, property.type)}</p>
+            </div>
           </div>
 
-          <div className="p-4">
-            <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2 line-clamp-2">
-              {property.title}
-            </h3>
-            
-            <div className="flex items-center text-gray-600 dark:text-gray-300 text-xs mb-2">
-              <MapPin className="w-3 h-3 mr-1" />
+          <div className="space-y-3 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-[color:var(--text)]">
+                {property.title}
+              </h3>
+              <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--text-muted)]" />
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-[color:var(--text-muted)]">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-[color:var(--brand)]" />
               <span className="truncate">{property.location}</span>
             </div>
 
-            <div className="flex items-center space-x-3 text-xs text-gray-600 dark:text-gray-300 mb-3">
-              <div className="flex items-center space-x-1">
-                <Bed className="w-3 h-3" />
-                <span>{property.bedrooms}</span>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-strong)] px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">Bedrooms</p>
+                <div className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--text)]">
+                  <Bed className="h-3.5 w-3.5 text-[color:var(--brand)]" />
+                  {property.bedrooms ?? '-'}
+                </div>
               </div>
-              <div className="flex items-center space-x-1">
-                <Bath className="w-3 h-3" />
-                <span>{property.bathrooms}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                <span>4.8</span>
+              <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-strong)] px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">Bathrooms</p>
+                <div className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--text)]">
+                  <Bath className="h-3.5 w-3.5 text-[color:var(--brand)]" />
+                  {property.bathrooms ?? '-'}
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                {formatPrice(property.price, property.type)}
+            <div className="flex items-center justify-between rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-strong)] px-3 py-2">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">Agent</p>
+                <p className="mt-0.5 text-xs text-[color:var(--text-muted)]">{property.agentName || 'Agent'}</p>
               </div>
               <button
-                onClick={() => window.open(buildListingWhatsAppUrl(property), '_blank', 'noopener,noreferrer')}
-                className="flex items-center space-x-1 px-2 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
+                onClick={() => {
+                  const whatsappUrl = buildListingWhatsAppUrl(property);
+                  if (!whatsappUrl) {
+                    alert('This listing does not have a WhatsApp contact number yet.');
+                    return;
+                  }
+                  window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+                }}
+                className="brand-button inline-flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold"
               >
-                <Phone className="w-3 h-3" />
-                <span>Call</span>
+                <Phone className="h-3.5 w-3.5" />
+                <span>Contact</span>
               </button>
             </div>
           </div>
-        </div>
+        </article>
       ))}
     </div>
   );

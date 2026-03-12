@@ -14,6 +14,9 @@ const formatListingPrice = (price: number, type: Property['type']) => {
 
 export const buildListingWhatsAppUrl = (property: Property) => {
   const sanitizedNumber = (property.agentWhatsapp || '').replace(/[^0-9]/g, '');
+  if (!sanitizedNumber) {
+    return null;
+  }
   const imageUrl = property.images?.[0];
   const lines = [
     `Hi, I'm interested in this listing on FindShelta:`,
@@ -30,4 +33,3 @@ export const buildListingWhatsAppUrl = (property: Property) => {
   const text = encodeURIComponent(lines.join('\n'));
   return `https://wa.me/${sanitizedNumber}?text=${text}`;
 };
-

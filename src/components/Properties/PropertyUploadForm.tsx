@@ -170,12 +170,27 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
           is_approved: isAdminUpload
         };
 
-        const { data: updatedListing, error: updateError } = await supabase
+        let { data: updatedListing, error: updateError } = await supabase
           .from('listings')
           .update(updateData)
           .eq('id', initialData.id)
           .select()
           .single();
+
+        if (updateError?.code === '42703') {
+          const fallbackUpdateData = { ...updateData };
+          delete fallbackUpdateData.agent_whatsapp;
+
+          const retry = await supabase
+            .from('listings')
+            .update(fallbackUpdateData)
+            .eq('id', initialData.id)
+            .select()
+            .single();
+
+          updatedListing = retry.data;
+          updateError = retry.error;
+        }
 
         if (updateError) {
           console.error('Update failed:', updateError);
@@ -252,7 +267,6 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         images: formData.images,
         video_url: formData.video || null,
         agent_id: user.id,
-        agent_name: user.name || user.email || 'Unknown Agent',
         agent_whatsapp: formData.whatsappNumber,
         is_approved: isAdminUpload,
         status: isAdminUpload ? 'approved' : 'pending'
@@ -260,26 +274,53 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
       
       console.log('Inserting listing data:', listingData);
       
-      const { data: listing, error: listingError } = await supabase
+      let { data: listing, error: listingError } = await supabase
         .from('listings')
         .insert(listingData)
         .select()
         .single();
+
+      if (listingError?.code === '42703') {
+        const fallbackListingData = { ...listingData };
+        delete fallbackListingData.agent_whatsapp;
+
+        const retry = await supabase
+          .from('listings')
+          .insert(fallbackListingData)
+          .select()
+          .single();
+
+        listing = retry.data;
+        listingError = retry.error;
+      }
       
-      // If foreign key constraint fails, try creating listing with agent_name instead
+      // If foreign key constraint fails, try creating listing without agent_id.
       if (listingError && listingError.code === '23503') {
         console.log('Foreign key constraint failed, trying alternative approach...');
         const alternativeData = {
-          ...listingData,
-          agent_name: user.user_metadata?.full_name || user.email || 'Unknown Agent'
+          ...listingData
         };
         delete alternativeData.agent_id; // Remove the problematic foreign key
         
-        const { data: altListing, error: altError } = await supabase
+        let { data: altListing, error: altError } = await supabase
           .from('listings')
           .insert(alternativeData)
           .select()
           .single();
+
+        if (altError?.code === '42703') {
+          const fallbackAlternativeData = { ...alternativeData };
+          delete fallbackAlternativeData.agent_whatsapp;
+
+          const retry = await supabase
+            .from('listings')
+            .insert(fallbackAlternativeData)
+            .select()
+            .single();
+
+          altListing = retry.data;
+          altError = retry.error;
+        }
           
         if (altError) {
           console.error('Alternative listing creation failed:', altError);

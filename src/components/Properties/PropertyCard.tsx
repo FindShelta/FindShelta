@@ -121,7 +121,12 @@ const PropertyCard: React.FC<PropertyCardProps> = memo(({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(buildListingWhatsAppUrl(property), '_blank', 'noopener,noreferrer');
+                const whatsappUrl = buildListingWhatsAppUrl(property);
+                if (!whatsappUrl) {
+                  alert('This listing does not have a WhatsApp contact number yet.');
+                  return;
+                }
+                window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
               }}
               className="inline-flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg sm:rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl text-xs sm:text-sm"
             >

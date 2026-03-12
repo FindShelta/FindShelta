@@ -357,6 +357,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .eq('agent_id', user.id);
 
         if (listingsError) {
+          if (listingsError.code === '42703') {
+            setUser((prev) => (
+              prev
+                ? {
+                    ...prev,
+                    whatsappNumber: data.user.user_metadata?.whatsapp_number || normalizedWhatsapp
+                  }
+                : prev
+            ));
+            return true;
+          }
           console.error('Listing WhatsApp sync failed:', listingsError.message);
           return false;
         }

@@ -73,11 +73,11 @@ const HomeSeekerDashboard: React.FC = () => {
       }
 
       const from = (pageNum - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      const to = from + ITEMS_PER_PAGE;
 
-      const { data, error, count } = await supabase
+      const { data, error } = await supabase
         .from('listings')
-        .select('id, title, description, price, property_type, location_state, location_city, location_address, amenities, images, agent_id, agent_name, agent_whatsapp, created_at, views_count, bookmarks_count', { count: 'exact' })
+        .select('id, title, description, price, property_type, location_state, location_city, location_address, amenities, images, agent_id, agent_name, agent_whatsapp, created_at, views_count, bookmarks_count')
         .eq('is_approved', true)
         .order('created_at', { ascending: false })
         .range(from, to);
@@ -89,7 +89,8 @@ const HomeSeekerDashboard: React.FC = () => {
       }
 
       // Transform data to match Property interface
-      const transformedProperties: Property[] = (data || []).map(listing => ({
+      const pageItems = (data || []).slice(0, ITEMS_PER_PAGE);
+      const transformedProperties: Property[] = pageItems.map(listing => ({
         id: listing.id,
         title: listing.title || 'Property Listing',
         description: listing.description || 'No description available',
@@ -115,7 +116,7 @@ const HomeSeekerDashboard: React.FC = () => {
         setProperties(prev => [...prev, ...transformedProperties]);
       }
 
-      setHasMore(transformedProperties.length === ITEMS_PER_PAGE && (count || 0) > pageNum * ITEMS_PER_PAGE);
+      setHasMore((data || []).length > ITEMS_PER_PAGE);
       setPage(pageNum);
     } catch (error) {
       console.error('Error fetching properties:', error);
@@ -874,7 +875,14 @@ const HomeSeekerDashboard: React.FC = () => {
                     Compare
                   </button>
                     <button
-                      onClick={() => window.open(buildListingWhatsAppUrl(selectedProperty), '_blank', 'noopener,noreferrer')}
+                      onClick={() => {
+                        const whatsappUrl = buildListingWhatsAppUrl(selectedProperty);
+                        if (!whatsappUrl) {
+                          alert('This listing does not have a WhatsApp contact number yet.');
+                          return;
+                        }
+                        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+                      }}
                       className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 sm:text-sm"
                     >
                     <Phone className="h-4 w-4" />

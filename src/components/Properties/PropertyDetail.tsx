@@ -37,7 +37,12 @@ const PropertyDetail: React.FC<PropertyDetailProps> = ({ property, onBack }) => 
   };
 
   const handleWhatsAppContact = () => {
-    window.open(buildListingWhatsAppUrl(property), '_blank');
+    const whatsappUrl = buildListingWhatsAppUrl(property);
+    if (!whatsappUrl) {
+      alert('This listing does not have a WhatsApp contact number yet.');
+      return;
+    }
+    window.open(whatsappUrl, '_blank');
   };
 
   const nextImage = () => {
