@@ -20,7 +20,13 @@ type PendingListing = {
 
 type ListingCategory = 'all' | 'sale' | 'rent' | 'shortstay';
 
-const DEFAULT_ADMIN_EMAILS = ['agantiembennett@gmail.com', 'pythonbook@hotmail.com', 'sharellerealty677@gmail.com', 'shezz2024@gmail.com'];
+const DEFAULT_ADMIN_EMAILS = [
+  'agantiembennett@gmail.com',
+  'pythonbook@hotmail.com',
+  'sharellerealty677@gmail.com',
+  'shezz2024@gmail.com',
+  'shoppermonique20@gmail.com',
+];
 
 const AdminPortal: React.FC = () => {
   const { user, loading: authLoading, login, logout } = useAuth();
