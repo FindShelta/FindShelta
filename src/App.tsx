@@ -1,10 +1,11 @@
 import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { ComparisonProvider } from './contexts/ComparisonContext';
 import { AlertProvider } from './contexts/AlertContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import HomePage from './components/Landing/HomePage';
+import CityLandingPage from './components/Landing/CityLandingPage';
 import RegistrationFlow from './components/Auth/RegistrationFlow';
 import LoginForm from './components/Auth/LoginForm';
 import ResetPassword from './components/Auth/ResetPassword';
@@ -13,6 +14,8 @@ import AgentDashboard from './components/Dashboard/AgentDashboard';
 import AdminPortal from './components/Admin/AdminPortal';
 import SubscriptionPlans from './components/Subscription/SubscriptionPlans';
 import DatabaseTest from './components/Debug/DatabaseTest';
+import SiteFooter from './components/Layout/SiteFooter';
+import MobileBottomNav from './components/Layout/MobileBottomNav';
 import './utils/makeAdmin';
 
 const FullScreenLoader: React.FC<{ label?: string }> = ({ label = 'Loading...' }) => (
@@ -58,6 +61,7 @@ const LandingRoute: React.FC = () => {
     <HomePage
       onGetStarted={() => navigate('/register')}
       onSignIn={() => navigate('/login')}
+      onCitySearch={(city) => navigate(`/short-stay-${city.toLowerCase()}`)}
     />
   );
 };
@@ -92,18 +96,27 @@ const RegisterRoute: React.FC = () => {
 const NotFoundRoute: React.FC = () => <Navigate to="/" replace />;
 
 function AppRoutes() {
+  const location = useLocation();
+
   return (
-    <Routes>
-      <Route path="/" element={<LandingRoute />} />
-      <Route path="/login" element={<LoginRoute />} />
-      <Route path="/register" element={<RegisterRoute />} />
-      <Route path="/dashboard" element={<DashboardRoute />} />
-      <Route path="/admin" element={<AdminPortal />} />
-      <Route path="/subscription" element={<SubscriptionPlans />} />
-      <Route path="/debug" element={<DatabaseTest />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="*" element={<NotFoundRoute />} />
-    </Routes>
+    <>
+      <div key={location.pathname} className="app-screen">
+        <Routes location={location}>
+          <Route path="/" element={<LandingRoute />} />
+          <Route path="/short-stay-:city" element={<CityLandingPage />} />
+          <Route path="/login" element={<LoginRoute />} />
+          <Route path="/register" element={<RegisterRoute />} />
+          <Route path="/dashboard" element={<DashboardRoute />} />
+          <Route path="/admin" element={<AdminPortal />} />
+          <Route path="/subscription" element={<SubscriptionPlans />} />
+          <Route path="/debug" element={<DatabaseTest />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="*" element={<NotFoundRoute />} />
+        </Routes>
+      </div>
+      <SiteFooter />
+      <MobileBottomNav />
+    </>
   );
 }
 

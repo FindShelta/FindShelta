@@ -1,0 +1,23 @@
+{
+  "name": "FindShelta Short Stays",
+  "short_name": "FindShelta",
+  "description": "Discover and book premium short stay apartments across Nigeria.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f5f9",
+  "theme_color": "#173767",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/findshelta-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,12 +1,28 @@
 import React, { useState } from 'react';
-import { X, Upload, Plus, Trash2, Camera, Video, MapPin, Home, DollarSign, Bed, Bath, Wifi, Car, Shield, Clock } from 'lucide-react';
+import { X, Upload, Camera, Video, MapPin, Home, DollarSign, Bed, Bath, Wifi, Car, Shield } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
+interface EditableListing {
+  id?: string;
+  title?: string;
+  description?: string | null;
+  price?: number;
+  location_address?: string | null;
+  location_city?: string | null;
+  location_state?: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  amenities?: string[] | null;
+  images?: string[] | null;
+  video_url?: string | null;
+  agent_whatsapp?: string | null;
+}
+
 interface PropertyUploadFormProps {
   onClose: () => void;
-  onSubmit: (propertyData: any) => void;
-  initialData?: any;
+  onSubmit: (propertyData: unknown) => void;
+  initialData?: EditableListing;
   isEditing?: boolean;
   allowAdminUpload?: boolean;
 }
@@ -18,7 +34,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
     title: initialData?.title || '',
     description: initialData?.description || '',
     price: initialData?.price?.toString() || '',
-    type: (initialData?.category || initialData?.property_type || 'sale') as 'sale' | 'rent' | 'shortstay',
+    type: 'shortstay' as const,
     location: initialData?.location_address || `${initialData?.location_city || ''}, ${initialData?.location_state || ''}`.replace(', ', '') || '',
     bedrooms: initialData?.bedrooms?.toString() || '',
     bathrooms: initialData?.bathrooms?.toString() || '',
@@ -73,7 +89,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
       try {
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
         
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from('property-images')
           .upload(fileName, file, {
             contentType: file.type,
@@ -264,6 +280,8 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         location_state: state,
         location_address: formData.location,
         amenities: formData.amenities,
+        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
+        bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
         images: formData.images,
         video_url: formData.video || null,
         agent_id: user.id,
@@ -430,20 +448,8 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
                 {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Property Type *
-                </label>
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                >
-                  <option value="sale">For Sale</option>
-                  <option value="rent">For Rent</option>
-                  <option value="shortstay">Short Stay</option>
-                </select>
+              <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-100">
+                <span className="font-semibold">Listing type:</span> Short stay
               </div>
 
               <div>

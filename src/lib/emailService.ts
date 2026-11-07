@@ -27,7 +27,7 @@ export class EmailService {
   constructor() {
     // In production, get these from environment variables
     this.apiKey = import.meta.env.VITE_EMAIL_API_KEY || '';
-    this.fromEmail = import.meta.env.VITE_FROM_EMAIL || 'noreply@findshelter.com';
+    this.fromEmail = import.meta.env.VITE_FROM_EMAIL || 'noreply@findshelta.com';
     this.isProduction = import.meta.env.PROD === 'true';
   }
 
@@ -107,7 +107,8 @@ export class EmailService {
   }
 
   private getPasswordResetTemplate(data: PasswordResetEmailData): EmailTemplate {
-    const subject = 'Reset Your FindShelter Password';
+    const subject = 'Reset Your FindShelta Password';
+    const logoUrl = `${import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin}/findshelta-logo.png`;
     
     const html = `
       <!DOCTYPE html>
@@ -130,7 +131,8 @@ export class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🏠 FindShelter</h1>
+            <img src="${logoUrl}" width="72" height="72" alt="FindShelta" style="display:block;margin:0 auto 12px;border-radius:14px;" />
+            <h1>FindShelta</h1>
             <p>Password Reset Request</p>
           </div>
           
@@ -151,7 +153,7 @@ export class EmailService {
           </div>
           
           <div class="footer">
-            <p>© 2024 FindShelter. All rights reserved.</p>
+            <p>© 2026 FindShelta. All rights reserved.</p>
             <p>This is an automated message, please do not reply.</p>
           </div>
         </div>
@@ -160,7 +162,7 @@ export class EmailService {
     `;
 
     const text = `
-      FindShelter - Password Reset Request
+      FindShelta - Password Reset Request
       
       We received a request to reset your password.
       
@@ -172,14 +174,15 @@ export class EmailService {
       
       For security reasons, never share this code with anyone.
       
-      © 2024 FindShelter. All rights reserved.
+      © 2026 FindShelta. All rights reserved.
     `;
 
     return { subject, html, text };
   }
 
   private getPasswordChangeTemplate(data: PasswordChangeConfirmationData): EmailTemplate {
-    const subject = 'Password Successfully Changed - FindShelter';
+    const subject = 'Password Successfully Changed - FindShelta';
+    const logoUrl = `${import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin}/findshelta-logo.png`;
     
     const html = `
       <!DOCTYPE html>
@@ -199,7 +202,8 @@ export class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>FindShelter</h1>
+            <img src="${logoUrl}" width="72" height="72" alt="FindShelta" style="display:block;margin:0 auto 12px;border-radius:14px;" />
+            <h1>FindShelta</h1>
             <p>Password Changed Successfully</p>
           </div>
           
@@ -208,7 +212,7 @@ export class EmailService {
               <strong>✅ Success!</strong> Your password has been successfully changed.
             </div>
             
-            <p>Your FindShelter account password was changed on ${data.timestamp}.</p>
+            <p>Your FindShelta account password was changed on ${data.timestamp}.</p>
             
             <p>If you didn't make this change, please contact our support team immediately.</p>
             

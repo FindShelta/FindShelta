@@ -72,7 +72,7 @@ const AliExpressCard: React.FC<AliExpressCardProps> = memo(
         aria-label={`Open property ${property.title}`}
         onClick={() => onSelect(property)}
         onKeyDown={onCardKeyDown}
-        className="group overflow-hidden rounded-[1.25rem] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]"
+        className="app-card pressable group overflow-hidden border border-[color:var(--border)] bg-[color:var(--surface)] transition duration-200 hover:border-[color:var(--brand)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]"
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-[color:var(--surface-strong)]">
           <LazyImage

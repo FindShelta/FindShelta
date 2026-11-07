@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { SavedSearch, FavoriteProperty } from '../types/favorites';
+import { SavedSearch } from '../types/favorites';
 import { Property } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
@@ -12,7 +12,7 @@ interface FavoritesContextType {
   addToFavorites: (propertyId: string) => Promise<void>;
   removeFromFavorites: (propertyId: string) => Promise<void>;
   isFavorite: (propertyId: string) => boolean;
-  saveSearch: (name: string, filters: any) => Promise<void>;
+  saveSearch: (name: string, filters: SavedSearch['filters']) => Promise<void>;
   deleteSavedSearch: (id: string) => Promise<void>;
   applySavedSearch: (search: SavedSearch) => void;
   refreshFavorites: () => Promise<void>;
@@ -88,6 +88,7 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
         .from('listings')
         .select('*')
         .in('id', Array.from(favorites))
+        .eq('is_hidden', false)
         .or('is_approved.eq.true,status.eq.approved,status.eq.approve');
 
       if (!error && data) {
@@ -99,8 +100,8 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
           currency: 'NGN',
           type: (listing.category || listing.property_type || 'sale') as 'sale' | 'rent' | 'shortstay',
           location: `${listing.location_city || 'Unknown'}, ${listing.location_state || 'Nigeria'}`,
-          bedrooms: 2,
-          bathrooms: 2,
+          bedrooms: listing.bedrooms == null ? undefined : Number(listing.bedrooms),
+          bathrooms: listing.bathrooms == null ? undefined : Number(listing.bathrooms),
           amenities: listing.amenities || ['wifi', 'parking'],
           images: listing.images && listing.images.length > 0 ? listing.images : ['https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'],
           agentId: listing.agent_id,
@@ -159,7 +160,7 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
     return favorites.has(propertyId);
   };
 
-  const saveSearch = async (name: string, filters: any) => {
+  const saveSearch = async (name: string, filters: SavedSearch['filters']) => {
     if (!user) return;
 
     try {

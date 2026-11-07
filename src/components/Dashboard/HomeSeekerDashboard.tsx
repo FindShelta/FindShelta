@@ -1,6 +1,5 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Property } from '../../types';
-import { useAuth } from '../../contexts/AuthContext';
 import { useComparison } from '../../contexts/ComparisonContext';
 import { useAlerts } from '../../contexts/AlertContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
@@ -17,16 +16,27 @@ import MapSearch from '../Search/MapSearch';
 import LazyImage from '../common/LazyImage';
 import AliExpressCard from '../Properties/AliExpressCard';
 import usePerformance from '../../hooks/usePerformance';
-import { Search, Filter, Heart, MapPin, Bed, Bath, Car, Wifi, Shield, Star, Phone, X, Scale, Bell, Settings, Save, Bookmark, Play, MessageCircle, Map, TrendingDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Heart, MapPin, Bed, Bath, Phone, X, Scale, Bell, Save, Bookmark, Play, Map, ChevronLeft, ChevronRight } from 'lucide-react';
 import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 
+type DashboardFilters = {
+  minPrice: string;
+  maxPrice: string;
+  bedrooms: string;
+  bathrooms: string;
+  location: string;
+};
+
+type SavedDashboardFilters = {
+  searchQuery?: string;
+  filters?: Partial<DashboardFilters>;
+};
+
 const HomeSeekerDashboard: React.FC = () => {
-  const { user } = useAuth();
   usePerformance('HomeSeekerDashboard');
-  const [activeCategory, setActiveCategory] = useState<'all' | 'sale' | 'rent' | 'shortstay'>('all');
+  const activeCategory = 'shortstay' as const;
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [bookmarkedProperties, setBookmarkedProperties] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [showCreateAlert, setShowCreateAlert] = useState(false);
@@ -43,10 +53,11 @@ const HomeSeekerDashboard: React.FC = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
   const ITEMS_PER_PAGE = 12;
   const { comparisonList, addToComparison, isInComparison } = useComparison();
   const { alerts } = useAlerts();
-  const { favorites, addToFavorites, removeFromFavorites, isFavorite, favoriteProperties, savedSearches } = useFavorites();
+  const { favorites, addToFavorites, removeFromFavorites, isFavorite, savedSearches } = useFavorites();
   const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
@@ -77,8 +88,10 @@ const HomeSeekerDashboard: React.FC = () => {
 
       const { data, error } = await supabase
         .from('listings')
-        .select('id, title, description, price, property_type, location_state, location_city, location_address, amenities, images, agent_id, agent_name, agent_whatsapp, created_at, views_count, bookmarks_count')
+        .select('id, title, description, price, property_type, location_state, location_city, location_address, bedrooms, bathrooms, amenities, images, agent_id, agent_name, agent_whatsapp, created_at, views_count, bookmarks_count')
         .eq('is_approved', true)
+        .eq('is_hidden', false)
+        .eq('property_type', 'shortstay')
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -96,10 +109,10 @@ const HomeSeekerDashboard: React.FC = () => {
         description: listing.description || 'No description available',
         price: listing.price || 0,
         currency: 'NGN',
-        type: listing.property_type || 'sale',
+        type: 'shortstay',
         location: `${listing.location_city || ''}, ${listing.location_state || 'Nigeria'}`.trim(),
-        bedrooms: 2,
-        bathrooms: 2,
+        bedrooms: listing.bedrooms == null ? undefined : Number(listing.bedrooms),
+        bathrooms: listing.bathrooms == null ? undefined : Number(listing.bathrooms),
         amenities: listing.amenities || ['wifi', 'parking'],
         images: listing.images && listing.images.length > 0 ? listing.images : ['https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'],
         agentId: listing.agent_id,
@@ -132,6 +145,23 @@ const HomeSeekerDashboard: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (!hasMore || loading || loadingMore) return;
+    const node = loadMoreSentinelRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) loadMore();
+      },
+      { rootMargin: '320px 0px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  // loadMore intentionally tracks the current page and request state from this render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loading, loadingMore, page]);
+
   // Filter properties based on search query, category, and filters
   const getFilteredProperties = () => {
     let filtered = properties;
@@ -158,10 +188,10 @@ const HomeSeekerDashboard: React.FC = () => {
       filtered = filtered.filter(property => property.price <= parseInt(filters.maxPrice));
     }
     if (filters.bedrooms) {
-      filtered = filtered.filter(property => property.bedrooms >= parseInt(filters.bedrooms));
+      filtered = filtered.filter(property => (property.bedrooms ?? 0) >= parseInt(filters.bedrooms));
     }
     if (filters.bathrooms) {
-      filtered = filtered.filter(property => property.bathrooms >= parseInt(filters.bathrooms));
+      filtered = filtered.filter(property => (property.bathrooms ?? 0) >= parseInt(filters.bathrooms));
     }
     if (filters.location.trim()) {
       filtered = filtered.filter(property =>
@@ -173,15 +203,6 @@ const HomeSeekerDashboard: React.FC = () => {
   };
 
   const filteredProperties = getFilteredProperties();
-  const categorizedProperties = useMemo(
-    () => ({
-      sale: filteredProperties.filter((property) => property.type === 'sale'),
-      rent: filteredProperties.filter((property) => property.type === 'rent'),
-      shortstay: filteredProperties.filter((property) => property.type === 'shortstay'),
-    }),
-    [filteredProperties]
-  );
-
   const handleSearch = () => {
     // Search is handled by getFilteredProperties
     // This function can be used for additional search logic if needed
@@ -212,15 +233,6 @@ const HomeSeekerDashboard: React.FC = () => {
     return formatter.format(price) + suffix;
   };
 
-  const getAmenityIcon = (amenity: string) => {
-    switch (amenity) {
-      case 'wifi': return <Wifi className="w-4 h-4" />;
-      case 'parking': return <Car className="w-4 h-4" />;
-      case 'security': return <Shield className="w-4 h-4" />;
-      default: return null;
-    }
-  };
-
   const handleBookmarkToggle = (propertyId: string) => {
     if (isFavorite(propertyId)) {
       removeFromFavorites(propertyId);
@@ -237,21 +249,18 @@ const HomeSeekerDashboard: React.FC = () => {
     };
   };
 
-  const applyFilters = (savedFilters: any) => {
-    if (savedFilters.activeCategory) {
-      setActiveCategory(savedFilters.activeCategory);
-    }
+  const applyFilters = (savedFilters: SavedDashboardFilters) => {
     if (savedFilters.searchQuery) {
       setSearchQuery(savedFilters.searchQuery);
     }
     if (savedFilters.filters) {
-      setFilters(savedFilters.filters);
+      setFilters((current) => ({ ...current, ...savedFilters.filters }));
     }
     setShowSavedSearches(false);
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-24 md:pb-0">
       <Header />
 
       <div className="section-shell py-6 sm:py-8">
@@ -334,28 +343,10 @@ const HomeSeekerDashboard: React.FC = () => {
       <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-3 sm:px-4">
           <div className="flex space-x-4 sm:space-x-8 overflow-x-auto py-3 sm:py-4 scrollbar-hide">
-            {[
-              { id: 'all', label: 'All', fullLabel: 'All Properties', count: properties.length },
-              { id: 'sale', label: 'Sale', fullLabel: 'For Sale', count: properties.filter(p => p.type === 'sale').length },
-              { id: 'rent', label: 'Rent', fullLabel: 'For Rent', count: properties.filter(p => p.type === 'rent').length },
-              { id: 'shortstay', label: 'Stay', fullLabel: 'Short Stay', count: properties.filter(p => p.type === 'shortstay').length }
-            ].map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setActiveCategory(category.id as typeof activeCategory)}
-                className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${
-                  activeCategory === category.id
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <span className="sm:hidden">{category.label}</span>
-                <span className="hidden sm:inline">{category.fullLabel}</span>
-                <span className="bg-gray-200 dark:bg-slate-600 text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
-                  {category.count}
-                </span>
-              </button>
-            ))}
+            <div className="flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+              Short stays
+              <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs dark:bg-slate-700">{properties.length}</span>
+            </div>
             
             {/* Alerts Button */}
             <button
@@ -573,7 +564,7 @@ const HomeSeekerDashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[color:var(--text)] sm:text-xl">
-            {activeCategory === 'all' ? 'Categorized Listings' : 'Available Properties'}
+            Available short stays
           </h2>
           <p className="text-xs text-[color:var(--text-muted)] sm:text-sm">{filteredProperties.length} results</p>
         </div>
@@ -585,81 +576,34 @@ const HomeSeekerDashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <>
-            {activeCategory === 'all' ? (
-              <div className="space-y-8">
-                {[
-                  { key: 'sale', title: 'For Sale', items: categorizedProperties.sale },
-                  { key: 'rent', title: 'For Rent', items: categorizedProperties.rent },
-                  { key: 'shortstay', title: 'Short Stay', items: categorizedProperties.shortstay },
-                ].map((section) =>
-                  section.items.length > 0 ? (
-                    <section key={section.key}>
-                      <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-base font-semibold text-[color:var(--text)] sm:text-lg">{section.title}</h3>
-                        <span className="text-xs text-[color:var(--text-muted)]">{section.items.length} listings</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                        {section.items.map((property) => (
-                          <AliExpressCard
-                            key={property.id}
-                            property={property}
-                            onSelect={setSelectedProperty}
-                            onBookmarkToggle={handleBookmarkToggle}
-                            onTourClick={(prop) => {
-                              setSelectedTourProperty(prop);
-                              setShowVirtualTour(true);
-                            }}
-                            onCompareClick={addToComparison}
-                            isFavorite={isFavorite(property.id)}
-                            isInComparison={isInComparison(property.id)}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  ) : null
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                {filteredProperties.map((property) => (
-                  <AliExpressCard
-                    key={property.id}
-                    property={property}
-                    onSelect={setSelectedProperty}
-                    onBookmarkToggle={handleBookmarkToggle}
-                    onTourClick={(prop) => {
-                      setSelectedTourProperty(prop);
-                      setShowVirtualTour(true);
-                    }}
-                    onCompareClick={addToComparison}
-                    isFavorite={isFavorite(property.id)}
-                    isInComparison={isInComparison(property.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {filteredProperties.map((property) => (
+              <AliExpressCard
+                key={property.id}
+                property={property}
+                onSelect={setSelectedProperty}
+                onBookmarkToggle={handleBookmarkToggle}
+                onTourClick={(prop) => {
+                  setSelectedTourProperty(prop);
+                  setShowVirtualTour(true);
+                }}
+                onCompareClick={addToComparison}
+                isFavorite={isFavorite(property.id)}
+                isInComparison={isInComparison(property.id)}
+              />
+            ))}
+          </div>
         )}
 
-        {/* Load More Button */}
-        {!loading && hasMore && filteredProperties.length > 0 && (
-          <div className="text-center mt-8">
-            <button
-              onClick={loadMore}
-              disabled={loadingMore}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-            >
-              {loadingMore ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Loading...</span>
-                </div>
-              ) : (
-                'Load More Properties'
-              )}
-            </button>
+        {!loading && filteredProperties.length > 0 && <div ref={loadMoreSentinelRef} className="h-4" aria-hidden="true" />}
+        {!loading && loadingMore && (
+          <div className="flex items-center justify-center gap-2 py-8 text-sm text-[color:var(--text-muted)]">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[color:var(--brand)] border-t-transparent" />
+            Loading more short stays…
           </div>
+        )}
+        {!loading && !hasMore && filteredProperties.length > 0 && (
+          <p className="py-8 text-center text-sm font-medium text-[color:var(--text-muted)]">You’ve seen all available properties.</p>
         )}
 
         {/* No Results */}
@@ -673,7 +617,7 @@ const HomeSeekerDashboard: React.FC = () => {
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
               {properties.length === 0 
-                ? 'Be the first agent to list a property on FindShelta!' 
+                ? 'New short stays are being added. Please check back soon.'
                 : 'Try adjusting your search criteria or browse all properties'
               }
             </p>
@@ -688,6 +632,36 @@ const HomeSeekerDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      <nav className="mobile-bottom-nav md:hidden" aria-label="Dashboard navigation">
+        <div className="mobile-bottom-nav__inner">
+          <button
+            type="button"
+            onClick={() => {
+              setShowFavorites(false);
+              setShowAlerts(false);
+              setShowFilters(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`mobile-bottom-nav__item ${!showFavorites && !showAlerts && !showFilters ? 'is-active' : ''}`}
+          >
+            <span className="mobile-bottom-nav__icon"><Search className="h-5 w-5" /></span>
+            <span>Explore</span>
+          </button>
+          <button type="button" onClick={() => setShowFavorites((current) => !current)} className={`mobile-bottom-nav__item ${showFavorites ? 'is-active' : ''}`}>
+            <span className="mobile-bottom-nav__icon"><Heart className="h-5 w-5" /></span>
+            <span>Saved</span>
+          </button>
+          <button type="button" onClick={() => setShowAlerts((current) => !current)} className={`mobile-bottom-nav__item ${showAlerts ? 'is-active' : ''}`}>
+            <span className="mobile-bottom-nav__icon"><Bell className="h-5 w-5" /></span>
+            <span>Alerts</span>
+          </button>
+          <button type="button" onClick={() => setShowFilters((current) => !current)} className={`mobile-bottom-nav__item ${showFilters ? 'is-active' : ''}`}>
+            <span className="mobile-bottom-nav__icon"><Filter className="h-5 w-5" /></span>
+            <span>Filters</span>
+          </button>
+        </div>
+      </nav>
 
       {/* Floating Comparison Bar */}
       {comparisonList.length > 0 && (
@@ -745,8 +719,9 @@ const HomeSeekerDashboard: React.FC = () => {
 
       {/* Property Detail Modal */}
       {selectedProperty && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4">
-          <div className="panel max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-2xl">
+        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="panel mobile-sheet max-h-[94dvh] w-full max-w-5xl overflow-y-auto rounded-t-[2rem] sm:max-h-[92vh] sm:rounded-2xl">
+            <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[color:var(--border)] sm:hidden" aria-hidden="true" />
             <div className="sticky top-0 z-10 flex items-start justify-between border-b border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 sm:px-6">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">Property Preview</p>

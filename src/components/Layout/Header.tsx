@@ -42,13 +42,13 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = false }) 
                 <Menu className="h-5 w-5" />
               </button>
             )}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <a href="/" className="flex items-center gap-2 sm:gap-3" aria-label="FindShelta home">
               <FindSheltaLogo size={44} />
               <div className="hidden sm:block">
                 <p className="text-sm font-semibold tracking-[0.14em] text-[color:var(--text-muted)]">FINDSHELTA</p>
-                <p className="text-xs text-[color:var(--text-muted)]">Property Marketplace</p>
+                <p className="text-xs text-[color:var(--text-muted)]">Short Stay Platform</p>
               </div>
-            </div>
+            </a>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
