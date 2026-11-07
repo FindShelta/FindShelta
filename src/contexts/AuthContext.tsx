@@ -18,6 +18,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const getPasswordResetRedirectUrl = () => {
+  const configuredSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL?.trim();
+  const siteUrl = configuredSiteUrl || (import.meta.env.PROD ? 'https://findshelta.com' : window.location.origin);
+
+  return new URL('/reset-password', siteUrl).toString();
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -304,7 +311,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = async (email: string): Promise<boolean> => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: getPasswordResetRedirectUrl()
       });
 
       if (error) {
