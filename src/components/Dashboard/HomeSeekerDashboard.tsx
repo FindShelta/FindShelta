@@ -16,7 +16,7 @@ import MapSearch from '../Search/MapSearch';
 import LazyImage from '../common/LazyImage';
 import AliExpressCard from '../Properties/AliExpressCard';
 import usePerformance from '../../hooks/usePerformance';
-import { Search, Filter, Heart, MapPin, Bed, Bath, Phone, X, Scale, Bell, Save, Bookmark, Play, Map, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Heart, MapPin, Bed, Bath, Phone, X, Scale, Bell, Bookmark, Play, Map, ChevronLeft, ChevronRight } from 'lucide-react';
 import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 import { AVAILABLE_CITIES } from '../../lib/cities';
 import { buildCityLocationFilter, ListingRow, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../../lib/listings';
@@ -216,87 +216,60 @@ const HomeSeekerDashboard: React.FC = () => {
     <div className="min-h-screen pb-24 md:pb-0">
       <Header />
 
-      <div className="section-shell py-5 sm:py-8">
-        <section className="relative overflow-hidden rounded-[1.75rem] bg-[color:var(--brand-strong)] px-4 py-6 text-white shadow-[0_24px_70px_rgba(8,31,72,0.2)] sm:px-8 sm:py-8">
-          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border border-white/10" aria-hidden="true" />
-          <div className="relative">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-200">Finds</p>
-                <h1 className="mt-2 text-3xl font-bold tracking-[-0.045em] sm:text-5xl">Where are you staying?</h1>
-              </div>
-              <div className="shrink-0 rounded-2xl bg-white/10 px-3 py-2 text-right backdrop-blur-sm sm:px-4">
-                <p className="text-xl font-bold sm:text-2xl">{filteredProperties.length}</p>
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-200">stays</p>
-              </div>
-            </div>
+      <div className="section-shell py-4 sm:py-6">
+        <section className="panel rounded-2xl border border-[color:var(--border)] p-2.5 shadow-sm sm:p-3">
+          <div className="flex items-stretch gap-2">
+            <label className="relative min-w-0 flex-1">
+              <span className="sr-only">Search stays</span>
+              <span className="absolute left-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl bg-blue-50 text-[color:var(--brand)] dark:bg-blue-950/40">
+                <Search className="h-4 w-4" />
+              </span>
+              <input
+                type="search"
+                placeholder="Search city or area"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="h-14 min-h-14 w-full rounded-xl border-0 bg-[color:var(--surface-strong)] py-3 pl-14 pr-11 text-base font-semibold text-[color:var(--text)] outline-none ring-1 ring-inset ring-[color:var(--border)] placeholder:font-medium placeholder:text-[color:var(--text-muted)] focus:ring-2 focus:ring-[color:var(--brand)]"
+              />
+              {searchQuery && (
+                <button type="button" onClick={() => setSearchQuery('')} className="absolute right-1.5 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[color:var(--text-muted)] hover:bg-[color:var(--surface)]" aria-label="Clear search">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowFilters((current) => !current)}
+              className={`relative inline-flex min-h-14 shrink-0 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold transition ${showFilters ? 'border-[color:var(--brand)] bg-[color:var(--brand-strong)] text-white' : 'border-[color:var(--border)] bg-[color:var(--surface-strong)] text-[color:var(--text)] hover:border-[color:var(--brand)]'}`}
+              aria-label="Open filters"
+              aria-expanded={showFilters}
+            >
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">Filter</span>
+              {activeFilterCount > 0 && <span className="absolute -right-1.5 -top-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-slate-950">{activeFilterCount}</span>}
+            </button>
+          </div>
 
-            <div className="mt-6 flex items-stretch gap-2 sm:mt-8">
-              <label className="relative min-w-0 flex-1">
-                <span className="sr-only">Search stays</span>
-                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="search"
-                  placeholder="City or area"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  className="h-14 w-full rounded-2xl border-0 bg-white py-3 pl-12 pr-12 text-base font-semibold text-slate-950 outline-none ring-2 ring-transparent placeholder:font-medium placeholder:text-slate-500 focus:ring-blue-300"
-                />
-                {searchQuery && (
-                  <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100" aria-label="Clear search">
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowFilters((current) => !current)}
-                className={`relative inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border transition ${showFilters ? 'border-white bg-white text-blue-800' : 'border-white/20 bg-white/10 text-white hover:bg-white/20'}`}
-                aria-label="Open filters"
-                aria-expanded={showFilters}
-              >
-                <Filter className="h-5 w-5" />
-                {activeFilterCount > 0 && <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-slate-950">{activeFilterCount}</span>}
-              </button>
-            </div>
-
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide" aria-label="Quick city search">
-              {AVAILABLE_CITIES.map((city) => {
-                const isSelected = searchQuery.trim().toLowerCase() === city.toLowerCase();
-                return (
-                  <button
-                    key={city}
-                    type="button"
-                    onClick={() => setSearchQuery(isSelected ? '' : city)}
-                    className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-bold transition ${isSelected ? 'bg-white text-blue-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 hover:text-white'}`}
-                    aria-pressed={isSelected}
-                  >
-                    {city}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-5 flex gap-2 overflow-x-auto border-t border-white/15 pt-4 scrollbar-hide">
-              <button type="button" onClick={() => setShowMapSearch((current) => !current)} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition ${showMapSearch ? 'bg-white text-blue-800' : 'bg-white/10 text-white hover:bg-white/20'}`} aria-pressed={showMapSearch}>
-                <Map className="h-4 w-4" /> Map
-              </button>
-              <button type="button" onClick={() => setShowFavorites((current) => !current)} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition ${showFavorites ? 'bg-white text-blue-800' : 'bg-white/10 text-white hover:bg-white/20'}`} aria-pressed={showFavorites}>
-                <Heart className="h-4 w-4" /> Wishlist <span className="text-xs opacity-70">{favorites.size}</span>
-              </button>
-              <button type="button" onClick={() => setShowAlerts((current) => !current)} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition ${showAlerts ? 'bg-white text-blue-800' : 'bg-white/10 text-white hover:bg-white/20'}`} aria-pressed={showAlerts}>
-                <Bell className="h-4 w-4" /> Alerts <span className="text-xs opacity-70">{activeAlertCount}</span>
-              </button>
-              <button type="button" onClick={() => setShowSavedSearches((current) => !current)} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition ${showSavedSearches ? 'bg-white text-blue-800' : 'bg-white/10 text-white hover:bg-white/20'}`} aria-pressed={showSavedSearches}>
-                <Bookmark className="h-4 w-4" /> Saved <span className="text-xs opacity-70">{savedSearches.length}</span>
-              </button>
-              <button type="button" onClick={() => setShowSaveSearch(true)} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-white/10 px-3.5 text-sm font-bold text-white transition hover:bg-white/20">
-                <Save className="h-4 w-4" /> Save search
-              </button>
-              <button type="button" onClick={() => setShowCreateAlert(true)} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-white/10 px-3.5 text-sm font-bold text-white transition hover:bg-white/20">
-                <Bell className="h-4 w-4" /> New alert
-              </button>
-            </div>
+          <div className="mt-2 flex items-center gap-2 overflow-x-auto border-t border-[color:var(--border)] pt-2 scrollbar-hide">
+            {AVAILABLE_CITIES.map((city) => {
+              const isSelected = searchQuery.trim().toLowerCase() === city.toLowerCase();
+              return (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => setSearchQuery(isSelected ? '' : city)}
+                  className={`min-h-9 shrink-0 rounded-full px-3.5 text-xs font-bold transition ${isSelected ? 'bg-[color:var(--brand-strong)] text-white' : 'bg-[color:var(--surface-strong)] text-[color:var(--text-muted)] hover:text-[color:var(--text)]'}`}
+                  aria-pressed={isSelected}
+                >
+                  {city}
+                </button>
+              );
+            })}
+            <span className="mx-1 h-6 w-px shrink-0 bg-[color:var(--border)]" aria-hidden="true" />
+            <button type="button" title="Map" onClick={() => setShowMapSearch((current) => !current)} className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${showMapSearch ? 'bg-[color:var(--brand-strong)] text-white' : 'text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--text)]'}`} aria-label="Map search" aria-pressed={showMapSearch}><Map className="h-4 w-4" /></button>
+            <button type="button" title="Wishlist" onClick={() => setShowFavorites((current) => !current)} className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${showFavorites ? 'bg-[color:var(--brand-strong)] text-white' : 'text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--text)]'}`} aria-label={`Wishlist, ${favorites.size} items`} aria-pressed={showFavorites}><Heart className="h-4 w-4" /></button>
+            <button type="button" title="Alerts" onClick={() => setShowAlerts((current) => !current)} className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${showAlerts ? 'bg-[color:var(--brand-strong)] text-white' : 'text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--text)]'}`} aria-label={`Alerts, ${activeAlertCount} active`} aria-pressed={showAlerts}><Bell className="h-4 w-4" /></button>
+            <button type="button" title="Saved searches" onClick={() => setShowSavedSearches((current) => !current)} className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${showSavedSearches ? 'bg-[color:var(--brand-strong)] text-white' : 'text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--text)]'}`} aria-label={`Saved searches, ${savedSearches.length} saved`} aria-pressed={showSavedSearches}><Bookmark className="h-4 w-4" /></button>
           </div>
         </section>
       </div>
