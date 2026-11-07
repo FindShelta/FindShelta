@@ -7,10 +7,10 @@ interface FindSheltaLogoProps {
 
 const FindSheltaLogo: React.FC<FindSheltaLogoProps> = ({ size = 64, className = '' }) => {
   return (
-    <div className={`inline-flex items-center justify-center overflow-hidden rounded-xl ${className}`}>
+    <div className={`inline-flex shrink-0 items-center justify-center ${className}`}>
       <img
         src="/findshelta-logo.png"
-        alt="FindShelta Logo"
+        alt="FindShelta"
         width={size}
         height={size}
         className="object-contain"

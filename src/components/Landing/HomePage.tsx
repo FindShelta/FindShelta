@@ -28,8 +28,8 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
   const pageTitle = import.meta.env.VITE_HOME_TITLE || 'Short Stay Apartments in Nigeria | FindShelta';
   const pageDescription =
     import.meta.env.VITE_HOME_DESCRIPTION ||
-    'Find premium short stay apartments in Lagos, Abuja, and Enugu. Browse quality stays and book directly on FindShelta.';
-  const pageHeading = import.meta.env.VITE_HOME_H1 || 'Find Your Perfect Short Stay in Nigeria';
+    'Find quality short stay apartments in Lagos, Abuja, and Enugu. Browse daily or weekly stays and contact hosts directly on FindShelta.';
+  const pageHeading = import.meta.env.VITE_HOME_H1 || 'Classy short stays across Nigeria.';
 
   useEffect(() => {
     if (carouselPaused || carouselHovered || propertyShowcases.length < 2) return undefined;
@@ -73,7 +73,18 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
 
   return (
     <div className="min-h-screen overflow-x-clip bg-[color:var(--bg)]">
-      <Seo title={pageTitle} description={pageDescription} />
+      <Seo
+        title={pageTitle}
+        description={pageDescription}
+        canonicalPath="/"
+        keywords={[
+          'short stay apartments Nigeria',
+          'short let Nigeria',
+          'furnished apartments Nigeria short stay',
+          'book short stay Nigeria no agent',
+          'serviced apartments Nigeria',
+        ]}
+      />
 
       <header className="sticky top-0 z-50 border-b border-[color:var(--border)] bg-[color:var(--surface-solid)]/95 backdrop-blur-md">
         <div className="section-shell flex h-16 items-center justify-between sm:h-20">
@@ -109,7 +120,7 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
                 {pageHeading}
               </h1>
               <p className="hero-reveal hero-reveal-delay-1 mx-auto mt-6 max-w-2xl text-base leading-7 text-blue-100 sm:text-xl sm:leading-8">
-                Discover quality apartments, see the details that matter, and speak directly with the host.
+                Quality apartments in Lagos, Abuja, and Enugu. Compare the details that matter and speak directly with the host.
               </p>
             </div>
 
