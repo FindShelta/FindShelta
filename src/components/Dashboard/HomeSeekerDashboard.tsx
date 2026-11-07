@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Property } from '../../types';
 import { useComparison } from '../../contexts/ComparisonContext';
 import { useAlerts } from '../../contexts/AlertContext';
@@ -34,6 +34,8 @@ type SavedDashboardFilters = {
   filters?: Partial<DashboardFilters>;
 };
 
+const ITEMS_PER_PAGE = 8;
+
 const HomeSeekerDashboard: React.FC = () => {
   usePerformance('HomeSeekerDashboard');
   const activeCategory = 'shortstay' as const;
@@ -53,10 +55,6 @@ const HomeSeekerDashboard: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
-  const ITEMS_PER_PAGE = 12;
   const { comparisonList, addToComparison, isInComparison } = useComparison();
   const { alerts } = useAlerts();
   const { favorites, addToFavorites, removeFromFavorites, isFavorite, savedSearches } = useFavorites();
@@ -70,23 +68,16 @@ const HomeSeekerDashboard: React.FC = () => {
 
   // Fetch properties from Supabase
   useEffect(() => {
-    fetchProperties(1, true);
+    void fetchProperties();
   }, []);
 
   useEffect(() => {
     setPreviewImageIndex(0);
   }, [selectedProperty?.id]);
 
-  const fetchProperties = async (pageNum: number = 1, reset: boolean = false) => {
+  const fetchProperties = async () => {
     try {
-      if (reset) {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-
-      const from = (pageNum - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE;
+      setLoading(true);
 
       const { data, error } = await supabase
         .from('listings')
@@ -94,56 +85,23 @@ const HomeSeekerDashboard: React.FC = () => {
         .eq('is_approved', true)
         .eq('property_type', 'shortstay')
         .or(buildCityLocationFilter(AVAILABLE_CITIES))
-        .order('created_at', { ascending: false })
-        .range(from, to);
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching properties:', error);
-        if (reset) setProperties([]);
+        setProperties([]);
         return;
       }
 
-      const pageItems = (data || []).slice(0, ITEMS_PER_PAGE);
-      const transformedProperties: Property[] = (pageItems as ListingRow[]).map(mapListingToProperty);
-
-      if (reset) {
-        setProperties(transformedProperties);
-      } else {
-        setProperties(prev => [...prev, ...transformedProperties]);
-      }
-
-      setHasMore((data || []).length > ITEMS_PER_PAGE);
-      setPage(pageNum);
+      const transformedProperties: Property[] = ((data || []) as ListingRow[]).map(mapListingToProperty);
+      setProperties(transformedProperties);
     } catch (error) {
       console.error('Error fetching properties:', error);
+      setProperties([]);
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   };
-
-  const loadMore = () => {
-    if (!loadingMore && hasMore) {
-      fetchProperties(page + 1, false);
-    }
-  };
-
-  useEffect(() => {
-    if (!hasMore || loading || loadingMore) return;
-    const node = loadMoreSentinelRef.current;
-    if (!node) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) loadMore();
-      },
-      { rootMargin: '320px 0px' }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  // loadMore intentionally tracks the current page and request state from this render.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, loading, loadingMore, page]);
 
   // Filter properties based on search query, category, and filters
   const getFilteredProperties = () => {
@@ -186,8 +144,22 @@ const HomeSeekerDashboard: React.FC = () => {
   };
 
   const filteredProperties = getFilteredProperties();
+  const totalPages = Math.max(1, Math.ceil(filteredProperties.length / ITEMS_PER_PAGE));
+  const paginatedProperties = filteredProperties.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
   const activeFilterCount = Object.values(filters).filter((value) => value.trim()).length;
   const activeAlertCount = alerts.filter((alert) => alert.is_active).length;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, filters.minPrice, filters.maxPrice, filters.bedrooms, filters.bathrooms, filters.location]);
+
+  const changePage = (nextPage: number) => {
+    if (nextPage < 1 || nextPage > totalPages || nextPage === page) return;
+    setPage(nextPage);
+    window.requestAnimationFrame(() => {
+      document.getElementById('dashboard-listings')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -492,7 +464,7 @@ const HomeSeekerDashboard: React.FC = () => {
       )}
 
       {/* Properties Grid */}
-      <div className="section-shell py-4 sm:py-6 lg:py-8">
+      <div id="dashboard-listings" className="section-shell scroll-mt-24 py-4 sm:py-6 lg:py-8">
         <div className="mb-5 flex items-end justify-between">
           <h2 className="text-2xl font-bold tracking-[-0.03em] text-[color:var(--text)] sm:text-3xl">
             Available stays
@@ -507,8 +479,8 @@ const HomeSeekerDashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {filteredProperties.map((property) => (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {paginatedProperties.map((property) => (
               <AliExpressCard
                 key={property.id}
                 property={property}
@@ -524,17 +496,6 @@ const HomeSeekerDashboard: React.FC = () => {
               />
             ))}
           </div>
-        )}
-
-        {!loading && filteredProperties.length > 0 && <div ref={loadMoreSentinelRef} className="h-4" aria-hidden="true" />}
-        {!loading && loadingMore && (
-          <div className="flex items-center justify-center gap-2 py-8 text-sm text-[color:var(--text-muted)]">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[color:var(--brand)] border-t-transparent" />
-            Loading more short stays…
-          </div>
-        )}
-        {!loading && !hasMore && filteredProperties.length > 0 && (
-          <p className="py-8 text-center text-sm font-medium text-[color:var(--text-muted)]">You’ve seen all available properties.</p>
         )}
 
         {/* No Results */}
@@ -561,6 +522,30 @@ const HomeSeekerDashboard: React.FC = () => {
               </button>
             )}
           </div>
+        )}
+
+        {!loading && filteredProperties.length > 0 && totalPages > 1 && (
+          <nav className="mt-8 flex items-center justify-between border-t border-[color:var(--border)] pt-6" aria-label="Listing pages">
+            <button
+              type="button"
+              onClick={() => changePage(page - 1)}
+              disabled={page === 1}
+              className="ghost-button inline-flex min-h-12 items-center gap-2 rounded-xl px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" /> Previous
+            </button>
+            <p className="text-sm font-bold text-[color:var(--text)]">
+              Page <span className="text-[color:var(--brand)]">{page}</span> of {totalPages}
+            </p>
+            <button
+              type="button"
+              onClick={() => changePage(page + 1)}
+              disabled={page === totalPages}
+              className="brand-button inline-flex min-h-12 items-center gap-2 rounded-xl px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next <ChevronRight className="h-4 w-4" />
+            </button>
+          </nav>
         )}
       </div>
 
