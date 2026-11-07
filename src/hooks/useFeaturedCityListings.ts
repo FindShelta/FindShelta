@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Property } from '../types';
 import { supabase } from '../lib/supabase';
-import { ListingRow, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../lib/listings';
+import { buildCityLocationFilter, ListingRow, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../lib/listings';
 
 export interface FeaturedCityListing {
   city: string;
@@ -27,9 +27,8 @@ const useFeaturedCityListings = (cities: readonly string[]) => {
             .from('listings')
             .select(PUBLIC_LISTING_SELECT)
             .eq('is_approved', true)
-            .eq('is_hidden', false)
             .eq('property_type', 'shortstay')
-            .ilike('location_city', city)
+            .or(buildCityLocationFilter([city]))
             .order('created_at', { ascending: false })
             .limit(2);
           return { city, ...result };

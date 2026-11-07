@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { mapListingToProperty, PUBLIC_LISTING_SELECT } from '../lib/listings';
+import { buildCityLocationFilter, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../lib/listings';
 import { Property } from '../types';
 import { AVAILABLE_CITIES } from '../lib/cities';
 
@@ -27,15 +27,14 @@ const useShortStayListings = (city?: string) => {
         .from('listings')
         .select(PUBLIC_LISTING_SELECT)
         .eq('is_approved', true)
-        .eq('is_hidden', false)
         .eq('property_type', 'shortstay')
         .order('created_at', { ascending: false })
         .range(from, to);
 
       if (city) {
-        query = query.ilike('location_city', city);
+        query = query.or(buildCityLocationFilter([city]));
       } else {
-        query = query.or(AVAILABLE_CITIES.map((availableCity) => `location_city.ilike.${availableCity}`).join(','));
+        query = query.or(buildCityLocationFilter(AVAILABLE_CITIES));
       }
 
       const { data, error: fetchError } = await query;

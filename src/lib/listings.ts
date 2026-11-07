@@ -9,8 +9,6 @@ export const PUBLIC_LISTING_SELECT = [
   'location_state',
   'location_city',
   'location_address',
-  'bedrooms',
-  'bathrooms',
   'amenities',
   'images',
   'video_url',
@@ -21,6 +19,18 @@ export const PUBLIC_LISTING_SELECT = [
   'views_count',
   'bookmarks_count',
 ].join(',');
+
+export const buildCityLocationFilter = (cities: readonly string[]) =>
+  cities
+    .flatMap((city) => {
+      const terms = city.toLowerCase() === 'abuja' ? [city, 'FCT'] : [city];
+      return terms.flatMap((term) => [
+        `location_state.ilike.%${term}%`,
+        `location_city.ilike.%${term}%`,
+        `location_address.ilike.%${term}%`,
+      ]);
+    })
+    .join(',');
 
 export interface ListingRow {
   id: string;

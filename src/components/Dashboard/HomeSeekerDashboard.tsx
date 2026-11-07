@@ -19,6 +19,7 @@ import usePerformance from '../../hooks/usePerformance';
 import { Search, Filter, Heart, MapPin, Bed, Bath, Phone, X, Scale, Bell, Save, Bookmark, Play, Map, ChevronLeft, ChevronRight } from 'lucide-react';
 import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 import { AVAILABLE_CITIES } from '../../lib/cities';
+import { buildCityLocationFilter, ListingRow, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../../lib/listings';
 
 type DashboardFilters = {
   minPrice: string;
@@ -89,11 +90,10 @@ const HomeSeekerDashboard: React.FC = () => {
 
       const { data, error } = await supabase
         .from('listings')
-        .select('id, title, description, price, property_type, location_state, location_city, location_address, bedrooms, bathrooms, amenities, images, agent_id, agent_name, agent_whatsapp, created_at, views_count, bookmarks_count')
+        .select(PUBLIC_LISTING_SELECT)
         .eq('is_approved', true)
-        .eq('is_hidden', false)
         .eq('property_type', 'shortstay')
-        .or(AVAILABLE_CITIES.map((city) => `location_city.ilike.${city}`).join(','))
+        .or(buildCityLocationFilter(AVAILABLE_CITIES))
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -103,27 +103,8 @@ const HomeSeekerDashboard: React.FC = () => {
         return;
       }
 
-      // Transform data to match Property interface
       const pageItems = (data || []).slice(0, ITEMS_PER_PAGE);
-      const transformedProperties: Property[] = pageItems.map(listing => ({
-        id: listing.id,
-        title: listing.title || 'Property Listing',
-        description: listing.description || 'No description available',
-        price: listing.price || 0,
-        currency: 'NGN',
-        type: 'shortstay',
-        location: `${listing.location_city || ''}, ${listing.location_state || 'Nigeria'}`.trim(),
-        bedrooms: listing.bedrooms == null ? undefined : Number(listing.bedrooms),
-        bathrooms: listing.bathrooms == null ? undefined : Number(listing.bathrooms),
-        amenities: listing.amenities || ['wifi', 'parking'],
-        images: listing.images && listing.images.length > 0 ? listing.images : ['https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'],
-        agentId: listing.agent_id,
-        agentName: listing.agent_name || 'Agent',
-        agentWhatsapp: listing.agent_whatsapp || '',
-        createdAt: new Date(listing.created_at),
-        views: listing.views_count || 0,
-        bookmarks: listing.bookmarks_count || 0
-      }));
+      const transformedProperties: Property[] = (pageItems as ListingRow[]).map(mapListingToProperty);
 
       if (reset) {
         setProperties(transformedProperties);
@@ -205,10 +186,8 @@ const HomeSeekerDashboard: React.FC = () => {
   };
 
   const filteredProperties = getFilteredProperties();
-  const handleSearch = () => {
-    // Search is handled by getFilteredProperties
-    // This function can be used for additional search logic if needed
-  };
+  const activeFilterCount = Object.values(filters).filter((value) => value.trim()).length;
+  const activeAlertCount = alerts.filter((alert) => alert.is_active).length;
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -265,191 +244,141 @@ const HomeSeekerDashboard: React.FC = () => {
     <div className="min-h-screen pb-24 md:pb-0">
       <Header />
 
-      <div className="section-shell py-6 sm:py-8">
-        <section className="enterprise-header">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Finds</p>
-              <h1 className="mt-2 text-3xl font-bold text-[color:var(--text)] sm:text-4xl lg:text-5xl">Find your next short stay</h1>
-              <p className="mt-3 max-w-2xl text-sm text-[color:var(--text-muted)] sm:text-base">
-                Search by city, save filters, and contact agents directly from each listing card.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-              <div className="enterprise-kpi">
-                <p className="text-lg font-bold text-[color:var(--text)] sm:text-2xl">{properties.length}</p>
-                <p className="text-xs text-[color:var(--text-muted)]">Finds</p>
+      <div className="section-shell py-5 sm:py-8">
+        <section className="relative overflow-hidden rounded-[1.75rem] bg-[color:var(--brand-strong)] px-4 py-6 text-white shadow-[0_24px_70px_rgba(8,31,72,0.2)] sm:px-8 sm:py-8">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border border-white/10" aria-hidden="true" />
+          <div className="relative">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-200">Finds</p>
+                <h1 className="mt-2 text-3xl font-bold tracking-[-0.045em] sm:text-5xl">Where are you staying?</h1>
               </div>
-              <div className="enterprise-kpi">
-                <p className="text-lg font-bold text-[color:var(--text)] sm:text-2xl">{favorites.size}</p>
-                <p className="text-xs text-[color:var(--text-muted)]">Wishlist</p>
-              </div>
-              <div className="enterprise-kpi">
-                <p className="text-lg font-bold text-[color:var(--text)] sm:text-2xl">{alerts.filter((a) => a.is_active).length}</p>
-                <p className="text-xs text-[color:var(--text-muted)]">Alerts</p>
-              </div>
-              <div className="enterprise-kpi">
-                <p className="text-lg font-bold text-[color:var(--text)] sm:text-2xl">{savedSearches.length}</p>
-                <p className="text-xs text-[color:var(--text-muted)]">Saved</p>
+              <div className="shrink-0 rounded-2xl bg-white/10 px-3 py-2 text-right backdrop-blur-sm sm:px-4">
+                <p className="text-xl font-bold sm:text-2xl">{filteredProperties.length}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-200">stays</p>
               </div>
             </div>
-          </div>
 
-          <div className="enterprise-kpi mt-6 p-3 sm:p-4">
-            <div className="flex flex-col gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--text-muted)]" />
+            <div className="mt-6 flex items-stretch gap-2 sm:mt-8">
+              <label className="relative min-w-0 flex-1">
+                <span className="sr-only">Search stays</span>
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
                 <input
-                  type="text"
-                  placeholder="Search by city, area, or property keyword"
+                  type="search"
+                  placeholder="City or area"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="brand-input w-full rounded-xl py-3 pl-10 pr-3 text-sm"
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className="h-14 w-full rounded-2xl border-0 bg-white py-3 pl-12 pr-12 text-base font-semibold text-slate-950 outline-none ring-2 ring-transparent placeholder:font-medium placeholder:text-slate-500 focus:ring-blue-300"
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="ghost-button rounded-lg px-3 py-2 text-sm font-semibold"
-                >
-                  <span className="inline-flex items-center gap-1"><Filter className="h-4 w-4" /> Filters</span>
-                </button>
-                <button
-                  onClick={() => setShowCreateAlert(true)}
-                  className="ghost-button rounded-lg px-3 py-2 text-sm font-semibold"
-                >
-                  <span className="inline-flex items-center gap-1"><Bell className="h-4 w-4" /> Alert</span>
-                </button>
-                <button
-                  onClick={() => setShowSaveSearch(true)}
-                  className="ghost-button rounded-lg px-3 py-2 text-sm font-semibold"
-                >
-                  <span className="inline-flex items-center gap-1"><Save className="h-4 w-4" /> Save</span>
-                </button>
-                <button
-                  onClick={() => setShowMapSearch(!showMapSearch)}
-                  className="ghost-button rounded-lg px-3 py-2 text-sm font-semibold"
-                >
-                  <span className="inline-flex items-center gap-1"><Map className="h-4 w-4" /> Map</span>
-                </button>
-                <button onClick={handleSearch} className="brand-button rounded-lg px-3 py-2 text-sm font-semibold">
-                  Search now
-                </button>
-              </div>
+                {searchQuery && (
+                  <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100" aria-label="Clear search">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowFilters((current) => !current)}
+                className={`relative inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border transition ${showFilters ? 'border-white bg-white text-blue-800' : 'border-white/20 bg-white/10 text-white hover:bg-white/20'}`}
+                aria-label="Open filters"
+                aria-expanded={showFilters}
+              >
+                <Filter className="h-5 w-5" />
+                {activeFilterCount > 0 && <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-slate-950">{activeFilterCount}</span>}
+              </button>
+            </div>
+
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide" aria-label="Quick city search">
+              {AVAILABLE_CITIES.map((city) => {
+                const isSelected = searchQuery.trim().toLowerCase() === city.toLowerCase();
+                return (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => setSearchQuery(isSelected ? '' : city)}
+                    className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-bold transition ${isSelected ? 'bg-white text-blue-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 hover:text-white'}`}
+                    aria-pressed={isSelected}
+                  >
+                    {city}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-5 flex gap-2 overflow-x-auto border-t border-white/15 pt-4 scrollbar-hide">
+              <button type="button" onClick={() => setShowMapSearch((current) => !current)} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition ${showMapSearch ? 'bg-white text-blue-800' : 'bg-white/10 text-white hover:bg-white/20'}`} aria-pressed={showMapSearch}>
+                <Map className="h-4 w-4" /> Map
+              </button>
+              <button type="button" onClick={() => setShowFavorites((current) => !current)} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition ${showFavorites ? 'bg-white text-blue-800' : 'bg-white/10 text-white hover:bg-white/20'}`} aria-pressed={showFavorites}>
+                <Heart className="h-4 w-4" /> Wishlist <span className="text-xs opacity-70">{favorites.size}</span>
+              </button>
+              <button type="button" onClick={() => setShowAlerts((current) => !current)} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition ${showAlerts ? 'bg-white text-blue-800' : 'bg-white/10 text-white hover:bg-white/20'}`} aria-pressed={showAlerts}>
+                <Bell className="h-4 w-4" /> Alerts <span className="text-xs opacity-70">{activeAlertCount}</span>
+              </button>
+              <button type="button" onClick={() => setShowSavedSearches((current) => !current)} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition ${showSavedSearches ? 'bg-white text-blue-800' : 'bg-white/10 text-white hover:bg-white/20'}`} aria-pressed={showSavedSearches}>
+                <Bookmark className="h-4 w-4" /> Saved <span className="text-xs opacity-70">{savedSearches.length}</span>
+              </button>
+              <button type="button" onClick={() => setShowSaveSearch(true)} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-white/10 px-3.5 text-sm font-bold text-white transition hover:bg-white/20">
+                <Save className="h-4 w-4" /> Save search
+              </button>
+              <button type="button" onClick={() => setShowCreateAlert(true)} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-white/10 px-3.5 text-sm font-bold text-white transition hover:bg-white/20">
+                <Bell className="h-4 w-4" /> New alert
+              </button>
             </div>
           </div>
         </section>
       </div>
 
-      {/* Category Tabs */}
-      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4">
-          <div className="flex space-x-4 sm:space-x-8 overflow-x-auto py-3 sm:py-4 scrollbar-hide">
-            <div className="flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-              Finds
-              <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs dark:bg-slate-700">{properties.length}</span>
-            </div>
-            
-            {/* Alerts Button */}
-            <button
-              onClick={() => setShowAlerts(!showAlerts)}
-              className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${
-                showAlerts
-                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <Bell className="w-4 h-4" />
-              <span className="sm:hidden">Alerts</span>
-              <span className="hidden sm:inline">My Alerts</span>
-              <span className="bg-gray-200 dark:bg-slate-600 text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
-                {alerts.filter(a => a.is_active).length}
-              </span>
-            </button>
-            
-            {/* Favorites Button */}
-            <button
-              onClick={() => setShowFavorites(!showFavorites)}
-              className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${
-                showFavorites
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <Heart className="w-4 h-4" />
-              <span className="sm:hidden">Wishlist</span>
-              <span className="hidden sm:inline">My Wishlist</span>
-              <span className="bg-gray-200 dark:bg-slate-600 text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
-                {favorites.size}
-              </span>
-            </button>
-            
-            {/* Saved Searches Button */}
-            <button
-              onClick={() => setShowSavedSearches(!showSavedSearches)}
-              className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${
-                showSavedSearches
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <Bookmark className="w-4 h-4" />
-              <span className="sm:hidden">Saved</span>
-              <span className="hidden sm:inline">Saved Searches</span>
-              <span className="bg-gray-200 dark:bg-slate-600 text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
-                {savedSearches.length}
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Filters Panel */}
       {showFilters && (
-        <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
+        <div className="section-shell pb-5">
+          <section className="panel rounded-2xl border border-[color:var(--border)] p-4 sm:p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand)]">Refine</p>
+                <h2 className="mt-1 text-xl font-bold text-[color:var(--text)]">Narrow the list</h2>
+              </div>
               <button
                 onClick={() => setShowFilters(false)}
-                className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="ghost-button inline-flex h-10 w-10 items-center justify-center rounded-xl"
+                aria-label="Close filters"
               >
-                <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-                  Min Price (₦)
+                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.08em] text-[color:var(--text-muted)]">
+                  Min price
                 </label>
                 <input
                   type="number"
                   value={filters.minPrice}
                   onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                  className="w-full px-2 sm:px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
-                  placeholder="0"
+                  className="brand-input min-h-12 w-full rounded-xl px-3 text-sm"
+                  placeholder="₦0"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Max Price (₦)
+                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.08em] text-[color:var(--text-muted)]">
+                  Max price
                 </label>
                 <input
                   type="number"
                   value={filters.maxPrice}
                   onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  className="brand-input min-h-12 w-full rounded-xl px-3 text-sm"
                   placeholder="Any"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Min Bedrooms
+                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.08em] text-[color:var(--text-muted)]">
+                  Beds
                 </label>
                 <select
                   value={filters.bedrooms}
                   onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  className="brand-input min-h-12 w-full rounded-xl px-3 text-sm"
                 >
                   <option value="">Any</option>
                   <option value="1">1+</option>
@@ -459,13 +388,13 @@ const HomeSeekerDashboard: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Min Bathrooms
+                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.08em] text-[color:var(--text-muted)]">
+                  Baths
                 </label>
                 <select
                   value={filters.bathrooms}
                   onChange={(e) => handleFilterChange('bathrooms', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  className="brand-input min-h-12 w-full rounded-xl px-3 text-sm"
                 >
                   <option value="">Any</option>
                   <option value="1">1+</option>
@@ -474,30 +403,30 @@ const HomeSeekerDashboard: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Location
+                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.08em] text-[color:var(--text-muted)]">
+                  Area
                 </label>
                 <input
                   type="text"
                   value={filters.location}
                   onChange={(e) => handleFilterChange('location', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  placeholder="City, State"
+                  className="brand-input min-h-12 w-full rounded-xl px-3 text-sm"
+                  placeholder="City or area"
                 />
               </div>
             </div>
-            <div className="flex items-center space-x-4 mt-4">
+            <div className="mt-5 flex items-center justify-between border-t border-[color:var(--border)] pt-4">
               <button
                 onClick={clearFilters}
-                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="text-sm font-bold text-[color:var(--text-muted)] hover:text-[color:var(--text)]"
               >
-                Clear All
+                Reset
               </button>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {filteredProperties.length} properties found
+              <div className="text-sm font-bold text-[color:var(--brand)]">
+                {filteredProperties.length} stays
               </div>
             </div>
-          </div>
+          </section>
         </div>
       )}
 
@@ -555,7 +484,7 @@ const HomeSeekerDashboard: React.FC = () => {
         <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
             <MapSearch onLocationSelect={(location) => {
-              setFilters(prev => ({ ...prev, location: location.address }));
+              setSearchQuery(location.address);
               setShowMapSearch(false);
             }} />
           </div>
@@ -563,12 +492,12 @@ const HomeSeekerDashboard: React.FC = () => {
       )}
 
       {/* Properties Grid */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[color:var(--text)] sm:text-xl">
-            Finds
+      <div className="section-shell py-4 sm:py-6 lg:py-8">
+        <div className="mb-5 flex items-end justify-between">
+          <h2 className="text-2xl font-bold tracking-[-0.03em] text-[color:var(--text)] sm:text-3xl">
+            Available stays
           </h2>
-          <p className="text-xs text-[color:var(--text-muted)] sm:text-sm">{filteredProperties.length} results</p>
+          <p className="text-xs font-bold uppercase tracking-[0.1em] text-[color:var(--text-muted)] sm:text-sm">{filteredProperties.length} results</p>
         </div>
         {loading ? (
           <div className="flex items-center justify-center py-12">
