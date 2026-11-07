@@ -21,7 +21,7 @@ const FavoritesList: React.FC = () => {
       <div className="flex items-center justify-center py-8">
         <div className="text-center">
           <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600 dark:text-gray-300">Loading favorites...</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">Loading your wishlist...</p>
         </div>
       </div>
     );
@@ -31,8 +31,8 @@ const FavoritesList: React.FC = () => {
     return (
       <div className="text-center py-8">
         <Heart className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No favorites yet</h3>
-        <p className="text-gray-600 dark:text-gray-300 text-sm">Start adding properties to your favorites</p>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Your wishlist is empty</h3>
+        <p className="text-gray-600 dark:text-gray-300 text-sm">Tap the heart on a stay to add it to your wishlist.</p>
       </div>
     );
   }
@@ -60,11 +60,12 @@ const FavoritesList: React.FC = () => {
             <button
               onClick={() => removeFromFavorites(property.id)}
               className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/90 text-red-500 shadow-sm backdrop-blur-sm transition hover:bg-white"
+              aria-label={`Remove ${property.title} from wishlist`}
             >
               <Trash2 className="h-4 w-4" />
             </button>
             <div className="absolute bottom-0 left-0 right-0 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">Saved Listing</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">Wishlist</p>
               <p className="text-xl font-bold text-white">{formatPrice(property.price, property.type)}</p>
             </div>
           </div>

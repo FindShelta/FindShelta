@@ -1,20 +1,21 @@
 import { ArrowDown, ArrowRight, Check, MapPin, Moon, Sun } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
+import { AVAILABLE_CITY_KEYS } from '../../lib/cities';
 import Seo from '../common/Seo';
 import FindSheltaLogo from '../common/FindShelterLogo';
 import InfiniteShortStayGrid from '../Properties/InfiniteShortStayGrid';
 
 const cityDescriptions: Record<string, string> = {
   lagos: 'Browse premium short stay apartments in Lagos, from Lekki to Victoria Island, and book directly with FindShelta hosts.',
-  calabar: 'Discover comfortable short stay apartments in Calabar for holidays, business trips, and memorable weekend escapes.',
   abuja: 'Find secure, stylish short stay apartments in Abuja for work trips, city breaks, and extended stays.',
+  enugu: 'Discover comfortable short stay apartments in Enugu for work trips, family visits, and relaxed city breaks.',
 };
 
 const cityImages: Record<string, string> = {
   lagos: 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1400',
-  calabar: 'https://images.pexels.com/photos/7031408/pexels-photo-7031408.jpeg?auto=compress&cs=tinysrgb&w=1400',
   abuja: 'https://images.pexels.com/photos/1642125/pexels-photo-1642125.jpeg?auto=compress&cs=tinysrgb&w=1400',
+  enugu: 'https://images.pexels.com/photos/7031601/pexels-photo-7031601.jpeg?auto=compress&cs=tinysrgb&w=1400',
 };
 
 const toTitleCase = (value: string) =>
@@ -27,6 +28,8 @@ const CityLandingPage: React.FC = () => {
   const cityName = toTitleCase(city);
   const description = cityDescriptions[cityKey] || `Explore available short stay apartments in ${cityName} and contact a FindShelta host directly to book.`;
   const image = cityImages[cityKey] || cityImages.lagos;
+
+  if (!AVAILABLE_CITY_KEYS.includes(cityKey)) return <Navigate to="/" replace />;
 
   return (
     <div className="min-h-screen bg-[color:var(--bg)]">

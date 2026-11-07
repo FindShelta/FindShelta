@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Property } from '../../types';
 import LazyImage from '../Common/LazyImage';
-import { MapPin, Bed, Bath, Star, Phone, Play, Scale, Heart } from 'lucide-react';
+import { MapPin, Bed, Bath, Phone, Play, Scale, Heart } from 'lucide-react';
 import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 
 interface PropertyCardProps {
@@ -44,6 +44,7 @@ const PropertyCard: React.FC<PropertyCardProps> = memo(({
             onBookmarkToggle(property.id);
           }}
           className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
+          aria-label={isFavorite ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart
             className={`w-4 h-4 sm:w-5 sm:h-5 ${

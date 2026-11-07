@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { mapListingToProperty, PUBLIC_LISTING_SELECT } from '../lib/listings';
 import { Property } from '../types';
+import { AVAILABLE_CITIES } from '../lib/cities';
 
 const PAGE_SIZE = 12;
 
@@ -33,6 +34,8 @@ const useShortStayListings = (city?: string) => {
 
       if (city) {
         query = query.ilike('location_city', city);
+      } else {
+        query = query.or(AVAILABLE_CITIES.map((availableCity) => `location_city.ilike.${availableCity}`).join(','));
       }
 
       const { data, error: fetchError } = await query;

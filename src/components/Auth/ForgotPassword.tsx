@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle2, Loader2, Mail } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import FindSheltaLogo from '../common/FindShelterLogo';
+import AuthShell from './AuthShell';
 
 interface ForgotPasswordProps {
   onBack: () => void;
@@ -14,120 +14,65 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBack }) => {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setLoading(true);
     setError('');
 
     if (!email.trim()) {
-      setError('Please enter your email address');
+      setError('Enter the email address connected to your account.');
       setLoading(false);
       return;
     }
 
     const success = await resetPassword(email.trim());
-    
-    if (success) {
-      setSent(true);
-    } else {
-      setError('Failed to send reset email. Please check your email address.');
-    }
-    
+    if (success) setSent(true);
+    else setError('We could not send the reset email. Check the address and try again.');
     setLoading(false);
   };
 
-  if (sent) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
-        <div className="max-w-md w-full">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 border border-gray-200 dark:border-slate-700 text-center">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-            </div>
-            
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Check Your Email
-            </h2>
-            
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              We've sent a password reset link to <strong>{email}</strong>
-            </p>
-            
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-              Click the link in the email to reset your password. The link will expire in 1 hour.
-            </p>
-            
-            <button
-              onClick={onBack}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-colors"
-            >
-              Back to Sign In
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 border border-gray-200 dark:border-slate-700">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center space-x-3 mb-6">
-              <FindSheltaLogo size={48} />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reset Password</h1>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300">
-              Enter your email address and we'll send you a link to reset your password
-            </p>
+    <AuthShell onBack={onBack} backLabel="Back to sign in" visualTitle="Your account stays protected." visualCopy="Recover access securely and get back to the properties, hosts, and searches you care about.">
+      {sent ? (
+        <div className="text-center">
+          <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+            <CheckCircle2 className="h-8 w-8" />
+          </span>
+          <h2 className="mt-6 text-4xl font-bold tracking-[-0.04em] text-[color:var(--text)]">Check your inbox</h2>
+          <p className="mt-4 text-base leading-7 text-[color:var(--text-muted)]">We sent a password reset link to <strong className="text-[color:var(--text)]">{email}</strong>. The link expires in one hour.</p>
+          <button type="button" onClick={onBack} className="brand-button mt-8 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl px-5 font-bold">
+            Return to sign in <ArrowRight className="h-5 w-5" />
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="mb-9">
+            <p className="text-sm font-bold text-[color:var(--brand)]">Account recovery</p>
+            <h2 className="mt-2 text-4xl font-bold leading-none tracking-[-0.045em] text-[color:var(--text)] sm:text-5xl">Reset your password</h2>
+            <p className="mt-4 text-base leading-7 text-[color:var(--text-muted)]">Enter your account email and we’ll send you a secure reset link.</p>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-xl text-red-700 dark:text-red-300 text-sm mb-6">
-              {error}
+            <div role="alert" className="mb-5 flex items-start gap-3 border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-200">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
+              <label htmlFor="reset-email" className="mb-2 block text-sm font-bold text-[color:var(--text)]">Email address</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full pl-12 pr-4 py-4 border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  placeholder="your@email.com"
-                />
+                <Mail className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[color:var(--text-muted)]" />
+                <input id="reset-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required className="brand-input min-h-14 w-full rounded-xl pl-12 pr-4 text-base" placeholder="you@example.com" />
               </div>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-4 rounded-xl transition-colors"
-            >
-              {loading ? 'Sending...' : 'Send Reset Link'}
+            <button type="submit" disabled={loading} className="brand-button inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl px-5 font-bold disabled:opacity-60">
+              {loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Sending link…</> : <>Send reset link <ArrowRight className="h-5 w-5" /></>}
             </button>
           </form>
-
-          <div className="mt-6 text-center">
-            <button
-              onClick={onBack}
-              className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mx-auto"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Sign In</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    </AuthShell>
   );
 };
 

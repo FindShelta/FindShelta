@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, Camera, Video, MapPin, Home, DollarSign, Bed, Bath, Wifi, Car, Shield } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { AVAILABLE_CITIES, CITY_STATES } from '../../lib/cities';
 
 interface EditableListing {
   id?: string;
@@ -27,6 +28,13 @@ interface PropertyUploadFormProps {
   allowAdminUpload?: boolean;
 }
 
+const getInitialAddress = (listing?: EditableListing) => {
+  const address = listing?.location_address || '';
+  const city = listing?.location_city || '';
+  if (!address || !city) return address;
+  return address.replace(new RegExp(`,?\\s*${city}$`, 'i'), '').trim();
+};
+
 const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubmit, initialData, isEditing = false, allowAdminUpload = false }) => {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
@@ -35,7 +43,8 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
     description: initialData?.description || '',
     price: initialData?.price?.toString() || '',
     type: 'shortstay' as const,
-    location: initialData?.location_address || `${initialData?.location_city || ''}, ${initialData?.location_state || ''}`.replace(', ', '') || '',
+    city: initialData?.location_city || 'Lagos',
+    location: getInitialAddress(initialData),
     bedrooms: initialData?.bedrooms?.toString() || '',
     bathrooms: initialData?.bathrooms?.toString() || '',
     amenities: initialData?.amenities || [] as string[],
@@ -129,6 +138,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
     if (step === 1) {
       if (!formData.title.trim()) newErrors.title = 'Property title is required';
       if (!formData.description.trim()) newErrors.description = 'Description is required';
+      if (!formData.city.trim()) newErrors.city = 'City is required';
       if (!formData.location.trim()) newErrors.location = 'Location is required';
     }
 
@@ -163,9 +173,8 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
     try {
       if (isEditing && initialData?.id) {
         // Update existing listing
-        const locationParts = formData.location.split(',').map(part => part.trim());
-        const city = locationParts[0] || formData.location;
-        const state = locationParts[1] || 'Lagos';
+        const city = formData.city as (typeof AVAILABLE_CITIES)[number];
+        const state = CITY_STATES[city];
 
         const updateData = {
           title: formData.title,
@@ -175,7 +184,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
           price: Number(formData.price),
           location_city: city,
           location_state: state,
-          location_address: formData.location,
+          location_address: `${formData.location}, ${city}`,
           bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
           bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
           amenities: formData.amenities,
@@ -265,9 +274,8 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
       }
 
       // Parse location into city and state
-      const locationParts = formData.location.split(',').map(part => part.trim());
-      const city = locationParts[0] || formData.location;
-      const state = locationParts[1] || 'Lagos';
+      const city = formData.city as (typeof AVAILABLE_CITIES)[number];
+      const state = CITY_STATES[city];
 
       // Create listing in database
       const listingData = {
@@ -278,7 +286,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         price: Number(formData.price),
         location_city: city,
         location_state: state,
-        location_address: formData.location,
+        location_address: `${formData.location}, ${city}`,
         amenities: formData.amenities,
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
@@ -452,9 +460,25 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
                 <span className="font-semibold">Listing type:</span> Short stay
               </div>
 
-              <div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    City *
+                  </label>
+                  <select
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    className="w-full px-3 sm:px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  >
+                    {AVAILABLE_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
+                  </select>
+                  {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+                </div>
+
+                <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Location *
+                  Area or address *
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -464,10 +488,11 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
                     value={formData.location}
                     onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                    placeholder="e.g., Victoria Island, Lagos"
+                    placeholder="e.g., Victoria Island"
                   />
                 </div>
                 {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
+                </div>
               </div>
 
               <div>

@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Bath, BedDouble, Check, ChevronDown, ChevronLeft, ChevronRight, MapPin, Moon, Pause, Play, ShieldCheck, Sun } from 'lucide-react';
+import { ArrowRight, Bath, BedDouble, Building2, Check, ChevronDown, ChevronLeft, ChevronRight, Loader2, MapPin, Moon, Pause, Play, ShieldCheck, Sun } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import useFeaturedCityListings from '../../hooks/useFeaturedCityListings';
+import { AVAILABLE_CITIES } from '../../lib/cities';
+import { formatNightlyPrice } from '../../lib/listings';
 import FindSheltaLogo from '../common/FindShelterLogo';
 import Seo from '../common/Seo';
 import InfiniteShortStayGrid from '../Properties/InfiniteShortStayGrid';
@@ -11,38 +14,7 @@ interface HomePageProps {
   onCitySearch: (city: string) => void;
 }
 
-const cities = ['Lagos', 'Calabar', 'Abuja', 'Uyo'];
-
-const propertyShowcases = [
-  {
-    city: 'Lagos',
-    title: 'Designed for city living.',
-    image: 'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    bedrooms: 2,
-    bathrooms: 2,
-  },
-  {
-    city: 'Calabar',
-    title: 'A calm base for your next trip.',
-    image: 'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    city: 'Abuja',
-    title: 'Quiet comfort, close to everything.',
-    image: 'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    bedrooms: 2,
-    bathrooms: 1,
-  },
-  {
-    city: 'Uyo',
-    title: 'Room to settle in and slow down.',
-    image: 'https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    bedrooms: 3,
-    bathrooms: 3,
-  },
-];
+const cities = AVAILABLE_CITIES;
 
 const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearch }) => {
   const { isDark, toggleTheme } = useTheme();
@@ -51,22 +23,27 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
   const [carouselPaused, setCarouselPaused] = useState(false);
   const [carouselHovered, setCarouselHovered] = useState(false);
   const mediaRef = useRef<HTMLDivElement>(null);
+  const { listings: propertyShowcases, loading: featuredLoading, error: featuredError } = useFeaturedCityListings(cities);
   const showcase = propertyShowcases[activeShowcase];
   const pageTitle = import.meta.env.VITE_HOME_TITLE || 'Short Stay Apartments in Nigeria | FindShelta';
   const pageDescription =
     import.meta.env.VITE_HOME_DESCRIPTION ||
-    'Find premium short stay apartments in Lagos, Calabar, Abuja, and Uyo. Browse quality stays and book directly on FindShelta.';
+    'Find premium short stay apartments in Lagos, Abuja, and Enugu. Browse quality stays and book directly on FindShelta.';
   const pageHeading = import.meta.env.VITE_HOME_H1 || 'Find Your Perfect Short Stay in Nigeria';
 
   useEffect(() => {
-    if (carouselPaused || carouselHovered) return undefined;
+    if (carouselPaused || carouselHovered || propertyShowcases.length < 2) return undefined;
 
     const timer = window.setInterval(() => {
       setActiveShowcase((current) => (current + 1) % propertyShowcases.length);
     }, 6000);
 
     return () => window.clearInterval(timer);
-  }, [carouselHovered, carouselPaused]);
+  }, [carouselHovered, carouselPaused, propertyShowcases.length]);
+
+  useEffect(() => {
+    if (activeShowcase >= propertyShowcases.length) setActiveShowcase(0);
+  }, [activeShowcase, propertyShowcases.length]);
 
   const chooseCity = (city: string) => {
     setSelectedCity(city);
@@ -75,6 +52,7 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
   };
 
   const moveShowcase = (direction: number) => {
+    if (propertyShowcases.length === 0) return;
     setActiveShowcase((current) => (current + direction + propertyShowcases.length) % propertyShowcases.length);
   };
 
@@ -127,16 +105,15 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
           <div className="hero-orbit pointer-events-none absolute -right-24 top-24 h-72 w-72 rounded-full border border-white/10 sm:h-[30rem] sm:w-[30rem]" aria-hidden="true" />
           <div className="section-shell relative pb-12 pt-14 sm:pb-20 sm:pt-20 lg:pt-24">
             <div className="mx-auto max-w-5xl text-center">
-              <p className="hero-reveal text-xs font-bold uppercase tracking-[0.2em] text-blue-200 sm:text-sm">Your next stay starts here</p>
-              <h1 className="hero-reveal hero-reveal-delay-1 mt-5 text-[clamp(3.25rem,8vw,7.5rem)] font-bold leading-[0.86] tracking-[-0.07em] text-white">
+              <h1 className="hero-reveal text-[clamp(3.25rem,8vw,7.5rem)] font-bold leading-[0.86] tracking-[-0.07em] text-white">
                 {pageHeading}
               </h1>
-              <p className="hero-reveal hero-reveal-delay-2 mx-auto mt-6 max-w-2xl text-base leading-7 text-blue-100 sm:text-xl sm:leading-8">
+              <p className="hero-reveal hero-reveal-delay-1 mx-auto mt-6 max-w-2xl text-base leading-7 text-blue-100 sm:text-xl sm:leading-8">
                 Discover quality apartments, see the details that matter, and speak directly with the host.
               </p>
             </div>
 
-            <div className="hero-reveal hero-reveal-delay-3 relative mt-10 min-w-0 bg-white text-slate-950 shadow-[0_28px_80px_rgba(8,24,54,0.28)] sm:mt-14 lg:grid lg:grid-cols-[0.76fr_1.24fr]">
+            <div className="hero-reveal hero-reveal-delay-2 relative mt-10 min-w-0 bg-white text-slate-950 shadow-[0_28px_80px_rgba(8,24,54,0.28)] sm:mt-14 lg:grid lg:grid-cols-[0.76fr_1.24fr]">
               <div className="flex min-w-0 flex-col justify-center p-5 sm:p-8 lg:p-10 xl:p-12">
                 <div className="flex items-center justify-between gap-4">
                   <div>
@@ -156,7 +133,7 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
                   <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-600" />
                 </label>
 
-                <div className="mt-4 grid grid-cols-2 gap-2" aria-label="Popular destinations">
+                <div className="mt-4 grid grid-cols-3 gap-2" aria-label="Available destinations">
                   {cities.map((city) => (
                     <button
                       key={city}
@@ -187,48 +164,57 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
                 onMouseLeave={() => { setCarouselHovered(false); resetMediaPointer(); }}
                 onMouseMove={handleMediaPointerMove}
               >
-                <div key={showcase.image} className="hero-media-layer absolute -inset-3">
-                  <img src={showcase.image} alt={`Furnished short stay apartment in ${showcase.city}`} className="hero-media-image h-full w-full object-cover" />
-                </div>
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent p-5 pt-32 text-white sm:p-8 sm:pt-44">
-                  <div className="flex items-end justify-between gap-5">
-                    <div key={showcase.city} className="hero-showcase-copy" aria-live="polite">
-                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-200">Featured in {showcase.city}</p>
-                      <p className="mt-2 text-2xl font-bold tracking-[-0.035em] sm:text-3xl">{showcase.title}</p>
-                      <div className="mt-3 flex items-center gap-4 text-sm font-semibold text-white/80">
-                        <span className="inline-flex items-center gap-1.5"><BedDouble className="h-4 w-4" /> {showcase.bedrooms} bedrooms</span>
-                        <span className="inline-flex items-center gap-1.5"><Bath className="h-4 w-4" /> {showcase.bathrooms} bathrooms</span>
+                {featuredLoading ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-sm font-bold text-slate-600"><Loader2 className="mr-2 h-5 w-5 animate-spin text-blue-700" /> Loading featured stays…</div>
+                ) : showcase ? (
+                  <>
+                    <div key={showcase.property.id} className="hero-media-layer absolute -inset-3">
+                      <img src={showcase.property.images[0]} alt={showcase.property.title} className="hero-media-image h-full w-full object-cover" />
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent p-5 pt-32 text-white sm:p-8 sm:pt-44">
+                      <div className="flex items-end justify-between gap-5">
+                        <div key={showcase.property.id} className="hero-showcase-copy" aria-live="polite">
+                          <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-200">Featured in {showcase.city}</p>
+                          <p className="mt-2 text-2xl font-bold tracking-[-0.035em] sm:text-3xl">{showcase.property.title}</p>
+                          <p className="mt-2 text-lg font-bold text-white">{formatNightlyPrice(showcase.property.price)}</p>
+                          <div className="mt-3 flex items-center gap-4 text-sm font-semibold text-white/80">
+                            <span className="inline-flex items-center gap-1.5"><BedDouble className="h-4 w-4" /> {showcase.property.bedrooms ?? '—'} bedrooms</span>
+                            <span className="inline-flex items-center gap-1.5"><Bath className="h-4 w-4" /> {showcase.property.bathrooms ?? '—'} bathrooms</span>
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => onCitySearch(showcase.city)} className="group hidden h-14 w-14 shrink-0 items-center justify-center bg-white text-slate-950 transition hover:bg-blue-50 sm:inline-flex" aria-label={`View stays in ${showcase.city}`}>
+                          <ArrowRight className="h-5 w-5" />
+                        </button>
                       </div>
                     </div>
-                    <button type="button" onClick={() => onCitySearch(showcase.city)} className="group hidden h-14 w-14 shrink-0 items-center justify-center bg-white text-slate-950 transition hover:bg-blue-50 sm:inline-flex" aria-label={`View stays in ${showcase.city}`}>
-                      <ArrowRight className="h-5 w-5" />
-                    </button>
+                    <div className="hero-float-card absolute right-4 top-4 bg-white px-4 py-3 text-slate-950 shadow-lg sm:right-6 sm:top-6">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Live on FindShelta</p>
+                      <p className="mt-1 text-sm font-bold">Real listing details</p>
+                    </div>
+
+                    {propertyShowcases.length > 1 && (
+                      <div className="absolute left-4 top-4 flex items-center gap-1.5 sm:left-6 sm:top-6">
+                        <button type="button" onClick={() => moveShowcase(-1)} className="inline-flex h-10 w-10 items-center justify-center bg-white/95 text-slate-950 shadow-sm transition hover:bg-white" aria-label="Previous featured stay"><ChevronLeft className="h-4 w-4" /></button>
+                        <button type="button" onClick={() => moveShowcase(1)} className="inline-flex h-10 w-10 items-center justify-center bg-white/95 text-slate-950 shadow-sm transition hover:bg-white" aria-label="Next featured stay"><ChevronRight className="h-4 w-4" /></button>
+                        <button type="button" onClick={() => setCarouselPaused((paused) => !paused)} className="inline-flex h-10 w-10 items-center justify-center bg-white/95 text-slate-950 shadow-sm transition hover:bg-white" aria-label={carouselPaused ? 'Play featured stays' : 'Pause featured stays'}>{carouselPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}</button>
+                      </div>
+                    )}
+
+                    <div className="absolute inset-x-4 bottom-3 flex gap-1.5 sm:inset-x-8 sm:bottom-4" aria-label={`Featured stay ${activeShowcase + 1} of ${propertyShowcases.length}`}>
+                      {propertyShowcases.map((item, index) => (
+                        <button key={item.property.id} type="button" onClick={() => setActiveShowcase(index)} className="h-1 flex-1 overflow-hidden bg-white/35" aria-label={`Show ${item.property.title} in ${item.city}`}>
+                          {index === activeShowcase && <span className="hero-progress block h-full origin-left bg-white" style={{ animationPlayState: carouselPaused || carouselHovered ? 'paused' : 'running' }} />}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 px-8 text-center text-slate-700">
+                    <Building2 className="h-9 w-9 text-blue-700" />
+                    <p className="mt-4 text-xl font-bold">No featured stays yet</p>
+                    <p className="mt-2 max-w-sm text-sm text-slate-500">{featuredError || 'New verified listings from Lagos, Abuja, and Enugu will appear here.'}</p>
                   </div>
-                </div>
-                <div className="hero-float-card absolute right-4 top-4 bg-white px-4 py-3 text-slate-950 shadow-lg sm:right-6 sm:top-6">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Browse confidently</p>
-                  <p className="mt-1 text-sm font-bold">Verified listing details</p>
-                </div>
-
-                <div className="absolute left-4 top-4 flex items-center gap-1.5 sm:left-6 sm:top-6">
-                  <button type="button" onClick={() => moveShowcase(-1)} className="inline-flex h-10 w-10 items-center justify-center bg-white/95 text-slate-950 shadow-sm transition hover:bg-white" aria-label="Previous featured stay">
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button type="button" onClick={() => moveShowcase(1)} className="inline-flex h-10 w-10 items-center justify-center bg-white/95 text-slate-950 shadow-sm transition hover:bg-white" aria-label="Next featured stay">
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                  <button type="button" onClick={() => setCarouselPaused((paused) => !paused)} className="inline-flex h-10 w-10 items-center justify-center bg-white/95 text-slate-950 shadow-sm transition hover:bg-white" aria-label={carouselPaused ? 'Play featured stays' : 'Pause featured stays'}>
-                    {carouselPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-                  </button>
-                </div>
-
-                <div className="absolute inset-x-4 bottom-3 flex gap-1.5 sm:inset-x-8 sm:bottom-4" aria-label={`Featured stay ${activeShowcase + 1} of ${propertyShowcases.length}`}>
-                  {propertyShowcases.map((item, index) => (
-                    <button key={item.city} type="button" onClick={() => setActiveShowcase(index)} className="h-1 flex-1 overflow-hidden bg-white/35" aria-label={`Show featured stay in ${item.city}`}>
-                      {index === activeShowcase && <span className="hero-progress block h-full origin-left bg-white" style={{ animationPlayState: carouselPaused || carouselHovered ? 'paused' : 'running' }} />}
-                    </button>
-                  ))}
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -237,7 +223,7 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
         <section className="border-y border-[color:var(--border)] bg-[color:var(--surface-solid)]">
           <div className="section-shell grid divide-y divide-[color:var(--border)] py-2 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:py-8">
             {[
-              ['4 cities', 'Focused coverage where guests need it'],
+              ['3 cities', 'Focused coverage in Lagos, Abuja, and Enugu'],
               ['Direct booking', 'Speak to the listing host yourself'],
               ['Clear details', 'Room counts, pricing, and amenities upfront'],
             ].map(([value, label]) => (

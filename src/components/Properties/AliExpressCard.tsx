@@ -100,8 +100,8 @@ const AliExpressCard: React.FC<AliExpressCardProps> = memo(
               onBookmarkToggle(property.id);
             }}
             className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/90 text-[color:var(--text-muted)] shadow-sm backdrop-blur-sm hover:text-rose-500"
-            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            aria-label={isFavorite ? 'Remove from wishlist' : 'Add to wishlist'}
+            title={isFavorite ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current text-rose-500' : ''}`} />
           </button>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -53,7 +53,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'League Spartan', system-ui, sans-serif;
   color: var(--text);
   background: var(--bg);
   overscroll-behavior-y: none;
@@ -71,7 +71,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'League Spartan', system-ui, sans-serif;
   letter-spacing: -0.03em;
 }
 
@@ -293,6 +293,30 @@ h4 {
   animation: hero-progress 6s linear both;
 }
 
+@keyframes auth-image-drift {
+  from { transform: scale(1.04); }
+  to { transform: scale(1.11); }
+}
+
+.auth-visual-image {
+  animation: auth-image-drift 18s ease-in-out alternate infinite;
+}
+
+@keyframes auth-form-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-form-enter {
+  animation: auth-form-enter 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @keyframes app-screen-enter {
   from {
     opacity: 0;
@@ -393,6 +417,10 @@ h4 {
 
 .mobile-bottom-nav__item.is-active .mobile-bottom-nav__icon {
   border-bottom: 2px solid var(--brand);
+}
+
+.mobile-bottom-nav__inner--five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .mobile-sheet {

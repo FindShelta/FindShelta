@@ -97,6 +97,7 @@ const NotFoundRoute: React.FC = () => <Navigate to="/" replace />;
 
 function AppRoutes() {
   const location = useLocation();
+  const isAuthRoute = ['/login', '/register', '/reset-password'].includes(location.pathname);
 
   return (
     <>
@@ -114,8 +115,8 @@ function AppRoutes() {
           <Route path="*" element={<NotFoundRoute />} />
         </Routes>
       </div>
-      <SiteFooter />
-      <MobileBottomNav />
+      {!isAuthRoute && <SiteFooter />}
+      {!isAuthRoute && <MobileBottomNav />}
     </>
   );
 }

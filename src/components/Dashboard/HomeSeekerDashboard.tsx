@@ -18,6 +18,7 @@ import AliExpressCard from '../Properties/AliExpressCard';
 import usePerformance from '../../hooks/usePerformance';
 import { Search, Filter, Heart, MapPin, Bed, Bath, Phone, X, Scale, Bell, Save, Bookmark, Play, Map, ChevronLeft, ChevronRight } from 'lucide-react';
 import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
+import { AVAILABLE_CITIES } from '../../lib/cities';
 
 type DashboardFilters = {
   minPrice: string;
@@ -92,6 +93,7 @@ const HomeSeekerDashboard: React.FC = () => {
         .eq('is_approved', true)
         .eq('is_hidden', false)
         .eq('property_type', 'shortstay')
+        .or(AVAILABLE_CITIES.map((city) => `location_city.ilike.${city}`).join(','))
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -267,8 +269,8 @@ const HomeSeekerDashboard: React.FC = () => {
         <section className="enterprise-header">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Home Seeker Dashboard</p>
-              <h1 className="mt-2 text-3xl font-bold text-[color:var(--text)] sm:text-4xl lg:text-5xl">Discover verified properties faster</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Finds</p>
+              <h1 className="mt-2 text-3xl font-bold text-[color:var(--text)] sm:text-4xl lg:text-5xl">Find your next short stay</h1>
               <p className="mt-3 max-w-2xl text-sm text-[color:var(--text-muted)] sm:text-base">
                 Search by city, save filters, and contact agents directly from each listing card.
               </p>
@@ -276,11 +278,11 @@ const HomeSeekerDashboard: React.FC = () => {
             <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
               <div className="enterprise-kpi">
                 <p className="text-lg font-bold text-[color:var(--text)] sm:text-2xl">{properties.length}</p>
-                <p className="text-xs text-[color:var(--text-muted)]">Properties</p>
+                <p className="text-xs text-[color:var(--text-muted)]">Finds</p>
               </div>
               <div className="enterprise-kpi">
                 <p className="text-lg font-bold text-[color:var(--text)] sm:text-2xl">{favorites.size}</p>
-                <p className="text-xs text-[color:var(--text-muted)]">Favorites</p>
+                <p className="text-xs text-[color:var(--text-muted)]">Wishlist</p>
               </div>
               <div className="enterprise-kpi">
                 <p className="text-lg font-bold text-[color:var(--text)] sm:text-2xl">{alerts.filter((a) => a.is_active).length}</p>
@@ -344,7 +346,7 @@ const HomeSeekerDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-3 sm:px-4">
           <div className="flex space-x-4 sm:space-x-8 overflow-x-auto py-3 sm:py-4 scrollbar-hide">
             <div className="flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-              Short stays
+              Finds
               <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs dark:bg-slate-700">{properties.length}</span>
             </div>
             
@@ -375,8 +377,8 @@ const HomeSeekerDashboard: React.FC = () => {
               }`}
             >
               <Heart className="w-4 h-4" />
-              <span className="sm:hidden">Favorites</span>
-              <span className="hidden sm:inline">My Favorites</span>
+              <span className="sm:hidden">Wishlist</span>
+              <span className="hidden sm:inline">My Wishlist</span>
               <span className="bg-gray-200 dark:bg-slate-600 text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
                 {favorites.size}
               </span>
@@ -522,7 +524,7 @@ const HomeSeekerDashboard: React.FC = () => {
         <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">My Favorite Properties</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">My Wishlist</h3>
               <span className="text-sm text-gray-500 dark:text-gray-400">{favorites.size} properties</span>
             </div>
             <FavoritesList />
@@ -564,7 +566,7 @@ const HomeSeekerDashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[color:var(--text)] sm:text-xl">
-            Available short stays
+            Finds
           </h2>
           <p className="text-xs text-[color:var(--text-muted)] sm:text-sm">{filteredProperties.length} results</p>
         </div>
@@ -646,11 +648,11 @@ const HomeSeekerDashboard: React.FC = () => {
             className={`mobile-bottom-nav__item ${!showFavorites && !showAlerts && !showFilters ? 'is-active' : ''}`}
           >
             <span className="mobile-bottom-nav__icon"><Search className="h-5 w-5" /></span>
-            <span>Explore</span>
+            <span>Finds</span>
           </button>
           <button type="button" onClick={() => setShowFavorites((current) => !current)} className={`mobile-bottom-nav__item ${showFavorites ? 'is-active' : ''}`}>
             <span className="mobile-bottom-nav__icon"><Heart className="h-5 w-5" /></span>
-            <span>Saved</span>
+            <span>Wishlist</span>
           </button>
           <button type="button" onClick={() => setShowAlerts((current) => !current)} className={`mobile-bottom-nav__item ${showAlerts ? 'is-active' : ''}`}>
             <span className="mobile-bottom-nav__icon"><Bell className="h-5 w-5" /></span>
