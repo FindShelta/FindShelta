@@ -16,8 +16,6 @@ export const PUBLIC_LISTING_SELECT = [
   'agent_name',
   'agent_whatsapp',
   'created_at',
-  'views_count',
-  'bookmarks_count',
 ].join(',');
 
 export const buildCityLocationFilter = (cities: readonly string[]) =>

@@ -16,7 +16,7 @@ import MapSearch from '../Search/MapSearch';
 import LazyImage from '../common/LazyImage';
 import AliExpressCard from '../Properties/AliExpressCard';
 import usePerformance from '../../hooks/usePerformance';
-import { Search, Filter, Heart, MapPin, Bed, Bath, Phone, X, Scale, Bell, Bookmark, Play, Map, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Heart, MapPin, Bed, Bath, Phone, X, Scale, Bell, Bookmark, Play, Map, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 import { AVAILABLE_CITIES } from '../../lib/cities';
 import { buildCityLocationFilter, ListingRow, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../../lib/listings';
@@ -54,6 +54,7 @@ const HomeSeekerDashboard: React.FC = () => {
   const [previewImageIndex, setPreviewImageIndex] = useState(0);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [page, setPage] = useState(1);
   const { comparisonList, addToComparison, isInComparison } = useComparison();
   const { alerts } = useAlerts();
@@ -78,6 +79,7 @@ const HomeSeekerDashboard: React.FC = () => {
   const fetchProperties = async () => {
     try {
       setLoading(true);
+      setLoadError('');
 
       const { data, error } = await supabase
         .from('listings')
@@ -89,14 +91,16 @@ const HomeSeekerDashboard: React.FC = () => {
 
       if (error) {
         console.error('Error fetching properties:', error);
+        setLoadError('We could not load the available stays. Check your connection and try again.');
         setProperties([]);
         return;
       }
 
-      const transformedProperties: Property[] = ((data || []) as ListingRow[]).map(mapListingToProperty);
+      const transformedProperties: Property[] = ((data || []) as unknown as ListingRow[]).map(mapListingToProperty);
       setProperties(transformedProperties);
     } catch (error) {
       console.error('Error fetching properties:', error);
+      setLoadError('We could not load the available stays. Check your connection and try again.');
       setProperties([]);
     } finally {
       setLoading(false);
@@ -472,7 +476,17 @@ const HomeSeekerDashboard: React.FC = () => {
         )}
 
         {/* No Results */}
-        {!loading && filteredProperties.length === 0 && (
+        {!loading && loadError && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-10 text-center dark:border-rose-900/50 dark:bg-rose-950/20">
+            <h3 className="text-xl font-bold text-[color:var(--text)]">Stays could not be loaded</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-[color:var(--text-muted)]">{loadError}</p>
+            <button type="button" onClick={() => void fetchProperties()} className="brand-button mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl px-5 text-sm font-bold">
+              <RefreshCw className="h-4 w-4" /> Try again
+            </button>
+          </div>
+        )}
+
+        {!loading && !loadError && filteredProperties.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
               <Search className="w-16 h-16 mx-auto" />

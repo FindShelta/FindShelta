@@ -35,6 +35,9 @@ const getInitialAddress = (listing?: EditableListing) => {
   return address.replace(new RegExp(`,?\\s*${city}$`, 'i'), '').trim();
 };
 
+const omitListingFields = (data: Record<string, unknown>, fields: string[]) =>
+  Object.fromEntries(Object.entries(data).filter(([key]) => !fields.includes(key)));
+
 const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubmit, initialData, isEditing = false, allowAdminUpload = false }) => {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
@@ -53,6 +56,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
     whatsappNumber: initialData?.agent_whatsapp || user?.whatsappNumber || ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState('');
   const [uploading, setUploading] = useState(false);
   const isAdminUpload = allowAdminUpload;
 
@@ -96,7 +100,9 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
     
     for (const file of filesToProcess) {
       try {
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+        if (!user?.id) throw new Error('You must be signed in to upload property images.');
+        const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${extension}`;
         
         const { error } = await supabase.storage
           .from('property-images')
@@ -164,8 +170,9 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
 
   const handleSubmit = async () => {
     if (!validateStep(3)) return;
+    setSubmitError('');
     if (!user?.id) {
-      alert('You must be logged in to publish a property');
+      setSubmitError('You must be logged in to publish a property.');
       return;
     }
 
@@ -203,15 +210,23 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
           .single();
 
         if (updateError?.code === '42703') {
-          const fallbackUpdateData = { ...updateData };
-          delete fallbackUpdateData.agent_whatsapp;
+          const fallbackUpdateData = omitListingFields(updateData, ['bedrooms', 'bathrooms']);
 
-          const retry = await supabase
+          let retry = await supabase
             .from('listings')
             .update(fallbackUpdateData)
             .eq('id', initialData.id)
             .select()
             .single();
+
+          if (retry.error?.code === '42703') {
+            retry = await supabase
+              .from('listings')
+              .update(omitListingFields(fallbackUpdateData, ['agent_whatsapp']))
+              .eq('id', initialData.id)
+              .select()
+              .single();
+          }
 
           updatedListing = retry.data;
           updateError = retry.error;
@@ -228,51 +243,6 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         alert('Property updated successfully! It will be reviewed again by admin.');
         return;
       }
-      // Ensure user exists in users table
-      console.log('User data:', { id: user.id, email: user.email, metadata: user.user_metadata });
-      
-      // First check if user exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-      
-      if (!existingUser) {
-        console.log('User does not exist, creating...');
-        // Try to insert user record
-        const { error: userInsertError } = await supabase
-          .from('users')
-          .insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || user.email || 'Unknown User'
-          });
-        
-        if (userInsertError) {
-          console.error('Failed to create user record:', userInsertError);
-          // If insert fails, try without the foreign key constraint by using a different approach
-          alert(`Failed to create user record: ${userInsertError.message}. Please contact support.`);
-          return;
-        }
-        console.log('User record created successfully');
-      } else {
-        console.log('User already exists in users table');
-      }
-
-      if (!isAdminUpload) {
-        const { data: agentData, error: agentError } = await supabase
-          .from('agent_registration')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (agentError || !agentData) {
-          alert('Agent registration not found. Please contact support.');
-          return;
-        }
-      }
-
       // Parse location into city and state
       const city = formData.city as (typeof AVAILABLE_CITIES)[number];
       const state = CITY_STATES[city];
@@ -293,6 +263,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         images: formData.images,
         video_url: formData.video || null,
         agent_id: user.id,
+        agent_name: user.name,
         agent_whatsapp: formData.whatsappNumber,
         is_approved: isAdminUpload,
         status: isAdminUpload ? 'approved' : 'pending'
@@ -307,67 +278,29 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         .single();
 
       if (listingError?.code === '42703') {
-        const fallbackListingData = { ...listingData };
-        delete fallbackListingData.agent_whatsapp;
+        const fallbackListingData = omitListingFields(listingData, ['bedrooms', 'bathrooms']);
 
-        const retry = await supabase
+        let retry = await supabase
           .from('listings')
           .insert(fallbackListingData)
           .select()
           .single();
 
+        if (retry.error?.code === '42703') {
+          retry = await supabase
+            .from('listings')
+            .insert(omitListingFields(fallbackListingData, ['agent_name', 'agent_whatsapp']))
+            .select()
+            .single();
+        }
+
         listing = retry.data;
         listingError = retry.error;
       }
       
-      // If foreign key constraint fails, try creating listing without agent_id.
-      if (listingError && listingError.code === '23503') {
-        console.log('Foreign key constraint failed, trying alternative approach...');
-        const alternativeData = {
-          ...listingData
-        };
-        delete alternativeData.agent_id; // Remove the problematic foreign key
-        
-        let { data: altListing, error: altError } = await supabase
-          .from('listings')
-          .insert(alternativeData)
-          .select()
-          .single();
-
-        if (altError?.code === '42703') {
-          const fallbackAlternativeData = { ...alternativeData };
-          delete fallbackAlternativeData.agent_whatsapp;
-
-          const retry = await supabase
-            .from('listings')
-            .insert(fallbackAlternativeData)
-            .select()
-            .single();
-
-          altListing = retry.data;
-          altError = retry.error;
-        }
-          
-        if (altError) {
-          console.error('Alternative listing creation failed:', altError);
-          alert('Failed to publish property. Please contact support.');
-          return;
-        }
-        
-        // Use the alternative listing
-        onSubmit(altListing);
-        onClose();
-        alert(
-          isAdminUpload
-            ? 'Property published successfully and is now live.'
-            : 'Property published successfully! It will be visible after admin approval.'
-        );
-        return;
-      }
-
       if (listingError) {
         console.error('Listing creation failed:', listingError);
-        alert('Failed to publish property. Please try again.');
+        setSubmitError(listingError.message || 'Failed to publish property. Please try again.');
         return;
       }
 
@@ -381,7 +314,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
       );
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Failed to publish property. Please try again.');
+      setSubmitError(error instanceof Error ? error.message : 'Failed to publish property. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -709,6 +642,12 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
             </div>
           )}
         </div>
+
+        {submitError && (
+          <div role="alert" className="mx-4 mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200 sm:mx-6">
+            {submitError}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-t border-gray-200 dark:border-slate-700">
