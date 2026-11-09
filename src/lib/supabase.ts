@@ -9,6 +9,18 @@ console.log('Supabase Key exists:', !!supabaseAnonKey);
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Public listing feeds should not depend on an authenticated session refresh or
+// user-specific RLS state. This client always uses the anon role and never
+// persists a session, while the main client above remains responsible for auth
+// and account-scoped writes.
+export const publicSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
+});
+
 export type Database = {
   public: {
     Tables: {

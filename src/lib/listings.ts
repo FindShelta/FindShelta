@@ -18,6 +18,27 @@ export const PUBLIC_LISTING_SELECT = [
   'created_at',
 ].join(',');
 
+// Listing feeds intentionally omit `images`. Some legacy rows contain multi-
+// megabyte base64 images, which makes a feed query exceed the database statement
+// timeout. New uploads use Storage URLs, but the feed stays lightweight until
+// those legacy rows have been migrated.
+export const PUBLIC_LISTING_FEED_SELECT = [
+  'id',
+  'title',
+  'description',
+  'price',
+  'property_type',
+  'location_state',
+  'location_city',
+  'location_address',
+  'amenities',
+  'video_url',
+  'agent_id',
+  'agent_name',
+  'agent_whatsapp',
+  'created_at',
+].join(',');
+
 export const buildCityLocationFilter = (cities: readonly string[]) =>
   cities
     .flatMap((city) => {
@@ -29,6 +50,21 @@ export const buildCityLocationFilter = (cities: readonly string[]) =>
       ]);
     })
     .join(',');
+
+export const listingMatchesAvailableCity = (
+  listing: Pick<ListingRow, 'location_address' | 'location_city' | 'location_state'>,
+  cities: readonly string[]
+) => {
+  const location = [listing.location_address, listing.location_city, listing.location_state]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return cities.some((city) => {
+    const terms = city.toLowerCase() === 'abuja' ? ['abuja', 'fct', 'federal capital territory'] : [city.toLowerCase()];
+    return terms.some((term) => location.includes(term));
+  });
+};
 
 export interface ListingRow {
   id: string;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { publicSupabase } from '../lib/supabase';
 import { buildCityLocationFilter, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../lib/listings';
 import { Property } from '../types';
 import { AVAILABLE_CITIES } from '../lib/cities';
@@ -23,7 +23,7 @@ const useShortStayListings = (city?: string) => {
       const from = pageNumber * PAGE_SIZE;
       const to = from + PAGE_SIZE;
 
-      let query = supabase
+      let query = publicSupabase
         .from('listings')
         .select(PUBLIC_LISTING_SELECT)
         .eq('is_approved', true)

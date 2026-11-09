@@ -3,7 +3,7 @@ import { Property } from '../../types';
 import { useComparison } from '../../contexts/ComparisonContext';
 import { useAlerts } from '../../contexts/AlertContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
-import { supabase } from '../../lib/supabase';
+import { publicSupabase } from '../../lib/supabase';
 import Header from '../Layout/Header';
 import PropertyComparison from '../Properties/PropertyComparison';
 import CreateAlertModal from '../Alerts/CreateAlertModal';
@@ -18,7 +18,7 @@ import PropertyDetailsModal from '../Properties/PropertyDetailsModal';
 import usePerformance from '../../hooks/usePerformance';
 import { Search, Filter, Heart, X, Scale, Bell, Bookmark, Map, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { AVAILABLE_CITIES } from '../../lib/cities';
-import { buildCityLocationFilter, ListingRow, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../../lib/listings';
+import { ListingRow, listingMatchesAvailableCity, mapListingToProperty, PUBLIC_LISTING_FEED_SELECT } from '../../lib/listings';
 
 type DashboardFilters = {
   minPrice: string;
@@ -71,17 +71,20 @@ const HomeSeekerDashboard: React.FC = () => {
   }, []);
 
   const fetchProperties = async () => {
+    const requestController = new AbortController();
+    const requestTimeout = window.setTimeout(() => requestController.abort(), 15000);
+
     try {
       setLoading(true);
       setLoadError('');
 
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from('listings')
-        .select(PUBLIC_LISTING_SELECT)
+        .select(PUBLIC_LISTING_FEED_SELECT)
         .eq('is_approved', true)
         .eq('property_type', 'shortstay')
-        .or(buildCityLocationFilter(AVAILABLE_CITIES))
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(requestController.signal);
 
       if (error) {
         console.error('Error fetching properties:', error);
@@ -90,13 +93,16 @@ const HomeSeekerDashboard: React.FC = () => {
         return;
       }
 
-      const transformedProperties: Property[] = ((data || []) as unknown as ListingRow[]).map(mapListingToProperty);
+      const transformedProperties: Property[] = ((data || []) as unknown as ListingRow[])
+        .filter((listing) => listingMatchesAvailableCity(listing, AVAILABLE_CITIES))
+        .map(mapListingToProperty);
       setProperties(transformedProperties);
     } catch (error) {
       console.error('Error fetching properties:', error);
       setLoadError('We could not load the available stays. Check your connection and try again.');
       setProperties([]);
     } finally {
+      window.clearTimeout(requestTimeout);
       setLoading(false);
     }
   };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Property } from '../types';
-import { supabase } from '../lib/supabase';
+import { publicSupabase } from '../lib/supabase';
 import { buildCityLocationFilter, ListingRow, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../lib/listings';
 
 export interface FeaturedCityListing {
@@ -23,7 +23,7 @@ const useFeaturedCityListings = (cities: readonly string[]) => {
 
       const cityResults = await Promise.all(
         cities.map(async (city) => {
-          const result = await supabase
+          const result = await publicSupabase
             .from('listings')
             .select(PUBLIC_LISTING_SELECT)
             .eq('is_approved', true)
