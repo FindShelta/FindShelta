@@ -49,8 +49,8 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = false }) 
   return (
     <header className="sticky top-0 z-50 border-b border-[color:var(--border)] bg-[color:var(--surface-solid)]/90 shadow-[0_1px_12px_rgba(15,23,42,0.04)] backdrop-blur-xl">
       <div className="section-shell">
-        <div className="flex h-[4.5rem] items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-[4.5rem] items-center justify-between gap-2 sm:gap-4">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             {showMenuButton && (
               <button
                 type="button"
@@ -63,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = false }) 
             )}
             <Link to={user ? '/dashboard' : '/'} className="group flex shrink-0 items-center gap-2.5" aria-label="FindShelta home">
               <FindSheltaLogo size={40} className="transition-transform duration-300 group-hover:scale-105" />
-              <span className="text-xl font-extrabold tracking-[-0.04em] text-[color:var(--text)] sm:text-[1.4rem]">
+              <span className="hidden text-xl font-extrabold tracking-[-0.04em] text-[color:var(--text)] sm:inline sm:text-[1.4rem]">
                 Find<span className="text-[color:var(--brand)]">Shelta</span>
               </span>
             </Link>
@@ -111,7 +111,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = false }) 
                       <span className="block max-w-32 truncate text-sm font-bold leading-tight text-[color:var(--text)]">{user.name}</span>
                       <span className="block text-[10px] font-semibold capitalize leading-tight text-[color:var(--text-muted)]">{user.role.replace('_', ' ')}</span>
                     </span>
-                    <ChevronDown className={`h-4 w-4 text-[color:var(--text-muted)] transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`hidden h-4 w-4 text-[color:var(--text-muted)] transition-transform sm:block ${showUserMenu ? 'rotate-180' : ''}`} />
                   </button>
 
                   {showUserMenu && (

@@ -474,8 +474,8 @@ const AgentDashboard: React.FC = () => {
         </button>
       )}
       
-      <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
-        <div className="flex items-center justify-between mb-4">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Your Listings
           </h3>
@@ -531,17 +531,17 @@ const AgentDashboard: React.FC = () => {
               };
               
               return (
-                <div key={listing.id} className="border border-gray-200 dark:border-slate-600 rounded-lg p-4">
-                  <div className="flex items-start space-x-4">
+                <div key={listing.id} className="rounded-lg border border-gray-200 p-3 dark:border-slate-600 sm:p-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                     <img
                       src={listing.images?.[0] || '/placeholder-property.jpg'}
                       alt={listing.title}
-                      className="w-20 h-20 object-cover rounded-lg"
+                      className="aspect-[16/9] w-full rounded-lg object-cover sm:h-20 sm:w-20 sm:shrink-0 sm:aspect-auto"
                     />
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 dark:text-white">{listing.title}</h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(listing.status, listing.is_approved)}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                        <h4 className="min-w-0 flex-1 font-medium text-gray-900 dark:text-white">{listing.title}</h4>
+                        <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(listing.status, listing.is_approved)}`}>
                           {getStatusText(listing.status, listing.is_approved)}
                         </span>
                       </div>
@@ -554,22 +554,22 @@ const AgentDashboard: React.FC = () => {
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         Created: {new Date(listing.created_at).toLocaleDateString()}
                       </p>
-                      <div className="flex items-center space-x-2 mt-2">
+                      <div className="mt-3 grid grid-cols-3 gap-2 sm:flex sm:items-center">
                         <button
                           onClick={() => setSelectedListing(listing)}
-                          className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                          className="min-h-10 rounded bg-blue-600 px-2 py-1 text-xs text-white transition-colors hover:bg-blue-700 sm:min-h-0 sm:px-3"
                         >
-                          View Details
+                          <span className="sm:hidden">View</span><span className="hidden sm:inline">View Details</span>
                         </button>
                         <button
                           onClick={() => setEditingListing(listing)}
-                          className="px-3 py-1 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                          className="min-h-10 rounded bg-gray-600 px-2 py-1 text-xs text-white transition-colors hover:bg-gray-700 sm:min-h-0 sm:px-3"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteListing(listing.id)}
-                          className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                          className="min-h-10 rounded bg-red-600 px-2 py-1 text-xs text-white transition-colors hover:bg-red-700 sm:min-h-0 sm:px-3"
                         >
                           Delete
                         </button>
@@ -759,7 +759,7 @@ const AgentDashboard: React.FC = () => {
           </div>
         </section>
 
-        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
           <div className="enterprise-card">
             <p className="text-2xl font-bold text-[color:var(--text)]">{stats.totalListings}</p>
             <p className="text-sm text-[color:var(--text-muted)]">Total Listings</p>
@@ -807,7 +807,7 @@ const AgentDashboard: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`flex items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-semibold sm:text-sm ${
+                  className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-[11px] font-semibold sm:flex-row sm:px-2 sm:text-sm ${
                     activeTab === tab.id
                       ? 'bg-[color:var(--brand)] text-white'
                       : 'text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)]'

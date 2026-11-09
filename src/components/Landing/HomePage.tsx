@@ -116,7 +116,7 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
           <div className="hero-orbit pointer-events-none absolute -right-24 top-24 h-72 w-72 rounded-full border border-white/10 sm:h-[30rem] sm:w-[30rem]" aria-hidden="true" />
           <div className="section-shell relative pb-12 pt-14 sm:pb-20 sm:pt-20 lg:pt-24">
             <div className="mx-auto max-w-5xl text-center">
-              <h1 className="hero-reveal text-[clamp(3.25rem,8vw,7.5rem)] font-bold leading-[0.86] tracking-[-0.07em] text-white">
+              <h1 className="hero-reveal text-[clamp(2.7rem,12vw,7.5rem)] font-bold leading-[0.9] tracking-[-0.06em] text-white sm:leading-[0.86] sm:tracking-[-0.07em]">
                 {pageHeading}
               </h1>
               <p className="hero-reveal hero-reveal-delay-1 mx-auto mt-6 max-w-2xl text-base leading-7 text-blue-100 sm:text-xl sm:leading-8">
@@ -144,21 +144,7 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
                   <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-600" />
                 </label>
 
-                <div className="mt-4 grid grid-cols-3 gap-2" aria-label="Available destinations">
-                  {cities.map((city) => (
-                    <button
-                      key={city}
-                      type="button"
-                      onClick={() => chooseCity(city)}
-                      aria-pressed={selectedCity === city}
-                      className={`min-h-11 border px-3 text-sm font-bold transition-colors ${selectedCity === city ? 'border-blue-700 bg-blue-50 text-blue-800' : 'border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-950'}`}
-                    >
-                      {city}
-                    </button>
-                  ))}
-                </div>
-
-                <button type="button" onClick={() => onCitySearch(selectedCity)} className="group mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 bg-[color:var(--brand-strong)] px-6 text-base font-bold text-white transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+                <button type="button" onClick={() => onCitySearch(selectedCity)} className="group mt-4 inline-flex min-h-14 w-full items-center justify-center gap-2 bg-[color:var(--brand-strong)] px-5 text-center text-base font-bold text-white transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 sm:mt-5 sm:px-6">
                   Show stays in {selectedCity} <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1.5" />
                 </button>
 
@@ -170,7 +156,7 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
 
               <div
                 ref={mediaRef}
-                className="hero-media relative min-h-[390px] overflow-hidden bg-slate-200 sm:min-h-[520px] lg:min-h-[610px]"
+                className="hero-media relative min-h-[340px] overflow-hidden bg-slate-200 sm:min-h-[520px] lg:min-h-[610px]"
                 onMouseEnter={() => setCarouselHovered(true)}
                 onMouseLeave={() => { setCarouselHovered(false); resetMediaPointer(); }}
                 onMouseMove={handleMediaPointerMove}
@@ -188,7 +174,7 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
                           <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-200">Featured in {showcase.city}</p>
                           <p className="mt-2 text-2xl font-bold tracking-[-0.035em] sm:text-3xl">{showcase.property.title}</p>
                           <p className="mt-2 text-lg font-bold text-white">{formatNightlyPrice(showcase.property.price)}</p>
-                          <div className="mt-3 flex items-center gap-4 text-sm font-semibold text-white/80">
+                          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-white/80">
                             <span className="inline-flex items-center gap-1.5"><BedDouble className="h-4 w-4" /> {showcase.property.bedrooms ?? '—'} bedrooms</span>
                             <span className="inline-flex items-center gap-1.5"><Bath className="h-4 w-4" /> {showcase.property.bathrooms ?? '—'} bathrooms</span>
                           </div>
@@ -198,7 +184,7 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
                         </button>
                       </div>
                     </div>
-                    <div className="hero-float-card absolute right-4 top-4 bg-white px-4 py-3 text-slate-950 shadow-lg sm:right-6 sm:top-6">
+                    <div className="hero-float-card absolute right-4 top-4 hidden bg-white px-4 py-3 text-slate-950 shadow-lg sm:right-6 sm:top-6 sm:block">
                       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Live on FindShelta</p>
                       <p className="mt-1 text-sm font-bold">Real listing details</p>
                     </div>
@@ -228,21 +214,6 @@ const HomePage: React.FC<HomePageProps> = ({ onGetStarted, onSignIn, onCitySearc
                 )}
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="border-y border-[color:var(--border)] bg-[color:var(--surface-solid)]">
-          <div className="section-shell grid divide-y divide-[color:var(--border)] py-2 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:py-8">
-            {[
-              ['3 cities', 'Focused coverage in Lagos, Abuja, and Enugu'],
-              ['Direct booking', 'Speak to the listing host yourself'],
-              ['Clear details', 'Room counts, pricing, and amenities upfront'],
-            ].map(([value, label]) => (
-              <div key={value} className="px-0 py-5 sm:px-8 sm:py-1 first:pl-0">
-                <p className="text-2xl font-bold text-[color:var(--text)]">{value}</p>
-                <p className="mt-1 text-sm text-[color:var(--text-muted)]">{label}</p>
-              </div>
-            ))}
           </div>
         </section>
 

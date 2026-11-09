@@ -74,10 +74,10 @@ const NotificationCenter: React.FC = () => {
           />
           
           {/* Dropdown */}
-          <div className="panel absolute right-0 top-full z-50 mt-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl shadow-[0_20px_55px_rgba(15,23,42,0.18)]">
+          <div className="panel fixed left-4 right-4 top-[4.75rem] z-50 overflow-hidden rounded-2xl shadow-[0_20px_55px_rgba(15,23,42,0.18)] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-[min(22rem,calc(100vw-2rem))]">
             {/* Header */}
             <div className="p-4 border-b border-gray-200 dark:border-slate-700">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Notifications
                 </h3>

@@ -254,22 +254,7 @@ const HomeSeekerDashboard: React.FC = () => {
             </button>
           </div>
 
-          <div className="mt-2 flex items-center gap-2 overflow-x-auto border-t border-[color:var(--border)] pt-2 scrollbar-hide">
-            {AVAILABLE_CITIES.map((city) => {
-              const isSelected = searchQuery.trim().toLowerCase() === city.toLowerCase();
-              return (
-                <button
-                  key={city}
-                  type="button"
-                  onClick={() => setSearchQuery(isSelected ? '' : city)}
-                  className={`min-h-9 shrink-0 rounded-full px-3.5 text-xs font-bold transition ${isSelected ? 'bg-[color:var(--brand-strong)] text-white' : 'bg-[color:var(--surface-strong)] text-[color:var(--text-muted)] hover:text-[color:var(--text)]'}`}
-                  aria-pressed={isSelected}
-                >
-                  {city}
-                </button>
-              );
-            })}
-            <span className="mx-1 h-6 w-px shrink-0 bg-[color:var(--border)]" aria-hidden="true" />
+          <div className="mt-2 flex items-center justify-end gap-1 border-t border-[color:var(--border)] pt-2">
             <button type="button" title="Map" onClick={() => setShowMapSearch((current) => !current)} className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${showMapSearch ? 'bg-[color:var(--brand-strong)] text-white' : 'text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--text)]'}`} aria-label="Map search" aria-pressed={showMapSearch}><Map className="h-4 w-4" /></button>
             <button type="button" title="Wishlist" onClick={() => setShowFavorites((current) => !current)} className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${showFavorites ? 'bg-[color:var(--brand-strong)] text-white' : 'text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--text)]'}`} aria-label={`Wishlist, ${favorites.size} items`} aria-pressed={showFavorites}><Heart className="h-4 w-4" /></button>
             <button type="button" title="Alerts" onClick={() => setShowAlerts((current) => !current)} className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${showAlerts ? 'bg-[color:var(--brand-strong)] text-white' : 'text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--text)]'}`} aria-label={`Alerts, ${activeAlertCount} active`} aria-pressed={showAlerts}><Bell className="h-4 w-4" /></button>
@@ -295,7 +280,7 @@ const HomeSeekerDashboard: React.FC = () => {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <div>
                 <label className="mb-2 block text-xs font-bold uppercase tracking-[0.08em] text-[color:var(--text-muted)]">
                   Min price
@@ -512,12 +497,12 @@ const HomeSeekerDashboard: React.FC = () => {
         )}
 
         {!loading && filteredProperties.length > 0 && totalPages > 1 && (
-          <nav className="mt-8 flex items-center justify-between border-t border-[color:var(--border)] pt-6" aria-label="Listing pages">
+          <nav className="mt-8 grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-t border-[color:var(--border)] pt-6" aria-label="Listing pages">
             <button
               type="button"
               onClick={() => changePage(page - 1)}
               disabled={page === 1}
-              className="ghost-button inline-flex min-h-12 items-center gap-2 rounded-xl px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40"
+              className="ghost-button inline-flex min-h-12 items-center justify-center gap-1 rounded-xl px-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40 sm:gap-2 sm:px-4"
             >
               <ChevronLeft className="h-4 w-4" /> Previous
             </button>
@@ -528,7 +513,7 @@ const HomeSeekerDashboard: React.FC = () => {
               type="button"
               onClick={() => changePage(page + 1)}
               disabled={page === totalPages}
-              className="brand-button inline-flex min-h-12 items-center gap-2 rounded-xl px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40"
+              className="brand-button inline-flex min-h-12 items-center justify-center gap-1 rounded-xl px-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40 sm:gap-2 sm:px-4"
             >
               Next <ChevronRight className="h-4 w-4" />
             </button>
@@ -568,7 +553,7 @@ const HomeSeekerDashboard: React.FC = () => {
 
       {/* Floating Comparison Bar */}
       {comparisonList.length > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 z-40">
+        <div className="fixed bottom-20 left-3 right-3 z-40 md:bottom-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:transform">
           <div className="bg-blue-600 text-white rounded-xl p-3 sm:p-4 shadow-2xl max-w-md mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">

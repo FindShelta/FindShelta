@@ -131,13 +131,13 @@ const CityLandingPage: React.FC = () => {
       </header>
 
       <main>
-        <section className="grid min-h-[620px] lg:grid-cols-2">
+        <section className="grid lg:min-h-[620px] lg:grid-cols-2">
           <div className="flex items-center bg-[color:var(--brand-strong)] px-5 py-14 text-white sm:px-10 lg:px-[max(2.5rem,calc((100vw-80rem)/2))] lg:py-20">
             <div className="max-w-xl">
               <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-blue-200"><MapPin className="h-4 w-4" /> {cityName}, Nigeria</p>
               <h1 className="mt-5 font-bold">
                 <span className="block text-sm uppercase tracking-[0.14em] text-blue-200">Short stay apartments in {cityName}</span>
-                <span className="mt-4 block text-5xl leading-[0.94] tracking-[-0.055em] sm:text-6xl lg:text-7xl">{content.headline}</span>
+                <span className="mt-4 block text-4xl leading-[0.96] tracking-[-0.045em] sm:text-6xl sm:leading-[0.94] sm:tracking-[-0.055em] lg:text-7xl">{content.headline}</span>
               </h1>
               <p className="mt-6 text-lg leading-8 text-blue-100">{content.intro}</p>
               <a href="#available-stays" className="mt-8 inline-flex min-h-14 items-center gap-3 bg-white px-6 py-3 text-base font-bold text-slate-950 hover:bg-blue-50">
@@ -150,7 +150,7 @@ const CityLandingPage: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="relative min-h-[420px] bg-slate-200 lg:min-h-full">
+          <div className="relative min-h-[320px] bg-slate-200 sm:min-h-[420px] lg:min-h-full">
             <img src={image} alt={`Furnished short stay apartment in ${cityName}`} className="absolute inset-0 h-full w-full object-cover" />
           </div>
         </section>

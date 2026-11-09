@@ -62,12 +62,12 @@ const AuthShell: React.FC<AuthShellProps> = ({
             className={`inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[color:var(--text)] transition hover:text-[color:var(--brand)] ${onBack ? '' : 'invisible'}`}
           >
             <ArrowLeft className="h-4 w-4" />
-            {backLabel}
+            <span className="hidden sm:inline">{backLabel}</span>
           </button>
 
           <div className="flex items-center gap-2 lg:hidden">
             <FindSheltaLogo size={34} />
-            <span className="font-bold">FindShelta</span>
+            <span className="hidden font-bold sm:inline">FindShelta</span>
           </div>
 
           <button
