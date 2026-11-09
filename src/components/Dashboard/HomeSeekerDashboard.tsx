@@ -13,11 +13,10 @@ import FavoritesList from '../Favorites/FavoritesList';
 import SavedSearchesList from '../Favorites/SavedSearchesList';
 import VirtualTour from '../Tours/VirtualTour';
 import MapSearch from '../Search/MapSearch';
-import LazyImage from '../common/LazyImage';
 import AliExpressCard from '../Properties/AliExpressCard';
+import PropertyDetailsModal from '../Properties/PropertyDetailsModal';
 import usePerformance from '../../hooks/usePerformance';
-import { Search, Filter, Heart, MapPin, Bed, Bath, Phone, X, Scale, Bell, Bookmark, Play, Map, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
-import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
+import { Search, Filter, Heart, X, Scale, Bell, Bookmark, Map, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { AVAILABLE_CITIES } from '../../lib/cities';
 import { buildCityLocationFilter, ListingRow, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../../lib/listings';
 
@@ -51,7 +50,6 @@ const HomeSeekerDashboard: React.FC = () => {
   const [showVirtualTour, setShowVirtualTour] = useState(false);
   const [showMapSearch, setShowMapSearch] = useState(false);
   const [selectedTourProperty, setSelectedTourProperty] = useState<Property | null>(null);
-  const [previewImageIndex, setPreviewImageIndex] = useState(0);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -71,10 +69,6 @@ const HomeSeekerDashboard: React.FC = () => {
   useEffect(() => {
     void fetchProperties();
   }, []);
-
-  useEffect(() => {
-    setPreviewImageIndex(0);
-  }, [selectedProperty?.id]);
 
   const fetchProperties = async () => {
     try {
@@ -178,16 +172,6 @@ const HomeSeekerDashboard: React.FC = () => {
       location: ''
     });
     setSearchQuery('');
-  };
-
-  const formatPrice = (price: number, type: string) => {
-    const formatter = new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    });
-    const suffix = type === 'rent' ? '/year' : type === 'shortstay' ? '/night' : '';
-    return formatter.format(price) + suffix;
   };
 
   const handleBookmarkToggle = (propertyId: string) => {
@@ -607,155 +591,18 @@ const HomeSeekerDashboard: React.FC = () => {
 
       {/* Property Detail Modal */}
       {selectedProperty && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="panel mobile-sheet max-h-[94dvh] w-full max-w-5xl overflow-y-auto rounded-t-[2rem] sm:max-h-[92vh] sm:rounded-2xl">
-            <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[color:var(--border)] sm:hidden" aria-hidden="true" />
-            <div className="sticky top-0 z-10 flex items-start justify-between border-b border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 sm:px-6">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">Property Preview</p>
-                <h2 className="text-lg font-bold text-[color:var(--text)] sm:text-2xl">{selectedProperty.title}</h2>
-              </div>
-              <button
-                onClick={() => setSelectedProperty(null)}
-                className="ghost-button inline-flex h-9 w-9 items-center justify-center rounded-lg"
-                aria-label="Close preview"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="grid gap-5 p-4 sm:grid-cols-2 sm:gap-6 sm:p-6">
-              <div>
-                <div className="relative overflow-hidden rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-strong)]">
-                  <LazyImage
-                    src={selectedProperty.images[previewImageIndex] || selectedProperty.images[0]}
-                    alt={selectedProperty.title}
-                    className="h-64 w-full object-cover sm:h-80"
-                  />
-                  {selectedProperty.images.length > 1 && (
-                    <>
-                      <button
-                        onClick={() =>
-                          setPreviewImageIndex((prev) =>
-                            prev === 0 ? selectedProperty.images.length - 1 : prev - 1
-                          )
-                        }
-                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/55 p-1.5 text-white"
-                        aria-label="Previous image"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() =>
-                          setPreviewImageIndex((prev) =>
-                            prev === selectedProperty.images.length - 1 ? 0 : prev + 1
-                          )
-                        }
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/55 p-1.5 text-white"
-                        aria-label="Next image"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {selectedProperty.images.length > 1 && (
-                  <div className="mt-3 grid grid-cols-5 gap-2">
-                    {selectedProperty.images.slice(0, 10).map((image: string, index: number) => (
-                      <button
-                        key={index}
-                        onClick={() => setPreviewImageIndex(index)}
-                        className={`overflow-hidden rounded-md border ${previewImageIndex === index ? 'border-[color:var(--brand)]' : 'border-[color:var(--border)]'}`}
-                        aria-label={`Open image ${index + 1}`}
-                      >
-                        <img src={image} alt={`${selectedProperty.title} ${index + 1}`} className="h-14 w-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="rounded-md bg-[color:var(--surface-strong)] px-2 py-1 text-xs font-semibold uppercase text-[color:var(--text-muted)]">
-                    {selectedProperty.type}
-                  </span>
-                  <p className="text-2xl font-bold text-[color:var(--brand)] sm:text-3xl">
-                    {formatPrice(selectedProperty.price, selectedProperty.type)}
-                  </p>
-                </div>
-
-                <div className="flex items-start gap-2 text-sm text-[color:var(--text-muted)]">
-                  <MapPin className="mt-0.5 h-4 w-4 text-[color:var(--brand)]" />
-                  <span>{selectedProperty.location}</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="enterprise-kpi flex items-center gap-2"><Bed className="h-4 w-4 text-[color:var(--brand)]" /> {selectedProperty.bedrooms || 'N/A'} Bedrooms</div>
-                  <div className="enterprise-kpi flex items-center gap-2"><Bath className="h-4 w-4 text-[color:var(--brand)]" /> {selectedProperty.bathrooms || 'N/A'} Bathrooms</div>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)]">Description</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-[color:var(--text-muted)]">
-                    {selectedProperty.description || 'No description provided for this property yet.'}
-                  </p>
-                </div>
-
-                {selectedProperty.amenities?.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)]">Amenities</h3>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {selectedProperty.amenities.slice(0, 8).map((amenity: string, index: number) => (
-                        <span key={index} className="rounded-md bg-[color:var(--surface-strong)] px-2 py-1 text-xs font-medium text-[color:var(--text-muted)]">
-                          {amenity}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-3 gap-2 pt-2">
-                  <button
-                    onClick={() => {
-                      setSelectedTourProperty(selectedProperty);
-                      setShowVirtualTour(true);
-                    }}
-                    className="ghost-button inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold sm:text-sm"
-                  >
-                    <Play className="h-4 w-4" />
-                    Tour
-                  </button>
-                  <button
-                    onClick={() => {
-                      addToComparison(selectedProperty);
-                      setSelectedProperty(null);
-                    }}
-                    className="brand-button inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold sm:text-sm"
-                  >
-                    <Scale className="h-4 w-4" />
-                    Compare
-                  </button>
-                    <button
-                      onClick={() => {
-                        const whatsappUrl = buildListingWhatsAppUrl(selectedProperty);
-                        if (!whatsappUrl) {
-                          alert('This listing does not have a WhatsApp contact number yet.');
-                          return;
-                        }
-                        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-                      }}
-                      className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 sm:text-sm"
-                    >
-                    <Phone className="h-4 w-4" />
-                    Contact
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PropertyDetailsModal
+          property={selectedProperty}
+          onClose={() => setSelectedProperty(null)}
+          onTour={(property) => {
+            setSelectedTourProperty(property);
+            setShowVirtualTour(true);
+          }}
+          onCompare={addToComparison}
+          onFavoriteToggle={handleBookmarkToggle}
+          isFavorite={isFavorite(selectedProperty.id)}
+          isInComparison={isInComparison(selectedProperty.id)}
+        />
       )}
     </div>
   );
