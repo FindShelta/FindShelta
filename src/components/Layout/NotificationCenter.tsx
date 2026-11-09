@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Check, X, Clock, CreditCard, Home } from 'lucide-react';
+import { Bell, CreditCard, Home } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -49,12 +49,16 @@ const NotificationCenter: React.FC = () => {
     <div className="relative">
       {/* Notification Bell */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+        className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]"
+        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+        aria-expanded={isOpen}
+        title="Notifications"
       >
-        <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+        <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+          <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white ring-2 ring-[color:var(--surface)]">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -70,7 +74,7 @@ const NotificationCenter: React.FC = () => {
           />
           
           {/* Dropdown */}
-          <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 z-50">
+          <div className="panel absolute right-0 top-full z-50 mt-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl shadow-[0_20px_55px_rgba(15,23,42,0.18)]">
             {/* Header */}
             <div className="p-4 border-b border-gray-200 dark:border-slate-700">
               <div className="flex items-center justify-between">
