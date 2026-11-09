@@ -205,7 +205,7 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
             </div>
 
             <aside className="min-w-0 border-b border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-6 sm:px-7 sm:py-8 lg:sticky lg:top-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start lg:border-b-0 lg:px-8 lg:py-9">
-              <div className="flex flex-wrap items-start justify-between gap-4 lg:block">
+              <div className="flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4 lg:block">
                 <div className="min-w-0 flex-1">
                   <h2 id="property-details-title" className="text-3xl font-extrabold leading-[1.02] tracking-[-0.045em] text-[color:var(--text)] sm:text-4xl">{property.title}</h2>
                   <p className="mt-3 flex items-start gap-2 text-sm font-medium text-[color:var(--text-muted)]">
@@ -213,8 +213,8 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                     <span>{property.location}</span>
                   </p>
                 </div>
-                <div className="lg:mt-7">
-                  <p className="text-2xl font-extrabold text-[color:var(--brand)] sm:text-3xl">{formatPrice(property.price, property.type)}</p>
+                <div className="w-full border-t border-[color:var(--border)] pt-4 sm:w-auto sm:border-t-0 sm:pt-0 lg:mt-7">
+                  <p className="whitespace-nowrap text-2xl font-extrabold tabular-nums text-[color:var(--brand)] sm:text-3xl">{formatPrice(property.price, property.type)}</p>
                   {property.type === 'shortstay' && <p className="mt-1 text-xs font-semibold text-[color:var(--text-muted)]">Confirm dates and total directly with the host</p>}
                 </div>
               </div>

@@ -28,15 +28,15 @@ const PublicPropertyCard: React.FC<PublicPropertyCardProps> = ({ property }) => 
       </div>
 
       <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <h3 className="truncate text-base font-bold text-[color:var(--text)]">{property.title}</h3>
+            <h3 className="line-clamp-2 text-base font-bold leading-snug text-[color:var(--text)]">{property.title}</h3>
             <p className="mt-1 flex items-center gap-1 truncate text-xs text-[color:var(--text-muted)]">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
               {property.location}
             </p>
           </div>
-          <p className="shrink-0 text-sm font-bold text-[color:var(--brand)]">{formatNightlyPrice(property.price)}</p>
+          <p className="shrink-0 whitespace-nowrap text-lg font-extrabold tabular-nums text-[color:var(--brand)] sm:text-right sm:text-sm sm:font-bold">{formatNightlyPrice(property.price)}</p>
         </div>
 
         <div className="mt-4 flex items-center gap-4 border-t border-[color:var(--border)] pt-3 text-xs text-[color:var(--text-muted)]">
