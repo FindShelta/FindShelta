@@ -153,7 +153,8 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
 
     if (step === 2) {
       if (!formData.price) newErrors.price = 'Price is required';
-      if (isNaN(Number(formData.price))) newErrors.price = 'Price must be a valid number';
+      else if (isNaN(Number(formData.price))) newErrors.price = 'Price must be a valid number';
+      else if (Number(formData.price) < 1000) newErrors.price = 'Enter the full nightly amount, e.g. 120000 instead of 120';
     }
 
     if (step === 3) {
@@ -485,11 +486,13 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
                     name="price"
                     value={formData.price}
                     onChange={handleInputChange}
+                    min="1000"
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                    placeholder="Enter amount"
+                    placeholder="e.g. 120000"
                   />
                 </div>
                 {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter the complete naira amount without abbreviating thousands.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
