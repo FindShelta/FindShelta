@@ -38,6 +38,9 @@ const getInitialAddress = (listing?: EditableListing) => {
 const omitListingFields = (data: Record<string, unknown>, fields: string[]) =>
   Object.fromEntries(Object.entries(data).filter(([key]) => !fields.includes(key)));
 
+const isMissingColumnError = (error?: { code?: string } | null) =>
+  error?.code === '42703' || error?.code === 'PGRST204';
+
 const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubmit, initialData, isEditing = false, allowAdminUpload = false }) => {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
@@ -196,6 +199,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
           bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
           amenities: formData.amenities,
           images: formData.images,
+          cover_image_url: formData.images[0] || null,
           video_url: formData.video || null,
           agent_whatsapp: formData.whatsappNumber,
           status: isAdminUpload ? 'approved' : 'pending',
@@ -209,23 +213,34 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
           .select()
           .single();
 
-        if (updateError?.code === '42703') {
-          const fallbackUpdateData = omitListingFields(updateData, ['bedrooms', 'bathrooms']);
+        if (isMissingColumnError(updateError)) {
+          const withoutCoverImage = omitListingFields(updateData, ['cover_image_url']);
 
           let retry = await supabase
             .from('listings')
-            .update(fallbackUpdateData)
+            .update(withoutCoverImage)
             .eq('id', initialData.id)
             .select()
             .single();
 
-          if (retry.error?.code === '42703') {
+          if (isMissingColumnError(retry.error)) {
+            const fallbackUpdateData = omitListingFields(withoutCoverImage, ['bedrooms', 'bathrooms']);
+
             retry = await supabase
               .from('listings')
-              .update(omitListingFields(fallbackUpdateData, ['agent_whatsapp']))
+              .update(fallbackUpdateData)
               .eq('id', initialData.id)
               .select()
               .single();
+
+            if (isMissingColumnError(retry.error)) {
+              retry = await supabase
+                .from('listings')
+                .update(omitListingFields(fallbackUpdateData, ['agent_whatsapp']))
+                .eq('id', initialData.id)
+                .select()
+                .single();
+            }
           }
 
           updatedListing = retry.data;
@@ -261,6 +276,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
         images: formData.images,
+        cover_image_url: formData.images[0] || null,
         video_url: formData.video || null,
         agent_id: user.id,
         agent_name: user.name,
@@ -277,21 +293,31 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
         .select()
         .single();
 
-      if (listingError?.code === '42703') {
-        const fallbackListingData = omitListingFields(listingData, ['bedrooms', 'bathrooms']);
+      if (isMissingColumnError(listingError)) {
+        const withoutCoverImage = omitListingFields(listingData, ['cover_image_url']);
 
         let retry = await supabase
           .from('listings')
-          .insert(fallbackListingData)
+          .insert(withoutCoverImage)
           .select()
           .single();
 
-        if (retry.error?.code === '42703') {
+        if (isMissingColumnError(retry.error)) {
+          const fallbackListingData = omitListingFields(withoutCoverImage, ['bedrooms', 'bathrooms']);
+
           retry = await supabase
             .from('listings')
-            .insert(omitListingFields(fallbackListingData, ['agent_name', 'agent_whatsapp']))
+            .insert(fallbackListingData)
             .select()
             .single();
+
+          if (isMissingColumnError(retry.error)) {
+            retry = await supabase
+              .from('listings')
+              .insert(omitListingFields(fallbackListingData, ['agent_name', 'agent_whatsapp']))
+              .select()
+              .single();
+          }
         }
 
         listing = retry.data;

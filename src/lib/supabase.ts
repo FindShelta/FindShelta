@@ -72,6 +72,7 @@ export type Database = {
           bathrooms: number | null;
           amenities: string[];
           images: string[];
+          cover_image_url: string | null;
           video: string | null;
           agent_id: string;
           agent_name: string;
@@ -94,6 +95,7 @@ export type Database = {
           bathrooms?: number | null;
           amenities?: string[];
           images?: string[];
+          cover_image_url?: string | null;
           video?: string | null;
           agent_id: string;
           agent_name: string;
@@ -116,6 +118,7 @@ export type Database = {
           bathrooms?: number | null;
           amenities?: string[];
           images?: string[];
+          cover_image_url?: string | null;
           video?: string | null;
           agent_id?: string;
           agent_name?: string;

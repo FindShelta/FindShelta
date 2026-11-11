@@ -20,9 +20,9 @@ export const PUBLIC_LISTING_SELECT = [
 
 // Listing feeds intentionally omit `images`. Some legacy rows contain multi-
 // megabyte base64 images, which makes a feed query exceed the database statement
-// timeout. New uploads use Storage URLs, but the feed stays lightweight until
-// those legacy rows have been migrated.
-export const PUBLIC_LISTING_FEED_SELECT = [
+// timeout. The feed uses one lightweight Storage URL while full image arrays
+// remain available to detail views.
+const PUBLIC_LISTING_FEED_FIELDS = [
   'id',
   'title',
   'description',
@@ -37,6 +37,13 @@ export const PUBLIC_LISTING_FEED_SELECT = [
   'agent_name',
   'agent_whatsapp',
   'created_at',
+];
+
+export const PUBLIC_LISTING_LEGACY_FEED_SELECT = PUBLIC_LISTING_FEED_FIELDS.join(',');
+
+export const PUBLIC_LISTING_FEED_SELECT = [
+  ...PUBLIC_LISTING_FEED_FIELDS,
+  'cover_image_url',
 ].join(',');
 
 export const buildCityLocationFilter = (cities: readonly string[]) =>
@@ -78,6 +85,7 @@ export interface ListingRow {
   bathrooms?: number | string | null;
   amenities?: string[] | null;
   images?: string[] | null;
+  cover_image_url?: string | null;
   video_url?: string | null;
   agent_id?: string | null;
   agent_name?: string | null;
@@ -105,7 +113,9 @@ export const mapListingToProperty = (listing: ListingRow): Property => ({
   images:
     Array.isArray(listing.images) && listing.images.length > 0
       ? listing.images
-      : ['https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg'],
+      : listing.cover_image_url
+        ? [listing.cover_image_url]
+        : ['https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg'],
   video: listing.video_url || undefined,
   agentId: listing.agent_id || '',
   agentName: listing.agent_name || 'FindShelta host',

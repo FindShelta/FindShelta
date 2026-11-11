@@ -18,7 +18,7 @@ import PropertyDetailsModal from '../Properties/PropertyDetailsModal';
 import usePerformance from '../../hooks/usePerformance';
 import { Search, Filter, Heart, X, Scale, Bell, Bookmark, Map, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { AVAILABLE_CITIES } from '../../lib/cities';
-import { ListingRow, listingMatchesAvailableCity, mapListingToProperty, PUBLIC_LISTING_FEED_SELECT } from '../../lib/listings';
+import { ListingRow, listingMatchesAvailableCity, mapListingToProperty, PUBLIC_LISTING_FEED_SELECT, PUBLIC_LISTING_LEGACY_FEED_SELECT } from '../../lib/listings';
 
 type DashboardFilters = {
   minPrice: string;
@@ -78,13 +78,28 @@ const HomeSeekerDashboard: React.FC = () => {
       setLoading(true);
       setLoadError('');
 
-      const { data, error } = await publicSupabase
+      let { data, error } = await publicSupabase
         .from('listings')
         .select(PUBLIC_LISTING_FEED_SELECT)
         .eq('is_approved', true)
         .eq('property_type', 'shortstay')
         .order('created_at', { ascending: false })
         .abortSignal(requestController.signal);
+
+      // Keep the deployed app working while the cover-image migration is being
+      // applied to environments that do not have the new column yet.
+      if (error?.code === '42703' || error?.code === 'PGRST204') {
+        const legacyResult = await publicSupabase
+          .from('listings')
+          .select(PUBLIC_LISTING_LEGACY_FEED_SELECT)
+          .eq('is_approved', true)
+          .eq('property_type', 'shortstay')
+          .order('created_at', { ascending: false })
+          .abortSignal(requestController.signal);
+
+        data = legacyResult.data;
+        error = legacyResult.error;
+      }
 
       if (error) {
         console.error('Error fetching properties:', error);
