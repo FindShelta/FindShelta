@@ -18,10 +18,9 @@ export const PUBLIC_LISTING_SELECT = [
   'created_at',
 ].join(',');
 
-// Listing feeds intentionally omit `images`. Some legacy rows contain multi-
-// megabyte base64 images, which makes a feed query exceed the database statement
-// timeout. The feed uses one lightweight Storage URL while full image arrays
-// remain available to detail views.
+// Keep the feed fields shared with the legacy fallback. The primary feed also
+// includes the Storage-backed image array so property previews can show the
+// complete gallery; `cover_image_url` remains the card image and fallback.
 const PUBLIC_LISTING_FEED_FIELDS = [
   'id',
   'title',
@@ -44,6 +43,7 @@ export const PUBLIC_LISTING_LEGACY_FEED_SELECT = PUBLIC_LISTING_FEED_FIELDS.join
 export const PUBLIC_LISTING_FEED_SELECT = [
   ...PUBLIC_LISTING_FEED_FIELDS,
   'cover_image_url',
+  'images',
 ].join(',');
 
 export const buildCityLocationFilter = (cities: readonly string[]) =>
