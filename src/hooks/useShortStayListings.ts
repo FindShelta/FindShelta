@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { publicSupabase } from '../lib/supabase';
-import { buildCityLocationFilter, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../lib/listings';
+import { buildCityLocationFilter, mapListingToProperty, PUBLIC_LISTING_LEGACY_SELECT, PUBLIC_LISTING_SELECT } from '../lib/listings';
 import { Property } from '../types';
 import { AVAILABLE_CITIES } from '../lib/cities';
 
@@ -23,21 +23,26 @@ const useShortStayListings = (city?: string) => {
       const from = pageNumber * PAGE_SIZE;
       const to = from + PAGE_SIZE;
 
-      let query = publicSupabase
-        .from('listings')
-        .select(PUBLIC_LISTING_SELECT)
-        .eq('is_approved', true)
-        .eq('property_type', 'shortstay')
-        .order('created_at', { ascending: false })
-        .range(from, to);
+      const buildQuery = (select: string) => {
+        let query = publicSupabase
+          .from('listings')
+          .select(select)
+          .eq('is_approved', true)
+          .eq('property_type', 'shortstay')
+          .order('created_at', { ascending: false })
+          .range(from, to);
 
-      if (city) {
-        query = query.or(buildCityLocationFilter([city]));
-      } else {
-        query = query.or(buildCityLocationFilter(AVAILABLE_CITIES));
+        query = query.or(buildCityLocationFilter(city ? [city] : AVAILABLE_CITIES));
+        return query;
+      };
+
+      let { data, error: fetchError } = await buildQuery(PUBLIC_LISTING_SELECT);
+
+      if (fetchError?.code === '42703' || fetchError?.code === 'PGRST204') {
+        const legacyResult = await buildQuery(PUBLIC_LISTING_LEGACY_SELECT);
+        data = legacyResult.data;
+        fetchError = legacyResult.error;
       }
-
-      const { data, error: fetchError } = await query;
 
       if (fetchError) {
         setError('We could not load stays right now. Please try again shortly.');

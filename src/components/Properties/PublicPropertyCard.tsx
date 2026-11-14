@@ -1,22 +1,22 @@
-import { Bath, Bed, MapPin, MessageCircle } from 'lucide-react';
+import { Bath, Bed, Eye, MapPin } from 'lucide-react';
 import { Property } from '../../types';
-import { buildListingWhatsAppUrl } from '../../lib/whatsapp';
 import { formatNightlyPrice } from '../../lib/listings';
 import LazyImage from '../common/LazyImage';
 
 interface PublicPropertyCardProps {
   property: Property;
+  onViewDetails: (property: Property) => void;
 }
 
-const PublicPropertyCard: React.FC<PublicPropertyCardProps> = ({ property }) => {
-  const contactHost = () => {
-    const url = buildListingWhatsAppUrl(property);
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
+const PublicPropertyCard: React.FC<PublicPropertyCardProps> = ({ property, onViewDetails }) => {
   return (
     <article className="group overflow-hidden border border-[color:var(--border)] bg-[color:var(--surface-solid)]">
-      <div className="relative aspect-[4/3] overflow-hidden bg-[color:var(--surface-strong)]">
+      <button
+        type="button"
+        onClick={() => onViewDetails(property)}
+        className="relative block aspect-[4/3] w-full overflow-hidden bg-[color:var(--surface-strong)] text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand)]"
+        aria-label={`View details for ${property.title}`}
+      >
         <LazyImage
           src={property.images[0]}
           alt={property.title}
@@ -25,7 +25,7 @@ const PublicPropertyCard: React.FC<PublicPropertyCardProps> = ({ property }) => 
         <span className="absolute left-3 top-3 bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-800">
           Short stay
         </span>
-      </div>
+      </button>
 
       <div className="p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -50,12 +50,11 @@ const PublicPropertyCard: React.FC<PublicPropertyCardProps> = ({ property }) => 
 
         <button
           type="button"
-          onClick={contactHost}
-          disabled={!property.agentWhatsapp}
-          className="pressable mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+          onClick={() => onViewDetails(property)}
+          className="pressable mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 bg-[color:var(--brand-strong)] px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand)]"
         >
-          <MessageCircle className="h-4 w-4" />
-          {property.agentWhatsapp ? 'Book on WhatsApp' : 'Contact unavailable'}
+          <Eye className="h-4 w-4" />
+          View full details
         </button>
       </div>
     </article>

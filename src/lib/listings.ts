@@ -1,27 +1,6 @@
 import { Property } from '../types';
 
-export const PUBLIC_LISTING_SELECT = [
-  'id',
-  'title',
-  'description',
-  'price',
-  'property_type',
-  'location_state',
-  'location_city',
-  'location_address',
-  'amenities',
-  'images',
-  'video_url',
-  'agent_id',
-  'agent_name',
-  'agent_whatsapp',
-  'created_at',
-].join(',');
-
-// Keep the feed fields shared with the legacy fallback. The primary feed also
-// includes the Storage-backed image array so property previews can show the
-// complete gallery; `cover_image_url` remains the card image and fallback.
-const PUBLIC_LISTING_FEED_FIELDS = [
+const PUBLIC_LISTING_BASE_FIELDS = [
   'id',
   'title',
   'description',
@@ -38,10 +17,27 @@ const PUBLIC_LISTING_FEED_FIELDS = [
   'created_at',
 ];
 
-export const PUBLIC_LISTING_LEGACY_FEED_SELECT = PUBLIC_LISTING_FEED_FIELDS.join(',');
+export const PUBLIC_LISTING_LEGACY_SELECT = [
+  ...PUBLIC_LISTING_BASE_FIELDS,
+  'images',
+].join(',');
+
+export const PUBLIC_LISTING_SELECT = [
+  ...PUBLIC_LISTING_BASE_FIELDS,
+  'bedrooms',
+  'bathrooms',
+  'images',
+].join(',');
+
+// Keep the feed fields shared with the legacy fallback. The primary feed also
+// includes the Storage-backed image array so property previews can show the
+// complete gallery; `cover_image_url` remains the card image and fallback.
+export const PUBLIC_LISTING_LEGACY_FEED_SELECT = PUBLIC_LISTING_BASE_FIELDS.join(',');
 
 export const PUBLIC_LISTING_FEED_SELECT = [
-  ...PUBLIC_LISTING_FEED_FIELDS,
+  ...PUBLIC_LISTING_BASE_FIELDS,
+  'bedrooms',
+  'bathrooms',
   'cover_image_url',
   'images',
 ].join(',');

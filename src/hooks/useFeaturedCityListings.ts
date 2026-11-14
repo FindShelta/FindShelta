@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Property } from '../types';
 import { publicSupabase } from '../lib/supabase';
-import { buildCityLocationFilter, ListingRow, mapListingToProperty, PUBLIC_LISTING_SELECT } from '../lib/listings';
+import { buildCityLocationFilter, ListingRow, mapListingToProperty, PUBLIC_LISTING_LEGACY_SELECT, PUBLIC_LISTING_SELECT } from '../lib/listings';
 
 export interface FeaturedCityListing {
   city: string;
@@ -23,14 +23,19 @@ const useFeaturedCityListings = (cities: readonly string[]) => {
 
       const cityResults = await Promise.all(
         cities.map(async (city) => {
-          const result = await publicSupabase
+          const buildQuery = (select: string) => publicSupabase
             .from('listings')
-            .select(PUBLIC_LISTING_SELECT)
+            .select(select)
             .eq('is_approved', true)
             .eq('property_type', 'shortstay')
             .or(buildCityLocationFilter([city]))
             .order('created_at', { ascending: false })
             .limit(2);
+
+          let result = await buildQuery(PUBLIC_LISTING_SELECT);
+          if (result.error?.code === '42703' || result.error?.code === 'PGRST204') {
+            result = await buildQuery(PUBLIC_LISTING_LEGACY_SELECT);
+          }
           return { city, ...result };
         })
       );

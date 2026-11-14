@@ -15,6 +15,7 @@ import {
   Scale,
   Share2,
   ShieldCheck,
+  UserPlus,
   X,
 } from 'lucide-react';
 import { Property } from '../../types';
@@ -24,11 +25,12 @@ import LazyImage from '../common/LazyImage';
 interface PropertyDetailsModalProps {
   property: Property;
   onClose: () => void;
-  onTour: (property: Property) => void;
-  onCompare: (property: Property) => void;
-  onFavoriteToggle: (propertyId: string) => void;
-  isFavorite: boolean;
-  isInComparison: boolean;
+  onTour?: (property: Property) => void;
+  onCompare?: (property: Property) => void;
+  onFavoriteToggle?: (propertyId: string) => void;
+  onRequireAuth?: () => void;
+  isFavorite?: boolean;
+  isInComparison?: boolean;
 }
 
 const typeLabels: Record<Property['type'], string> = {
@@ -55,13 +57,20 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
   onTour,
   onCompare,
   onFavoriteToggle,
-  isFavorite,
-  isInComparison,
+  onRequireAuth,
+  isFavorite = false,
+  isInComparison = false,
 }) => {
   const [activeImage, setActiveImage] = useState(0);
   const [shareLabel, setShareLabel] = useState('Share');
   const images = useMemo(() => property.images?.filter(Boolean) || [], [property.images]);
   const whatsappUrl = buildListingWhatsAppUrl(property);
+  const requiresAuthentication = Boolean(onRequireAuth);
+  const contactActionLabel = !whatsappUrl
+    ? 'Contact unavailable'
+    : requiresAuthentication
+      ? 'Sign up to book'
+      : 'Contact host on WhatsApp';
 
   useEffect(() => {
     setActiveImage(0);
@@ -114,6 +123,11 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
   };
 
   const contactHost = () => {
+    if (!whatsappUrl) return;
+    if (onRequireAuth) {
+      onRequireAuth();
+      return;
+    }
     if (whatsappUrl) window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -142,14 +156,16 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
               <Share2 className="h-4 w-4" />
               <span className="hidden sm:inline">{shareLabel}</span>
             </button>
-            <button
-              type="button"
-              onClick={() => onFavoriteToggle(property.id)}
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] ${isFavorite ? 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300' : 'border-[color:var(--border)] text-[color:var(--text-muted)] hover:text-rose-500'}`}
-              aria-label={isFavorite ? 'Remove from wishlist' : 'Add to wishlist'}
-            >
-              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-            </button>
+            {onFavoriteToggle && (
+              <button
+                type="button"
+                onClick={() => onFavoriteToggle(property.id)}
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] ${isFavorite ? 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300' : 'border-[color:var(--border)] text-[color:var(--text-muted)] hover:text-rose-500'}`}
+                aria-label={isFavorite ? 'Remove from wishlist' : 'Add to wishlist'}
+              >
+                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+              </button>
+            )}
             <button type="button" onClick={onClose} className="ghost-button inline-flex h-10 w-10 items-center justify-center rounded-full" aria-label="Close listing details">
               <X className="h-4 w-4" />
             </button>
@@ -249,18 +265,22 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
               </div>
 
               <div className="mt-6 hidden space-y-2.5 lg:block">
-                <button type="button" onClick={contactHost} disabled={!whatsappUrl} className="pressable inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 text-base font-extrabold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50">
-                  <MessageCircle className="h-5 w-5" /> {whatsappUrl ? 'Contact host on WhatsApp' : 'Contact unavailable'}
+                <button type="button" onClick={contactHost} disabled={!whatsappUrl} className={`pressable inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl px-5 text-base font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-50 ${requiresAuthentication ? 'bg-[color:var(--brand-strong)] hover:bg-blue-800' : 'bg-emerald-700 hover:bg-emerald-800'}`}>
+                  {requiresAuthentication ? <UserPlus className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />} {contactActionLabel}
                 </button>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button type="button" onClick={() => onTour(property)} className="ghost-button inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold"><Play className="h-4 w-4" /> Tour</button>
-                  <button type="button" onClick={() => onCompare(property)} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold ${isInComparison ? 'border-[color:var(--brand)] bg-blue-50 text-[color:var(--brand)] dark:bg-blue-950/30' : 'border-[color:var(--border)] text-[color:var(--text)] hover:border-[color:var(--brand)]'}`}>
-                    <Scale className="h-4 w-4" /> {isInComparison ? 'Added' : 'Compare'}
-                  </button>
-                </div>
+                {(onTour || onCompare) && (
+                  <div className={`grid gap-2.5 ${onTour && onCompare ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    {onTour && <button type="button" onClick={() => onTour(property)} className="ghost-button inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold"><Play className="h-4 w-4" /> Tour</button>}
+                    {onCompare && (
+                      <button type="button" onClick={() => onCompare(property)} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold ${isInComparison ? 'border-[color:var(--brand)] bg-blue-50 text-[color:var(--brand)] dark:bg-blue-950/30' : 'border-[color:var(--border)] text-[color:var(--text)] hover:border-[color:var(--brand)]'}`}>
+                        <Scale className="h-4 w-4" /> {isInComparison ? 'Added' : 'Compare'}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
-              <p className="mt-5 hidden text-center text-xs leading-5 text-[color:var(--text-muted)] lg:block">FindShelta does not collect payment for this stay. Confirm availability and payment terms with the host.</p>
+              <p className="mt-5 hidden text-center text-xs leading-5 text-[color:var(--text-muted)] lg:block">{requiresAuthentication ? 'Create a free account to contact the host and arrange this stay.' : 'FindShelta does not collect payment for this stay. Confirm availability and payment terms with the host.'}</p>
             </aside>
 
             <div className="space-y-8 px-4 py-7 sm:px-7 sm:py-9 lg:col-start-1 lg:row-start-2 lg:border-r lg:border-[color:var(--border)] lg:px-9">
@@ -296,11 +316,11 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
           </div>
         </div>
 
-        <footer className="grid shrink-0 grid-cols-[auto_auto_1fr] gap-2 border-t border-[color:var(--border)] bg-[color:var(--surface-solid)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
-          <button type="button" onClick={() => onCompare(property)} className={`inline-flex h-12 w-12 items-center justify-center rounded-xl border ${isInComparison ? 'border-[color:var(--brand)] bg-blue-50 text-[color:var(--brand)] dark:bg-blue-950/30' : 'border-[color:var(--border)] text-[color:var(--text)]'}`} aria-label={isInComparison ? 'Added to comparison' : 'Add to comparison'}><Scale className="h-5 w-5" /></button>
-          <button type="button" onClick={() => onTour(property)} className="ghost-button inline-flex h-12 w-12 items-center justify-center rounded-xl" aria-label="Open virtual tour"><Play className="h-5 w-5" /></button>
-          <button type="button" onClick={contactHost} disabled={!whatsappUrl} className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-extrabold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50">
-            <MessageCircle className="h-5 w-5" /> {whatsappUrl ? 'Contact host' : 'Contact unavailable'}
+        <footer className={`grid shrink-0 gap-2 border-t border-[color:var(--border)] bg-[color:var(--surface-solid)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden ${(onCompare || onTour) ? 'grid-cols-[auto_auto_1fr]' : 'grid-cols-1'}`}>
+          {onCompare && <button type="button" onClick={() => onCompare(property)} className={`inline-flex h-12 w-12 items-center justify-center rounded-xl border ${isInComparison ? 'border-[color:var(--brand)] bg-blue-50 text-[color:var(--brand)] dark:bg-blue-950/30' : 'border-[color:var(--border)] text-[color:var(--text)]'}`} aria-label={isInComparison ? 'Added to comparison' : 'Add to comparison'}><Scale className="h-5 w-5" /></button>}
+          {onTour && <button type="button" onClick={() => onTour(property)} className="ghost-button inline-flex h-12 w-12 items-center justify-center rounded-xl" aria-label="Open virtual tour"><Play className="h-5 w-5" /></button>}
+          <button type="button" onClick={contactHost} disabled={!whatsappUrl} className={`pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-50 ${requiresAuthentication ? 'bg-[color:var(--brand-strong)] hover:bg-blue-800' : 'bg-emerald-700 hover:bg-emerald-800'}`}>
+            {requiresAuthentication ? <UserPlus className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />} {contactActionLabel}
           </button>
         </footer>
       </section>

@@ -1,7 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Building2, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import useShortStayListings from '../../hooks/useShortStayListings';
+import { useAuth } from '../../contexts/AuthContext';
+import { Property } from '../../types';
 import PublicPropertyCard from './PublicPropertyCard';
+import PropertyDetailsModal from './PropertyDetailsModal';
 
 interface InfiniteShortStayGridProps {
   city?: string;
@@ -16,7 +20,10 @@ const InfiniteShortStayGrid: React.FC<InfiniteShortStayGridProps> = ({
   emptyTitle = 'New stays are on the way',
   emptyMessage = 'Join FindShelta and be the first to know when a short stay becomes available.',
 }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { properties, loading, loadingMore, hasMore, error, loadMore } = useShortStayListings(city);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const displayedProperties = limit ? properties.slice(0, limit) : properties;
 
@@ -62,7 +69,7 @@ const InfiniteShortStayGrid: React.FC<InfiniteShortStayGridProps> = ({
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {displayedProperties.map((property, index) => (
           <div key={property.id} style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }} className="app-card">
-            <PublicPropertyCard property={property} />
+            <PublicPropertyCard property={property} onViewDetails={setSelectedProperty} />
           </div>
         ))}
       </div>
@@ -76,6 +83,16 @@ const InfiniteShortStayGrid: React.FC<InfiniteShortStayGridProps> = ({
         <p className="py-8 text-center text-sm font-medium text-[color:var(--text-muted)]">
           You’ve seen all available properties.
         </p>
+      )}
+      {selectedProperty && (
+        <PropertyDetailsModal
+          property={selectedProperty}
+          onClose={() => setSelectedProperty(null)}
+          onRequireAuth={!user ? () => {
+            setSelectedProperty(null);
+            navigate('/register');
+          } : undefined}
+        />
       )}
     </>
   );
