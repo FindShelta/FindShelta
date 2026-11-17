@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
-interface Notification {
+export interface Notification {
   id: string;
-  type: 'payment_approved' | 'payment_rejected' | 'listing_approved' | 'listing_rejected';
+  type: 'payment_approved' | 'payment_rejected' | 'listing_approved' | 'listing_rejected' | 'general';
   title: string;
   message: string;
   read: boolean;
@@ -13,107 +13,77 @@ interface Notification {
 export const useNotifications = (userId?: string) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const fetchNotifications = async () => {
+    if (!userId) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (data) {
+      setNotifications(data);
+      setUnreadCount(data.filter((n) => !n.read).length);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!userId) return;
 
-    // Subscribe to real-time notifications
-    const subscription = supabase
-      .channel('notifications')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'payments',
-        filter: `agent_id=eq.${userId}`
-      }, (payload) => {
-        if (payload.eventType === 'UPDATE') {
-          const payment = payload.new;
-          if (payment.status === 'approved') {
-            addNotification({
-              type: 'payment_approved',
-              title: 'Payment Approved',
-              message: `Your ${payment.plan} payment has been approved!`
-            });
-          } else if (payment.status === 'rejected') {
-            addNotification({
-              type: 'payment_rejected',
-              title: 'Payment Rejected',
-              message: `Your ${payment.plan} payment was rejected. Please resubmit.`
-            });
-          }
+    fetchNotifications();
+
+    // Real-time: listen for new notifications inserted for this user
+    const channel = supabase
+      .channel(`notifications:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const n = payload.new as Notification;
+          setNotifications((prev) => [n, ...prev]);
+          setUnreadCount((prev) => prev + 1);
         }
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'listings',
-        filter: `agent_id=eq.${userId}`
-      }, (payload) => {
-        if (payload.eventType === 'UPDATE') {
-          const listing = payload.new;
-          if (listing.is_approved) {
-            addNotification({
-              type: 'listing_approved',
-              title: 'Listing Approved',
-              message: `Your listing "${listing.title}" has been approved!`
-            });
-          } else if (listing.status === 'rejected') {
-            addNotification({
-              type: 'listing_rejected',
-              title: 'Listing Rejected',
-              message: `Your listing "${listing.title}" was rejected.`
-            });
-          }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const updated = payload.new as Notification;
+          setNotifications((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+          setUnreadCount((prev) => (updated.read ? Math.max(0, prev - 1) : prev));
         }
-      })
+      )
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [userId]);
 
-  const addNotification = (notification: Omit<Notification, 'id' | 'read' | 'created_at'>) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: Date.now().toString(),
-      read: false,
-      created_at: new Date().toISOString()
-    };
-
-    setNotifications(prev => [newNotification, ...prev]);
-    setUnreadCount(prev => prev + 1);
-
-    // Auto-remove after 10 seconds
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== newNotification.id));
-    }, 10000);
+  const markAsRead = async (notificationId: string) => {
+    setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+    await supabase.from('notifications').update({ read: true }).eq('id', notificationId);
   };
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(n => 
-        n.id === notificationId ? { ...n, read: true } : n
-      )
-    );
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    if (!userId) return;
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
+    await supabase.from('notifications').update({ read: true }).eq('user_id', userId).eq('read', false);
   };
 
-  const clearNotifications = () => {
+  const clearNotifications = async () => {
+    if (!userId) return;
     setNotifications([]);
     setUnreadCount(0);
+    await supabase.from('notifications').delete().eq('user_id', userId);
   };
 
-  return {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    clearNotifications
-  };
+  return { notifications, unreadCount, loading, markAsRead, markAllAsRead, clearNotifications };
 };

@@ -1,14 +1,34 @@
-import React, { useState } from 'react';
-import { Bell, CreditCard, Home } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, BellOff, CreditCard, Home, Loader2 } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAuth } from '../../contexts/AuthContext';
+import { pushService } from '../../lib/pushService';
 
 const NotificationCenter: React.FC = () => {
   const { user } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotifications } = useNotifications(user?.id);
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead, clearNotifications } = useNotifications(user?.id);
   const [isOpen, setIsOpen] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
 
-  const getNotificationIcon = (type: string) => {
+  useEffect(() => {
+    pushService.isSubscribed().then(setPushEnabled);
+  }, []);
+
+  const togglePush = async () => {
+    if (!user?.id) return;
+    setPushLoading(true);
+    if (pushEnabled) {
+      await pushService.unregister(user.id);
+      setPushEnabled(false);
+    } else {
+      const ok = await pushService.register(user.id);
+      setPushEnabled(ok);
+    }
+    setPushLoading(false);
+  };
+
+  const getIcon = (type: string) => {
     switch (type) {
       case 'payment_approved':
       case 'payment_rejected':
@@ -21,40 +41,35 @@ const NotificationCenter: React.FC = () => {
     }
   };
 
-  const getNotificationColor = (type: string) => {
+  const getColor = (type: string) => {
     switch (type) {
       case 'payment_approved':
       case 'listing_approved':
-        return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30';
+        return 'text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-900/30';
       case 'payment_rejected':
       case 'listing_rejected':
-        return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30';
+        return 'text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-900/30';
       default:
-        return 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30';
+        return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30';
     }
   };
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return date.toLocaleDateString();
+    const diff = Math.floor((Date.now() - new Date(dateString).getTime()) / 60000);
+    if (diff < 1) return 'Just now';
+    if (diff < 60) return `${diff}m ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+    return new Date(dateString).toLocaleDateString();
   };
 
   return (
     <div className="relative">
-      {/* Notification Bell */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-[color:var(--text-muted)] hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]"
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
         aria-expanded={isOpen}
-        title="Notifications"
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
@@ -64,83 +79,83 @@ const NotificationCenter: React.FC = () => {
         )}
       </button>
 
-      {/* Notification Dropdown */}
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Dropdown */}
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+
           <div className="panel fixed left-4 right-4 top-[4.75rem] z-50 overflow-hidden rounded-2xl shadow-[0_20px_55px_rgba(15,23,42,0.18)] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-[min(22rem,calc(100vw-2rem))]">
+
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 dark:border-slate-700">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Notifications
-                </h3>
+            <div className="flex items-center justify-between border-b border-[color:var(--border)] px-4 py-3">
+              <h3 className="text-sm font-bold text-[color:var(--text)]">Notifications</h3>
+              <div className="flex items-center gap-3">
+                {/* Push toggle */}
+                <button
+                  type="button"
+                  onClick={togglePush}
+                  disabled={pushLoading}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--text-muted)] hover:text-[color:var(--text)] disabled:opacity-50"
+                  title={pushEnabled ? 'Disable push notifications' : 'Enable push notifications'}
+                >
+                  {pushLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : pushEnabled ? (
+                    <BellOff className="h-3.5 w-3.5" />
+                  ) : (
+                    <Bell className="h-3.5 w-3.5" />
+                  )}
+                  {pushEnabled ? 'Mute' : 'Enable alerts'}
+                </button>
+
                 {notifications.length > 0 && (
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={markAllAsRead}
-                      className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-                    >
+                  <>
+                    <button onClick={markAllAsRead} className="text-xs font-semibold text-[color:var(--brand)] hover:underline">
                       Mark all read
                     </button>
-                    <button
-                      onClick={clearNotifications}
-                      className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                    >
-                      Clear all
+                    <button onClick={clearNotifications} className="text-xs font-semibold text-[color:var(--text-muted)] hover:text-[color:var(--text)]">
+                      Clear
                     </button>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
 
-            {/* Notifications List */}
+            {/* List */}
             <div className="max-h-96 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Bell className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500 dark:text-gray-400">No notifications yet</p>
+              {loading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-5 w-5 animate-spin text-[color:var(--text-muted)]" />
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="py-10 text-center">
+                  <Bell className="mx-auto mb-3 h-10 w-10 text-[color:var(--text-muted)] opacity-40" />
+                  <p className="text-sm text-[color:var(--text-muted)]">No notifications yet</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-200 dark:divide-slate-700">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-4 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors ${
-                        !notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''
-                      }`}
-                      onClick={() => markAsRead(notification.id)}
+                <div className="divide-y divide-[color:var(--border)]">
+                  {notifications.map((n) => (
+                    <button
+                      key={n.id}
+                      type="button"
+                      onClick={() => markAsRead(n.id)}
+                      className={`w-full px-4 py-3 text-left transition-colors hover:bg-[color:var(--surface-strong)] ${!n.read ? 'bg-blue-50/60 dark:bg-blue-900/10' : ''}`}
                     >
-                      <div className="flex items-start space-x-3">
-                        <div className={`p-2 rounded-full ${getNotificationColor(notification.type)}`}>
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              {notification.title}
-                            </p>
-                            <div className="flex items-center space-x-1">
-                              {!notification.read && (
-                                <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                              )}
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {formatTime(notification.created_at)}
-                              </span>
+                      <div className="flex items-start gap-3">
+                        <span className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${getColor(n.type)}`}>
+                          {getIcon(n.type)}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="truncate text-sm font-semibold text-[color:var(--text)]">{n.title}</p>
+                            <div className="flex shrink-0 items-center gap-1.5">
+                              {!n.read && <span className="h-2 w-2 rounded-full bg-blue-500" />}
+                              <span className="text-[11px] text-[color:var(--text-muted)]">{formatTime(n.created_at)}</span>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                            {notification.message}
-                          </p>
+                          <p className="mt-0.5 text-xs leading-relaxed text-[color:var(--text-muted)]">{n.message}</p>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
