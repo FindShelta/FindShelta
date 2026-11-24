@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, Mail, ShieldCheck, UserRound } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import AuthShell from './AuthShell';
+import VerificationPending from './VerificationPending';
 
 interface AgentRegistrationFormProps {
   onClose: () => void;
@@ -11,6 +12,7 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
   const { registerAgent } = useAuth();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [requiresEmailVerification, setRequiresEmailVerification] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '' });
@@ -20,8 +22,11 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
     setLoading(true);
     setError('');
     try {
-      const ok = await registerAgent(formData);
-      if (ok) setSuccess(true);
+      const result = await registerAgent(formData);
+      if (result.success) {
+        setRequiresEmailVerification(result.requiresEmailVerification);
+        setSuccess(true);
+      }
       else setError('We could not submit your application. Check your details and try again.');
     } catch {
       setError('We could not submit your application right now. Please try again.');
@@ -33,12 +38,23 @@ const AgentRegistrationForm: React.FC<AgentRegistrationFormProps> = ({ onClose }
   return (
     <AuthShell onBack={onClose} backLabel="Change account type" visualTitle="List with clarity. Connect directly." visualCopy="Join FindShelta as an approved agent and put quality properties in front of serious home seekers.">
       {success ? (
-        <div className="text-center">
-          <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"><CheckCircle2 className="h-8 w-8" /></span>
-          <h2 className="mt-6 text-4xl font-bold tracking-[-0.04em] text-[color:var(--text)]">Application received</h2>
-          <p className="mt-4 text-base leading-7 text-[color:var(--text-muted)]">Our team will review your agent profile within one to two business days and send an update by email.</p>
-          <button type="button" onClick={onClose} className="brand-button mt-8 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl px-5 font-bold">Back to account options <ArrowRight className="h-5 w-5" /></button>
-        </div>
+        requiresEmailVerification ? (
+          <VerificationPending
+            email={formData.email.trim()}
+            title="Verify your agent email"
+            description="Your application is saved. Verify your email address so you can receive approval updates and securely access your agent account."
+            note="After verification, your application will remain pending until the FindShelta team approves your agent profile."
+            onBack={onClose}
+            backLabel="Back to account options"
+          />
+        ) : (
+          <div className="text-center">
+            <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"><CheckCircle2 className="h-8 w-8" /></span>
+            <h2 className="mt-6 text-4xl font-bold tracking-[-0.04em] text-[color:var(--text)]">Application received</h2>
+            <p className="mt-4 text-base leading-7 text-[color:var(--text-muted)]">Our team will review your agent profile within one to two business days and send an update by email.</p>
+            <button type="button" onClick={onClose} className="brand-button mt-8 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl px-5 font-bold">Back to account options <ArrowRight className="h-5 w-5" /></button>
+          </div>
+        )
       ) : (
         <>
           <div className="mb-8">

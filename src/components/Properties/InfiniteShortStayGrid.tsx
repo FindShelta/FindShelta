@@ -66,7 +66,7 @@ const InfiniteShortStayGrid: React.FC<InfiniteShortStayGridProps> = ({
 
   return (
     <>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
         {displayedProperties.map((property, index) => (
           <div key={property.id} style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }} className="app-card">
             <PublicPropertyCard property={property} onViewDetails={setSelectedProperty} />

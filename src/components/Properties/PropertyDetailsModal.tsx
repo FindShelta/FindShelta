@@ -64,6 +64,10 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
   const [activeImage, setActiveImage] = useState(0);
   const [shareLabel, setShareLabel] = useState('Share');
   const images = useMemo(() => property.images?.filter(Boolean) || [], [property.images]);
+  const additionalAmenities = useMemo(
+    () => (property.amenities || []).filter((amenity) => !/^(beds?|bedrooms?|baths?|bathrooms?)$/i.test(amenity.trim())),
+    [property.amenities]
+  );
   const whatsappUrl = buildListingWhatsAppUrl(property);
   const requiresAuthentication = Boolean(onRequireAuth);
   const contactActionLabel = !whatsappUrl
@@ -297,20 +301,24 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                     <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">What this place offers</p>
                     <h3 className="mt-1 text-2xl font-bold text-[color:var(--text)]">Amenities</h3>
                   </div>
-                  <span className="text-xs font-bold text-[color:var(--text-muted)]">{property.amenities?.length || 0} listed</span>
+                  <span className="text-xs font-bold text-[color:var(--text-muted)]">{additionalAmenities.length + 2} listed</span>
                 </div>
-                {property.amenities?.length > 0 ? (
-                  <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-                    {property.amenities.map((amenity, index) => (
-                      <div key={`${amenity}-${index}`} className="flex min-w-0 items-center gap-2.5 text-sm font-semibold text-[color:var(--text)]">
-                        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[color:var(--brand)] dark:bg-blue-950/40"><Check className="h-3.5 w-3.5" /></span>
-                        <span className="truncate capitalize">{amenity}</span>
-                      </div>
-                    ))}
+                <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+                  <div className="flex min-w-0 items-center gap-2.5 text-sm font-semibold text-[color:var(--text)]">
+                    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[color:var(--brand)] dark:bg-blue-950/40"><BedDouble className="h-3.5 w-3.5" /></span>
+                    <span>{property.bedrooms == null ? 'Bedrooms not specified' : `${property.bedrooms} ${property.bedrooms === 1 ? 'Bedroom' : 'Bedrooms'}`}</span>
                   </div>
-                ) : (
-                  <p className="mt-3 text-sm text-[color:var(--text-muted)]">Ask the host which amenities are available.</p>
-                )}
+                  <div className="flex min-w-0 items-center gap-2.5 text-sm font-semibold text-[color:var(--text)]">
+                    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[color:var(--brand)] dark:bg-blue-950/40"><Bath className="h-3.5 w-3.5" /></span>
+                    <span>{property.bathrooms == null ? 'Bathrooms not specified' : `${property.bathrooms} ${property.bathrooms === 1 ? 'Bathroom' : 'Bathrooms'}`}</span>
+                  </div>
+                  {additionalAmenities.map((amenity, index) => (
+                    <div key={`${amenity}-${index}`} className="flex min-w-0 items-center gap-2.5 text-sm font-semibold text-[color:var(--text)]">
+                      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[color:var(--brand)] dark:bg-blue-950/40"><Check className="h-3.5 w-3.5" /></span>
+                      <span className="truncate capitalize">{amenity}</span>
+                    </div>
+                  ))}
+                </div>
               </section>
             </div>
           </div>

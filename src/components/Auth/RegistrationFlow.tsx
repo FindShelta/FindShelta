@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { AlertCircle, ArrowRight, Building2, Check, CheckCircle2, Eye, EyeOff, Home, Loader2, LockKeyhole, Mail, UserRound } from 'lucide-react';
+import { AlertCircle, ArrowRight, Building2, Check, Eye, EyeOff, Home, Loader2, LockKeyhole, Mail, UserRound } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import AgentRegistrationForm from './AgentRegistrationForm';
 import AuthShell from './AuthShell';
+import VerificationPending from './VerificationPending';
 
 interface RegistrationFlowProps {
   onBack?: () => void;
@@ -45,8 +46,8 @@ const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onBack }) => {
     }
 
     try {
-      const success = await register(formData.name.trim(), formData.email.trim(), formData.password, selectedRole!);
-      if (success) setCurrentStep('success');
+      const result = await register(formData.name.trim(), formData.email.trim(), formData.password, selectedRole!);
+      if (result.success) setCurrentStep('success');
       else setError('An account with this email may already exist. Try signing in instead.');
     } catch {
       setError('We could not create your account right now. Please try again.');
@@ -91,13 +92,8 @@ const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onBack }) => {
 
   if (currentStep === 'success') {
     return (
-      <AuthShell visualTitle="You’re ready to find your next stay." visualCopy="Your FindShelta account keeps your wishlist, host conversations, and new discoveries together.">
-        <div className="text-center">
-          <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"><CheckCircle2 className="h-8 w-8" /></span>
-          <h2 className="mt-6 text-4xl font-bold tracking-[-0.04em] text-[color:var(--text)]">Your account is ready</h2>
-          <p className="mt-4 text-base leading-7 text-[color:var(--text-muted)]">We’re preparing your dashboard now. You’ll be taken there automatically.</p>
-          <div className="mt-8 flex items-center justify-center gap-2 text-sm font-bold text-[color:var(--brand)]"><Loader2 className="h-4 w-4 animate-spin" /> Opening FindShelta</div>
-        </div>
+      <AuthShell visualTitle="Secure your account. Then start exploring." visualCopy="Email verification protects your wishlist, host conversations, and every stay you save on FindShelta.">
+        <VerificationPending email={formData.email.trim()} onBack={() => onBack?.()} />
       </AuthShell>
     );
   }

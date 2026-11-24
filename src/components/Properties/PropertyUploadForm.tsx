@@ -51,8 +51,8 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
     type: 'shortstay' as const,
     city: initialData?.location_city || 'Lagos',
     location: getInitialAddress(initialData),
-    bedrooms: initialData?.bedrooms?.toString() || '',
-    bathrooms: initialData?.bathrooms?.toString() || '',
+    bedrooms: initialData?.bedrooms != null ? initialData.bedrooms.toString() : '',
+    bathrooms: initialData?.bathrooms != null ? initialData.bathrooms.toString() : '',
     amenities: initialData?.amenities || [] as string[],
     images: initialData?.images || [] as string[],
     video: initialData?.video_url || '',
@@ -155,6 +155,10 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
       if (!formData.price) newErrors.price = 'Price is required';
       else if (isNaN(Number(formData.price))) newErrors.price = 'Price must be a valid number';
       else if (Number(formData.price) < 1000) newErrors.price = 'Enter the full nightly amount, e.g. 120000 instead of 120';
+      if (formData.bedrooms === '') newErrors.bedrooms = 'Enter the exact number of bedrooms';
+      else if (!Number.isInteger(Number(formData.bedrooms)) || Number(formData.bedrooms) < 0) newErrors.bedrooms = 'Bedrooms must be a whole number';
+      if (formData.bathrooms === '') newErrors.bathrooms = 'Enter the exact number of bathrooms';
+      else if (!Number.isInteger(Number(formData.bathrooms)) || Number(formData.bathrooms) < 0) newErrors.bathrooms = 'Bathrooms must be a whole number';
     }
 
     if (step === 3) {
@@ -498,7 +502,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Bedrooms
+                    Bedrooms *
                   </label>
                   <div className="relative">
                     <Bed className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
@@ -512,11 +516,12 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
                       min="0"
                     />
                   </div>
+                  {errors.bedrooms && <p className="mt-1 text-xs text-red-500">{errors.bedrooms}</p>}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Bathrooms
+                    Bathrooms *
                   </label>
                   <div className="relative">
                     <Bath className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
@@ -530,6 +535,7 @@ const PropertyUploadForm: React.FC<PropertyUploadFormProps> = ({ onClose, onSubm
                       min="0"
                     />
                   </div>
+                  {errors.bathrooms && <p className="mt-1 text-xs text-red-500">{errors.bathrooms}</p>}
                 </div>
               </div>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail } from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, Mail, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import AuthShell from './AuthShell';
 import ForgotPassword from './ForgotPassword';
@@ -14,8 +14,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToRegister }) => 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const { login } = useAuth();
+  const { login, resendVerificationEmail } = useAuth();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -36,6 +38,22 @@ const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToRegister }) => 
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResendVerification = async () => {
+    if (!formData.email.trim()) {
+      setError('Enter your email address first, then request a new verification email.');
+      return;
+    }
+
+    setError('');
+    setVerificationMessage('');
+    setResendingVerification(true);
+    const sent = await resendVerificationEmail(formData.email.trim());
+    setVerificationMessage(sent
+      ? 'If this account is awaiting verification, a new email is on its way.'
+      : 'We could not resend the verification email right now. Please try again shortly.');
+    setResendingVerification(false);
   };
 
   if (showForgotPassword) {
@@ -104,6 +122,20 @@ const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToRegister }) => 
           {loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Signing in…</> : <>Sign in <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></>}
         </button>
       </form>
+
+      <div className="mt-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-strong)] p-4 text-center">
+        <p className="text-sm text-[color:var(--text-muted)]">Still need to verify your account?</p>
+        <button
+          type="button"
+          onClick={handleResendVerification}
+          disabled={resendingVerification}
+          className="mt-2 inline-flex min-h-10 items-center justify-center gap-2 text-sm font-bold text-[color:var(--brand)] hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {resendingVerification ? <Loader2 className="h-4 w-4 animate-spin" /> : verificationMessage ? <CheckCircle2 className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
+          {resendingVerification ? 'Sending...' : 'Resend verification email'}
+        </button>
+        {verificationMessage && <p role="status" aria-live="polite" className="mt-2 text-xs leading-5 text-[color:var(--text-muted)]">{verificationMessage}</p>}
+      </div>
 
       <div className="mt-8 border-t border-[color:var(--border)] pt-6 text-center">
         <p className="text-sm text-[color:var(--text-muted)]">

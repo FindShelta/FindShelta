@@ -9,6 +9,7 @@ import CityLandingPage from './components/Landing/CityLandingPage';
 import RegistrationFlow from './components/Auth/RegistrationFlow';
 import LoginForm from './components/Auth/LoginForm';
 import ResetPassword from './components/Auth/ResetPassword';
+import EmailVerification from './components/Auth/EmailVerification';
 import HomeSeekerDashboard from './components/Dashboard/HomeSeekerDashboard';
 import AgentDashboard from './components/Dashboard/AgentDashboard';
 import AdminPortal from './components/Admin/AdminPortal';
@@ -93,11 +94,23 @@ const RegisterRoute: React.FC = () => {
   return <RegistrationFlow onBack={() => navigate('/login')} />;
 };
 
+const VerifyEmailRoute: React.FC = () => {
+  const navigate = useNavigate();
+
+  return (
+    <EmailVerification
+      onContinue={() => navigate('/dashboard', { replace: true })}
+      onSignIn={() => navigate('/login', { replace: true })}
+      onRegister={() => navigate('/register', { replace: true })}
+    />
+  );
+};
+
 const NotFoundRoute: React.FC = () => <Navigate to="/" replace />;
 
 function AppRoutes() {
   const location = useLocation();
-  const isAuthRoute = ['/login', '/register', '/reset-password'].includes(location.pathname);
+  const isAuthRoute = ['/login', '/register', '/reset-password', '/verify-email'].includes(location.pathname);
   const isAppRoute = ['/dashboard', '/admin', '/debug'].includes(location.pathname);
 
   return (
@@ -108,6 +121,7 @@ function AppRoutes() {
           <Route path="/short-stay-:city" element={<CityLandingPage />} />
           <Route path="/login" element={<LoginRoute />} />
           <Route path="/register" element={<RegisterRoute />} />
+          <Route path="/verify-email" element={<VerifyEmailRoute />} />
           <Route path="/dashboard" element={<DashboardRoute />} />
           <Route path="/admin" element={<AdminPortal />} />
           <Route path="/subscription" element={<SubscriptionPlans />} />

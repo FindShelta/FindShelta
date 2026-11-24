@@ -1,12 +1,25 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
+import type { User as SupabaseAuthUser } from '@supabase/supabase-js';
+
+interface RegistrationResult {
+  success: boolean;
+  requiresEmailVerification: boolean;
+}
+
+interface AgentRegistrationData {
+  fullName: string;
+  email: string;
+  password: string;
+}
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string, role: 'agent' | 'home_seeker', whatsappNumber?: string) => Promise<boolean>;
-  registerAgent: (agentData: any) => Promise<boolean>;
+  register: (name: string, email: string, password: string, role: 'agent' | 'home_seeker') => Promise<RegistrationResult>;
+  registerAgent: (agentData: AgentRegistrationData) => Promise<RegistrationResult>;
+  resendVerificationEmail: (email: string) => Promise<boolean>;
   resetPassword: (email: string) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
   updateWhatsappNumber: (whatsappNumber: string) => Promise<boolean>;
@@ -18,12 +31,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const getPasswordResetRedirectUrl = () => {
+const getPublicSiteUrl = () => {
   const configuredSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL?.trim();
-  const siteUrl = configuredSiteUrl || (import.meta.env.PROD ? 'https://findshelta.com' : window.location.origin);
-
-  return new URL('/reset-password', siteUrl).toString();
+  return configuredSiteUrl || (import.meta.env.PROD ? 'https://findshelta.com' : window.location.origin);
 };
+
+const getPasswordResetRedirectUrl = () => new URL('/reset-password', getPublicSiteUrl()).toString();
+const getEmailVerificationRedirectUrl = () => new URL('/verify-email', getPublicSiteUrl()).toString();
+
+const isVerifiedAuthUser = (authUser: SupabaseAuthUser) => Boolean(authUser.email_confirmed_at || authUser.confirmed_at);
+
+const mapAuthUser = (authUser: SupabaseAuthUser): User => ({
+  id: authUser.id,
+  name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+  email: authUser.email!,
+  role: (authUser.user_metadata?.role || 'home_seeker') as User['role'],
+  whatsappNumber: authUser.user_metadata?.whatsapp_number,
+  isSubscribed: true,
+  createdAt: new Date(authUser.created_at),
+});
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -39,30 +65,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [agentStatus, setAgentStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
 
   useEffect(() => {
-    // Initialize auth state with timeout to prevent infinite loading
     const initializeAuth = async () => {
       const timeout = setTimeout(() => {
-        console.log('Auth initialization timeout');
         setLoading(false);
-      }, 3000); // 3 second timeout
+      }, 3000);
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
         clearTimeout(timeout);
-        
-        if (session?.user) {
-          const userData = {
-            id: session.user.id,
-            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-            email: session.user.email!,
-            role: session.user.user_metadata?.role || 'home_seeker',
-            whatsappNumber: session.user.user_metadata?.whatsapp_number,
-            isSubscribed: true,
-            createdAt: new Date(session.user.created_at)
-          };
+
+        if (session?.user && isVerifiedAuthUser(session.user)) {
+          const userData = mapAuthUser(session.user);
           setUser(userData);
-          
-          // Check agent status if user is an agent
+
           if (userData.role === 'agent') {
             checkAgentStatus(session.user.id);
           }
@@ -77,32 +92,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeAuth();
 
-    // Listen for auth state changes with error handling
-    let subscription;
+    let subscription: { unsubscribe: () => void } | undefined;
     try {
-      const { data } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          if (event === 'SIGNED_OUT' || !session) {
-            setUser(null);
-          } else if (session?.user) {
-            const userData = {
-              id: session.user.id,
-              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-              email: session.user.email!,
-              role: session.user.user_metadata?.role || 'home_seeker',
-              whatsappNumber: session.user.user_metadata?.whatsapp_number,
-              isSubscribed: true,
-              createdAt: new Date(session.user.created_at)
-            };
-            setUser(userData);
-            
-            // Check agent status if user is an agent
-            if (userData.role === 'agent') {
-              checkAgentStatus(session.user.id);
-            }
+      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_OUT' || !session) {
+          setUser(null);
+        } else if (session?.user && isVerifiedAuthUser(session.user)) {
+          const userData = mapAuthUser(session.user);
+          setUser(userData);
+
+          if (userData.role === 'agent') {
+            checkAgentStatus(session.user.id);
           }
+        } else {
+          setUser(null);
         }
-      );
+      });
       subscription = data.subscription;
     } catch (error) {
       console.error('Auth listener setup failed:', error);
@@ -110,9 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
+      if (subscription) subscription.unsubscribe();
     };
   }, []);
 
@@ -125,13 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
-        if (error.code === '42P01') {
-          // Table doesn't exist, set status to null
-          setAgentStatus(null);
-          return;
-        }
-        if (error.code === 'PGRST116') {
-          // No agent record found, set status to null
+        if (error.code === '42P01' || error.code === 'PGRST116') {
           setAgentStatus(null);
           return;
         }
@@ -140,7 +137,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      console.log('Agent status from DB:', agent?.status); // Debug log
       setAgentStatus(agent?.status || 'pending');
     } catch (error) {
       console.error('Error checking agent status:', error);
@@ -149,21 +145,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshAgentStatus = async () => {
-    if (user?.id) {
-      await checkAgentStatus(user.id);
-    }
+    if (user?.id) await checkAgentStatus(user.id);
   };
 
   const logout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Supabase logout error:', error.message);
-      }
+      if (error) console.error('Supabase logout error:', error.message);
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Always clear user state regardless of Supabase response
       setUser(null);
       setAgentStatus(null);
     }
@@ -171,35 +162,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
       if (authError) {
         console.error('Supabase login failed:', authError.message);
         return false;
       }
 
-      // Supabase login successful
-      if (authData.user) {
-        const userData = {
-          id: authData.user.id,
-          name: authData.user.user_metadata?.name || authData.user.email?.split('@')[0] || 'User',
-          email: authData.user.email!,
-          role: authData.user.user_metadata?.role || 'home_seeker',
-          whatsappNumber: authData.user.user_metadata?.whatsapp_number,
-          isSubscribed: true,
-          createdAt: new Date(authData.user.created_at)
-        };
-
+      if (authData.user && isVerifiedAuthUser(authData.user)) {
+        const userData = mapAuthUser(authData.user);
         setUser(userData);
-        
-        // Check agent status if user is an agent
-        if (userData.role === 'agent') {
-          await checkAgentStatus(authData.user.id);
-        }
-        
+
+        if (userData.role === 'agent') await checkAgentStatus(authData.user.id);
         return true;
       }
 
@@ -210,11 +184,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, password: string, role: 'agent' | 'home_seeker'): Promise<boolean> => {
-    // Block agent registration through this function
+  const register = async (name: string, email: string, password: string, role: 'agent' | 'home_seeker'): Promise<RegistrationResult> => {
     if (role === 'agent') {
       console.error('Agents must register through AgentRegistrationForm');
-      return false;
+      return { success: false, requiresEmailVerification: false };
     }
 
     try {
@@ -222,71 +195,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password,
         options: {
-          data: {
-            name,
-            role
-          }
+          data: { name, role },
+          emailRedirectTo: getEmailVerificationRedirectUrl(),
         }
       });
 
       if (authError) {
         console.error('Supabase registration failed:', authError.message);
-        return false;
+        return { success: false, requiresEmailVerification: false };
       }
 
-      // Supabase registration successful
       if (authData.user) {
-        const newUser = {
-          id: authData.user.id,
-          name,
-          email,
-          role,
-          isSubscribed: true,
-          createdAt: new Date(authData.user.created_at),
-        };
-
-        setUser(newUser);
-        return true;
+        const requiresEmailVerification = !authData.session || !isVerifiedAuthUser(authData.user);
+        if (!requiresEmailVerification) setUser(mapAuthUser(authData.user));
+        else setUser(null);
+        return { success: true, requiresEmailVerification };
       }
 
-      return false;
+      return { success: false, requiresEmailVerification: false };
     } catch (error) {
       console.error('Registration error:', error);
-      return false;
+      return { success: false, requiresEmailVerification: false };
     }
   };
 
-  const registerAgent = async (agentData: any): Promise<boolean> => {
+  const registerAgent = async (agentData: AgentRegistrationData): Promise<RegistrationResult> => {
     try {
-      // Sign out first to prevent auto-login
       await supabase.auth.signOut();
-      
-      // Create auth user without auto-login
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: agentData.email,
         password: agentData.password,
         options: {
-          data: {
-            name: agentData.fullName,
-            role: 'agent'
-          }
+          data: { name: agentData.fullName, role: 'agent' },
+          emailRedirectTo: getEmailVerificationRedirectUrl(),
         }
       });
 
       if (authError) {
         console.error('Auth user creation failed:', authError.message);
-        return false;
+        return { success: false, requiresEmailVerification: false };
       }
 
       if (!authData.user) {
         console.error('No user returned from auth signup');
-        return false;
+        return { success: false, requiresEmailVerification: false };
       }
 
-      // Immediately sign out to prevent auto-login
       await supabase.auth.signOut();
 
-      // Then create agent record with user_id
       const { error: agentError } = await supabase
         .from('agent_registration')
         .insert({
@@ -298,24 +255,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (agentError) {
         console.error('Agent record creation failed:', agentError.message);
+        return { success: false, requiresEmailVerification: false };
+      }
+
+      return { success: true, requiresEmailVerification: !authData.session || !isVerifiedAuthUser(authData.user) };
+    } catch (error) {
+      console.error('Agent registration error:', error);
+      return { success: false, requiresEmailVerification: false };
+    }
+  };
+
+  const resendVerificationEmail = async (email: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+        options: { emailRedirectTo: getEmailVerificationRedirectUrl() },
+      });
+
+      if (error) {
+        console.error('Verification email resend failed:', error.message);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Agent registration error:', error);
+      console.error('Verification email resend error:', error);
       return false;
     }
   };
 
   const resetPassword = async (email: string): Promise<boolean> => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: getPasswordResetRedirectUrl()
-      });
+      const redirectTo = getPasswordResetRedirectUrl();
+      console.log('Password reset redirectTo:', redirectTo);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 
       if (error) {
-        console.error('Password reset failed:', error.message);
+        console.error('Password reset failed:', error.message, error);
         return false;
       }
 
@@ -347,9 +325,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const { data, error } = await supabase.auth.updateUser({
-        data: {
-          whatsapp_number: normalizedWhatsapp
-        }
+        data: { whatsapp_number: normalizedWhatsapp }
       });
 
       if (error) {
@@ -365,14 +341,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (listingsError) {
           if (listingsError.code === '42703') {
-            setUser((prev) => (
-              prev
-                ? {
-                    ...prev,
-                    whatsappNumber: data.user.user_metadata?.whatsapp_number || normalizedWhatsapp
-                  }
-                : prev
-            ));
+            setUser((prev) => prev ? { ...prev, whatsappNumber: data.user.user_metadata?.whatsapp_number || normalizedWhatsapp } : prev);
             return true;
           }
           console.error('Listing WhatsApp sync failed:', listingsError.message);
@@ -380,15 +349,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      setUser((prev) => (
-        prev
-          ? {
-              ...prev,
-              whatsappNumber: data.user.user_metadata?.whatsapp_number || normalizedWhatsapp
-            }
-          : prev
-      ));
-
+      setUser((prev) => prev ? { ...prev, whatsappNumber: data.user.user_metadata?.whatsapp_number || normalizedWhatsapp } : prev);
       return true;
     } catch (error) {
       console.error('WhatsApp update error:', error);
@@ -397,7 +358,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, registerAgent, resetPassword, updatePassword, updateWhatsappNumber, logout, refreshAgentStatus, loading, agentStatus }}>
+    <AuthContext.Provider value={{ user, login, register, registerAgent, resendVerificationEmail, resetPassword, updatePassword, updateWhatsappNumber, logout, refreshAgentStatus, loading, agentStatus }}>
       {children}
     </AuthContext.Provider>
   );
